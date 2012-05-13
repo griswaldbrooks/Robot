@@ -1,0 +1,123 @@
+#define HET_TX1_Start_0	(e_HETPROGRAM0_UN.Program0_ST.TX1_Start_0)
+#define HET_TX1_PrdCtr_0	(e_HETPROGRAM0_UN.Program0_ST.TX1_PrdCtr_0)
+#define HET_TX1_BitCtr_0	(e_HETPROGRAM0_UN.Program0_ST.TX1_BitCtr_0)
+#define HET_TX1_Shift_0	(e_HETPROGRAM0_UN.Program0_ST.TX1_Shift_0)
+#define HET_TX1_LoadA_0	(e_HETPROGRAM0_UN.Program0_ST.TX1_LoadA_0)
+#define HET_TX1_CheckZ_0	(e_HETPROGRAM0_UN.Program0_ST.TX1_CheckZ_0)
+#define HET_TX1_High_0	(e_HETPROGRAM0_UN.Program0_ST.TX1_High_0)
+#define HET_TX1_Low_0	(e_HETPROGRAM0_UN.Program0_ST.TX1_Low_0)
+#define HET_TX1_Reload_0	(e_HETPROGRAM0_UN.Program0_ST.TX1_Reload_0)
+#define HET_TX1_Cont_0	(e_HETPROGRAM0_UN.Program0_ST.TX1_Cont_0)
+#define HET_RX1_Start_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Start_0)
+#define HET_RX1_PrdCtr_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_PrdCtr_0)
+#define HET_RX1_Shift_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Shift_0)
+#define HET_RX1_Check_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Check_0)
+#define HET_RX1_High_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_High_0)
+#define HET_RX1_BitCtr_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_BitCtr_0)
+#define HET_RX1_Done_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Done_0)
+#define HET_RX1_Done2_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Done2_0)
+#define HET_RX1_Done3_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Done3_0)
+#define HET_RX1_Buffer_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Buffer_0)
+#define HET_RX1_Reload_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Reload_0)
+#define HET_RX1_Detect_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Detect_0)
+#define HET_RX1_Low_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Low_0)
+#define HET_RX1_Low2_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Low2_0)
+#define HET_RX1_Cont_0	(e_HETPROGRAM0_UN.Program0_ST.RX1_Cont_0)
+#define HET_TX2_Start_0	(e_HETPROGRAM0_UN.Program0_ST.TX2_Start_0)
+#define HET_TX2_PrdCtr_0	(e_HETPROGRAM0_UN.Program0_ST.TX2_PrdCtr_0)
+#define HET_TX2_BitCtr_0	(e_HETPROGRAM0_UN.Program0_ST.TX2_BitCtr_0)
+#define HET_TX2_Shift_0	(e_HETPROGRAM0_UN.Program0_ST.TX2_Shift_0)
+#define HET_TX2_LoadA_0	(e_HETPROGRAM0_UN.Program0_ST.TX2_LoadA_0)
+#define HET_TX2_CheckZ_0	(e_HETPROGRAM0_UN.Program0_ST.TX2_CheckZ_0)
+#define HET_TX2_High_0	(e_HETPROGRAM0_UN.Program0_ST.TX2_High_0)
+#define HET_TX2_Low_0	(e_HETPROGRAM0_UN.Program0_ST.TX2_Low_0)
+#define HET_TX2_Reload_0	(e_HETPROGRAM0_UN.Program0_ST.TX2_Reload_0)
+#define HET_TX2_Cont_0	(e_HETPROGRAM0_UN.Program0_ST.TX2_Cont_0)
+#define HET_RX2_Start_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Start_0)
+#define HET_RX2_PrdCtr_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_PrdCtr_0)
+#define HET_RX2_Shift_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Shift_0)
+#define HET_RX2_Check_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Check_0)
+#define HET_RX2_High_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_High_0)
+#define HET_RX2_BitCtr_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_BitCtr_0)
+#define HET_RX2_Done_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Done_0)
+#define HET_RX2_Done2_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Done2_0)
+#define HET_RX2_Done3_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Done3_0)
+#define HET_RX2_Buffer_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Buffer_0)
+#define HET_RX2_Reload_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Reload_0)
+#define HET_RX2_Detect_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Detect_0)
+#define HET_RX2_Low_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Low_0)
+#define HET_RX2_Low2_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Low2_0)
+#define HET_RX2_Cont_0	(e_HETPROGRAM0_UN.Program0_ST.RX2_Cont_0)
+#define HET_hetlabel_63_0	(e_HETPROGRAM0_UN.Program0_ST.hetlabel_63_0)
+#define HET_PWM1_Count_0	(e_HETPROGRAM0_UN.Program0_ST.PWM1_Count_0)
+#define HET_PWM1_Compare_0	(e_HETPROGRAM0_UN.Program0_ST.PWM1_Compare_0)
+#define HET_PWM1_Branch_0	(e_HETPROGRAM0_UN.Program0_ST.PWM1_Branch_0)
+
+
+typedef union 
+{ 
+ 	HET_MEMORY	Memory0_PST[54];
+	struct
+	{
+		DJNZ_INSTRUCTION TX1_Start_0;
+		DJNZ_INSTRUCTION TX1_PrdCtr_0;
+		DJNZ_INSTRUCTION TX1_BitCtr_0;
+		SHFT_INSTRUCTION TX1_Shift_0;
+		MOV32_INSTRUCTION TX1_LoadA_0;
+		BR_INSTRUCTION TX1_CheckZ_0;
+		MCMP_INSTRUCTION TX1_High_0;
+		MCMP_INSTRUCTION TX1_Low_0;
+		MOV32_INSTRUCTION TX1_Reload_0;
+		MOV32_INSTRUCTION TX1_Cont_0;
+		DJNZ_INSTRUCTION RX1_Start_0;
+		DJNZ_INSTRUCTION RX1_PrdCtr_0;
+		SHFT_INSTRUCTION RX1_Shift_0;
+		BR_INSTRUCTION RX1_Check_0;
+		ADCNST_INSTRUCTION RX1_High_0;
+		DJNZ_INSTRUCTION RX1_BitCtr_0;
+		MOV32_INSTRUCTION RX1_Done_0;
+		MOV32_INSTRUCTION RX1_Done2_0;
+		DJNZ_INSTRUCTION RX1_Done3_0;
+		MOV32_INSTRUCTION RX1_Buffer_0;
+		MOV32_INSTRUCTION RX1_Reload_0;
+		BR_INSTRUCTION RX1_Detect_0;
+		MOV32_INSTRUCTION RX1_Low_0;
+		MOV32_INSTRUCTION RX1_Low2_0;
+		MOV32_INSTRUCTION RX1_Cont_0;
+		DJNZ_INSTRUCTION TX2_Start_0;
+		DJNZ_INSTRUCTION TX2_PrdCtr_0;
+		DJNZ_INSTRUCTION TX2_BitCtr_0;
+		SHFT_INSTRUCTION TX2_Shift_0;
+		MOV32_INSTRUCTION TX2_LoadA_0;
+		BR_INSTRUCTION TX2_CheckZ_0;
+		MCMP_INSTRUCTION TX2_High_0;
+		MCMP_INSTRUCTION TX2_Low_0;
+		MOV32_INSTRUCTION TX2_Reload_0;
+		MOV32_INSTRUCTION TX2_Cont_0;
+		DJNZ_INSTRUCTION RX2_Start_0;
+		DJNZ_INSTRUCTION RX2_PrdCtr_0;
+		SHFT_INSTRUCTION RX2_Shift_0;
+		BR_INSTRUCTION RX2_Check_0;
+		ADCNST_INSTRUCTION RX2_High_0;
+		DJNZ_INSTRUCTION RX2_BitCtr_0;
+		MOV32_INSTRUCTION RX2_Done_0;
+		MOV32_INSTRUCTION RX2_Done2_0;
+		DJNZ_INSTRUCTION RX2_Done3_0;
+		MOV32_INSTRUCTION RX2_Buffer_0;
+		MOV32_INSTRUCTION RX2_Reload_0;
+		BR_INSTRUCTION RX2_Detect_0;
+		MOV32_INSTRUCTION RX2_Low_0;
+		MOV32_INSTRUCTION RX2_Low2_0;
+		MOV32_INSTRUCTION RX2_Cont_0;
+		BR_INSTRUCTION hetlabel_63_0;
+		CNT_INSTRUCTION PWM1_Count_0;
+		ECMP_INSTRUCTION PWM1_Compare_0;
+		BR_INSTRUCTION PWM1_Branch_0;
+	} Program0_ST; 
+
+} HETPROGRAM0_UN;
+
+extern volatile HETPROGRAM0_UN e_HETPROGRAM0_UN;
+
+extern const HET_MEMORY HET_INIT0_PST[54];
+

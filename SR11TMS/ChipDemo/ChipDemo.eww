@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<workspace>
+  <project>
+    <path>$WS_DIR$\TOGGLE.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\ADC.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\GIO.ewp</path>
+  </project>
+  <project>
+    <path>$WS_DIR$\SCI.ewp</path>
+  </project>
+  <batchBuild>
+    <batchDefinition>
+      <name>all</name>
+      <member>
+        <project>ADC</project>
+        <configuration>flash</configuration>
+      </member>
+      <member>
+        <project>ADC</project>
+        <configuration>RAM</configuration>
+      </member>
+      <member>
+        <project>GIO</project>
+        <configuration>flash</configuration>
+      </member>
+      <member>
+        <project>GIO</project>
+        <configuration>RAM</configuration>
+      </member>
+      <member>
+        <project>SCI</project>
+        <configuration>flash</configuration>
+      </member>
+      <member>
+        <project>SCI</project>
+        <configuration>RAM</configuration>
+      </member>
+      <member>
+        <project>TOGGLE</project>
+        <configuration>flash</configuration>
+      </member>
+      <member>
+        <project>TOGGLE</project>
+        <configuration>RAM</configuration>
+      </member>
+    </batchDefinition>
+  </batchBuild>
+</workspace>
+
+

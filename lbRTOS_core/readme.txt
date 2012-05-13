@@ -1,0 +1,6 @@
+Actaeon Project Lower Brain Core - 01/13/2011
+
+-FreeRTOS v6.1.0
+-Society of Robots source code 1.11
+
+FreeRTOS has been ported for use with the ATMega640 and the SoR libraries have been integrated for use. To date, the PWM setup for Actaeon has not been fully configured, which will limit servo and LDS PID testing.

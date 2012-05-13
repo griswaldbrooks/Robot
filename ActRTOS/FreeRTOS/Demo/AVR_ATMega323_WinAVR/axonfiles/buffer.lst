@@ -1,0 +1,818 @@
+   1               		.file	"buffer.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+   8               		.global __do_copy_data
+   9               		.global __do_clear_bss
+  11               		.text
+  12               	.Ltext0:
+ 101               	.global	bufferInit
+ 103               	bufferInit:
+   1:buffer.c      **** /*! \file buffer.c \brief Multipurpose byte buffer structure and methods. */
+   2:buffer.c      **** //*****************************************************************************
+   3:buffer.c      **** //
+   4:buffer.c      **** // File Name	: 'buffer.c'
+   5:buffer.c      **** // Title		: Multipurpose byte buffer structure and methods
+   6:buffer.c      **** // Author		: Pascal Stang - Copyright (C) 2001-2002
+   7:buffer.c      **** // Created		: 9/23/2001
+   8:buffer.c      **** // Revised		: 9/23/2001
+   9:buffer.c      **** // Version		: 1.0
+  10:buffer.c      **** // Target MCU	: any
+  11:buffer.c      **** // Editor Tabs	: 4
+  12:buffer.c      **** //
+  13:buffer.c      **** // This code is distributed under the GNU Public License
+  14:buffer.c      **** //		which can be found at http://www.gnu.org/licenses/gpl.txt
+  15:buffer.c      **** //
+  16:buffer.c      **** //*****************************************************************************
+  17:buffer.c      **** 
+  18:buffer.c      **** #include "buffer.h"
+  19:buffer.c      **** #include "global.h"
+  20:buffer.c      **** #include "avr/io.h"
+  21:buffer.c      **** 
+  22:buffer.c      **** #ifndef CRITICAL_SECTION_START
+  23:buffer.c      **** #define CRITICAL_SECTION_START	unsigned char _sreg = SREG; cli()
+  24:buffer.c      **** #define CRITICAL_SECTION_END	SREG = _sreg
+  25:buffer.c      **** #endif
+  26:buffer.c      **** 
+  27:buffer.c      **** // global variables
+  28:buffer.c      **** 
+  29:buffer.c      **** // initialization
+  30:buffer.c      **** 
+  31:buffer.c      **** void bufferInit(cBuffer* buffer, unsigned char *start, unsigned short size)
+  32:buffer.c      **** {
+ 104               	n	68,0,32,.LM0-.LFBB1
+ 105               	.LM0:
+ 106               	.LFBB1:
+ 107 0000 DF93      		push r29
+ 108 0002 CF93      		push r28
+ 109 0004 CDB7      		in r28,__SP_L__
+ 110 0006 DEB7      		in r29,__SP_H__
+ 111 0008 2797      		sbiw r28,7
+ 112 000a 0FB6      		in __tmp_reg__,__SREG__
+ 113 000c F894      		cli
+ 114 000e DEBF      		out __SP_H__,r29
+ 115 0010 0FBE      		out __SREG__,__tmp_reg__
+ 116 0012 CDBF      		out __SP_L__,r28
+ 117               	/* prologue: function */
+ 118               	/* frame size = 7 */
+ 119 0014 9B83      		std Y+3,r25
+ 120 0016 8A83      		std Y+2,r24
+ 121 0018 7D83      		std Y+5,r23
+ 122 001a 6C83      		std Y+4,r22
+ 123 001c 5F83      		std Y+7,r21
+ 124 001e 4E83      		std Y+6,r20
+  33:buffer.c      **** 	// begin critical section
+  34:buffer.c      **** 	CRITICAL_SECTION_START;
+ 125               	.LFBB1
+ 126               	.LM1:
+ 127 0020 EFE5      		ldi r30,lo8(95)
+ 128 0022 F0E0      		ldi r31,hi8(95)
+ 129 0024 8081      		ld r24,Z
+ 130 0026 8983      		std Y+1,r24
+ 131               	/* #APP */
+ 132               	 ;  34 "buffer.c" 1
+ 133 0028 F894      		cli
+ 134               	 ;  0 "" 2
+  35:buffer.c      **** 	// set start pointer of the buffer
+  36:buffer.c      **** 	buffer->dataptr = start;
+ 135               	,0,36,.LM2-.LFBB1
+ 136               	.LM2:
+ 137               	/* #NOAPP */
+ 138 002a EA81      		ldd r30,Y+2
+ 139 002c FB81      		ldd r31,Y+3
+ 140 002e 8C81      		ldd r24,Y+4
+ 141 0030 9D81      		ldd r25,Y+5
+ 142 0032 9183      		std Z+1,r25
+ 143 0034 8083      		st Z,r24
+  37:buffer.c      **** 	buffer->size = size;
+ 144               	8,0,37,.LM3-.LFBB1
+ 145               	.LM3:
+ 146 0036 EA81      		ldd r30,Y+2
+ 147 0038 FB81      		ldd r31,Y+3
+ 148 003a 8E81      		ldd r24,Y+6
+ 149 003c 9F81      		ldd r25,Y+7
+ 150 003e 9383      		std Z+3,r25
+ 151 0040 8283      		std Z+2,r24
+  38:buffer.c      **** 	// initialize index and length
+  39:buffer.c      **** 	buffer->dataindex = 0;
+ 152               	68,0,39,.LM4-.LFBB1
+ 153               	.LM4:
+ 154 0042 EA81      		ldd r30,Y+2
+ 155 0044 FB81      		ldd r31,Y+3
+ 156 0046 1782      		std Z+7,__zero_reg__
+ 157 0048 1682      		std Z+6,__zero_reg__
+  40:buffer.c      **** 	buffer->datalength = 0;
+ 158               	n	68,0,40,.LM5-.LFBB1
+ 159               	.LM5:
+ 160 004a EA81      		ldd r30,Y+2
+ 161 004c FB81      		ldd r31,Y+3
+ 162 004e 1582      		std Z+5,__zero_reg__
+ 163 0050 1482      		std Z+4,__zero_reg__
+  41:buffer.c      **** 	// end critical section
+  42:buffer.c      **** 	CRITICAL_SECTION_END;
+ 164               	n	68,0,42,.LM6-.LFBB1
+ 165               	.LM6:
+ 166 0052 EFE5      		ldi r30,lo8(95)
+ 167 0054 F0E0      		ldi r31,hi8(95)
+ 168 0056 8981      		ldd r24,Y+1
+ 169 0058 8083      		st Z,r24
+ 170               	/* epilogue start */
+  43:buffer.c      **** }
+ 171               		68,0,43,.LM7-.LFBB1
+ 172               	.LM7:
+ 173 005a 2796      		adiw r28,7
+ 174 005c 0FB6      		in __tmp_reg__,__SREG__
+ 175 005e F894      		cli
+ 176 0060 DEBF      		out __SP_H__,r29
+ 177 0062 0FBE      		out __SREG__,__tmp_reg__
+ 178 0064 CDBF      		out __SP_L__,r28
+ 179 0066 CF91      		pop r28
+ 180 0068 DF91      		pop r29
+ 181 006a 0895      		ret
+ 186               	.Lscope1:
+ 189               	.global	bufferGetFromFront
+ 191               	bufferGetFromFront:
+  44:buffer.c      **** 
+  45:buffer.c      **** // access routines
+  46:buffer.c      **** unsigned char  bufferGetFromFront(cBuffer* buffer)
+  47:buffer.c      **** {
+ 192               	.LFBB2
+ 193               	.LM8:
+ 194               	.LFBB2:
+ 195 006c DF93      		push r29
+ 196 006e CF93      		push r28
+ 197 0070 00D0      		rcall .
+ 198 0072 00D0      		rcall .
+ 199 0074 CDB7      		in r28,__SP_L__
+ 200 0076 DEB7      		in r29,__SP_H__
+ 201               	/* prologue: function */
+ 202               	/* frame size = 4 */
+ 203 0078 9C83      		std Y+4,r25
+ 204 007a 8B83      		std Y+3,r24
+  48:buffer.c      **** 	unsigned char data = 0;
+ 205               	48,.LM9-.LFBB2
+ 206               	.LM9:
+ 207 007c 1A82      		std Y+2,__zero_reg__
+  49:buffer.c      **** 	// begin critical section
+  50:buffer.c      **** 	CRITICAL_SECTION_START;
+ 208               	tabn	68,0,50,.LM10-.LFBB2
+ 209               	.LM10:
+ 210 007e EFE5      		ldi r30,lo8(95)
+ 211 0080 F0E0      		ldi r31,hi8(95)
+ 212 0082 8081      		ld r24,Z
+ 213 0084 8983      		std Y+1,r24
+ 214               	/* #APP */
+ 215               	 ;  50 "buffer.c" 1
+ 216 0086 F894      		cli
+ 217               	 ;  0 "" 2
+  51:buffer.c      **** 	// check to see if there's data in the buffer
+  52:buffer.c      **** 	if(buffer->datalength)
+ 218               	,0,52,.LM11-.LFBB2
+ 219               	.LM11:
+ 220               	/* #NOAPP */
+ 221 0088 EB81      		ldd r30,Y+3
+ 222 008a FC81      		ldd r31,Y+4
+ 223 008c 8481      		ldd r24,Z+4
+ 224 008e 9581      		ldd r25,Z+5
+ 225 0090 0097      		sbiw r24,0
+ 226 0092 01F0      		breq .L4
+  53:buffer.c      **** 	{
+  54:buffer.c      **** 		// get the first character from buffer
+  55:buffer.c      **** 		data = buffer->dataptr[buffer->dataindex];
+ 227               	8,0,55,.LM12-.LFBB2
+ 228               	.LM12:
+ 229 0094 EB81      		ldd r30,Y+3
+ 230 0096 FC81      		ldd r31,Y+4
+ 231 0098 2081      		ld r18,Z
+ 232 009a 3181      		ldd r19,Z+1
+ 233 009c EB81      		ldd r30,Y+3
+ 234 009e FC81      		ldd r31,Y+4
+ 235 00a0 8681      		ldd r24,Z+6
+ 236 00a2 9781      		ldd r25,Z+7
+ 237 00a4 F901      		movw r30,r18
+ 238 00a6 E80F      		add r30,r24
+ 239 00a8 F91F      		adc r31,r25
+ 240 00aa 8081      		ld r24,Z
+ 241 00ac 8A83      		std Y+2,r24
+  56:buffer.c      **** 		// move index down and decrement length
+  57:buffer.c      **** 		buffer->dataindex++;
+ 242               	,.LM13-.LFBB2
+ 243               	.LM13:
+ 244 00ae EB81      		ldd r30,Y+3
+ 245 00b0 FC81      		ldd r31,Y+4
+ 246 00b2 8681      		ldd r24,Z+6
+ 247 00b4 9781      		ldd r25,Z+7
+ 248 00b6 0196      		adiw r24,1
+ 249 00b8 EB81      		ldd r30,Y+3
+ 250 00ba FC81      		ldd r31,Y+4
+ 251 00bc 9783      		std Z+7,r25
+ 252 00be 8683      		std Z+6,r24
+  58:buffer.c      **** 		if(buffer->dataindex >= buffer->size)
+ 253               	0,58,.LM14-.LFBB2
+ 254               	.LM14:
+ 255 00c0 EB81      		ldd r30,Y+3
+ 256 00c2 FC81      		ldd r31,Y+4
+ 257 00c4 2681      		ldd r18,Z+6
+ 258 00c6 3781      		ldd r19,Z+7
+ 259 00c8 EB81      		ldd r30,Y+3
+ 260 00ca FC81      		ldd r31,Y+4
+ 261 00cc 8281      		ldd r24,Z+2
+ 262 00ce 9381      		ldd r25,Z+3
+ 263 00d0 2817      		cp r18,r24
+ 264 00d2 3907      		cpc r19,r25
+ 265 00d4 00F0      		brlo .L5
+  59:buffer.c      **** 		{
+  60:buffer.c      **** 			buffer->dataindex -= buffer->size;
+ 266               	60,.LM15-.LFBB2
+ 267               	.LM15:
+ 268 00d6 EB81      		ldd r30,Y+3
+ 269 00d8 FC81      		ldd r31,Y+4
+ 270 00da 2681      		ldd r18,Z+6
+ 271 00dc 3781      		ldd r19,Z+7
+ 272 00de EB81      		ldd r30,Y+3
+ 273 00e0 FC81      		ldd r31,Y+4
+ 274 00e2 8281      		ldd r24,Z+2
+ 275 00e4 9381      		ldd r25,Z+3
+ 276 00e6 A901      		movw r20,r18
+ 277 00e8 481B      		sub r20,r24
+ 278 00ea 590B      		sbc r21,r25
+ 279 00ec CA01      		movw r24,r20
+ 280 00ee EB81      		ldd r30,Y+3
+ 281 00f0 FC81      		ldd r31,Y+4
+ 282 00f2 9783      		std Z+7,r25
+ 283 00f4 8683      		std Z+6,r24
+ 284               	.L5:
+  61:buffer.c      **** 		}
+  62:buffer.c      **** 		buffer->datalength--;
+ 285               	16-.LFBB2
+ 286               	.LM16:
+ 287 00f6 EB81      		ldd r30,Y+3
+ 288 00f8 FC81      		ldd r31,Y+4
+ 289 00fa 8481      		ldd r24,Z+4
+ 290 00fc 9581      		ldd r25,Z+5
+ 291 00fe 0197      		sbiw r24,1
+ 292 0100 EB81      		ldd r30,Y+3
+ 293 0102 FC81      		ldd r31,Y+4
+ 294 0104 9583      		std Z+5,r25
+ 295 0106 8483      		std Z+4,r24
+ 296               	.L4:
+  63:buffer.c      **** 	}
+  64:buffer.c      **** 	// end critical section
+  65:buffer.c      **** 	CRITICAL_SECTION_END;
+ 297               	,65,.LM17-.LFBB2
+ 298               	.LM17:
+ 299 0108 EFE5      		ldi r30,lo8(95)
+ 300 010a F0E0      		ldi r31,hi8(95)
+ 301 010c 8981      		ldd r24,Y+1
+ 302 010e 8083      		st Z,r24
+  66:buffer.c      **** 	// return
+  67:buffer.c      **** 	return data;
+ 303               	n	68,0,67,.LM18-.LFBB2
+ 304               	.LM18:
+ 305 0110 8A81      		ldd r24,Y+2
+ 306               	/* epilogue start */
+  68:buffer.c      **** }
+ 307               	abn	68,0,68,.LM19-.LFBB2
+ 308               	.LM19:
+ 309 0112 0F90      		pop __tmp_reg__
+ 310 0114 0F90      		pop __tmp_reg__
+ 311 0116 0F90      		pop __tmp_reg__
+ 312 0118 0F90      		pop __tmp_reg__
+ 313 011a CF91      		pop r28
+ 314 011c DF91      		pop r29
+ 315 011e 0895      		ret
+ 321               	.Lscope2:
+ 325               	.global	bufferDumpFromFront
+ 327               	bufferDumpFromFront:
+  69:buffer.c      **** 
+  70:buffer.c      **** void bufferDumpFromFront(cBuffer* buffer, unsigned short numbytes)
+  71:buffer.c      **** {
+ 328               	-.LFBB3
+ 329               	.LM20:
+ 330               	.LFBB3:
+ 331 0120 DF93      		push r29
+ 332 0122 CF93      		push r28
+ 333 0124 00D0      		rcall .
+ 334 0126 00D0      		rcall .
+ 335 0128 0F92      		push __tmp_reg__
+ 336 012a CDB7      		in r28,__SP_L__
+ 337 012c DEB7      		in r29,__SP_H__
+ 338               	/* prologue: function */
+ 339               	/* frame size = 5 */
+ 340 012e 9B83      		std Y+3,r25
+ 341 0130 8A83      		std Y+2,r24
+ 342 0132 7D83      		std Y+5,r23
+ 343 0134 6C83      		std Y+4,r22
+  72:buffer.c      **** 	// begin critical section
+  73:buffer.c      **** 	CRITICAL_SECTION_START;
+ 344               	.LM21-.LFBB3
+ 345               	.LM21:
+ 346 0136 EFE5      		ldi r30,lo8(95)
+ 347 0138 F0E0      		ldi r31,hi8(95)
+ 348 013a 8081      		ld r24,Z
+ 349 013c 8983      		std Y+1,r24
+ 350               	/* #APP */
+ 351               	 ;  73 "buffer.c" 1
+ 352 013e F894      		cli
+ 353               	 ;  0 "" 2
+  74:buffer.c      **** 	// dump numbytes from the front of the buffer
+  75:buffer.c      **** 	// are we dumping less than the entire buffer?
+  76:buffer.c      **** 	if(numbytes < buffer->datalength)
+ 354               	,0,76,.LM22-.LFBB3
+ 355               	.LM22:
+ 356               	/* #NOAPP */
+ 357 0140 EA81      		ldd r30,Y+2
+ 358 0142 FB81      		ldd r31,Y+3
+ 359 0144 2481      		ldd r18,Z+4
+ 360 0146 3581      		ldd r19,Z+5
+ 361 0148 8C81      		ldd r24,Y+4
+ 362 014a 9D81      		ldd r25,Y+5
+ 363 014c 8217      		cp r24,r18
+ 364 014e 9307      		cpc r25,r19
+ 365 0150 00F4      		brsh .L8
+  77:buffer.c      **** 	{
+  78:buffer.c      **** 		// move index down by numbytes and decrement length by numbytes
+  79:buffer.c      **** 		buffer->dataindex += numbytes;
+ 366               	,79,.LM23-.LFBB3
+ 367               	.LM23:
+ 368 0152 EA81      		ldd r30,Y+2
+ 369 0154 FB81      		ldd r31,Y+3
+ 370 0156 2681      		ldd r18,Z+6
+ 371 0158 3781      		ldd r19,Z+7
+ 372 015a 8C81      		ldd r24,Y+4
+ 373 015c 9D81      		ldd r25,Y+5
+ 374 015e 820F      		add r24,r18
+ 375 0160 931F      		adc r25,r19
+ 376 0162 EA81      		ldd r30,Y+2
+ 377 0164 FB81      		ldd r31,Y+3
+ 378 0166 9783      		std Z+7,r25
+ 379 0168 8683      		std Z+6,r24
+  80:buffer.c      **** 		if(buffer->dataindex >= buffer->size)
+ 380               	0,.LM24-.LFBB3
+ 381               	.LM24:
+ 382 016a EA81      		ldd r30,Y+2
+ 383 016c FB81      		ldd r31,Y+3
+ 384 016e 2681      		ldd r18,Z+6
+ 385 0170 3781      		ldd r19,Z+7
+ 386 0172 EA81      		ldd r30,Y+2
+ 387 0174 FB81      		ldd r31,Y+3
+ 388 0176 8281      		ldd r24,Z+2
+ 389 0178 9381      		ldd r25,Z+3
+ 390 017a 2817      		cp r18,r24
+ 391 017c 3907      		cpc r19,r25
+ 392 017e 00F0      		brlo .L9
+  81:buffer.c      **** 		{
+  82:buffer.c      **** 			buffer->dataindex -= buffer->size;
+ 393               	82,.LM25-.LFBB3
+ 394               	.LM25:
+ 395 0180 EA81      		ldd r30,Y+2
+ 396 0182 FB81      		ldd r31,Y+3
+ 397 0184 2681      		ldd r18,Z+6
+ 398 0186 3781      		ldd r19,Z+7
+ 399 0188 EA81      		ldd r30,Y+2
+ 400 018a FB81      		ldd r31,Y+3
+ 401 018c 8281      		ldd r24,Z+2
+ 402 018e 9381      		ldd r25,Z+3
+ 403 0190 A901      		movw r20,r18
+ 404 0192 481B      		sub r20,r24
+ 405 0194 590B      		sbc r21,r25
+ 406 0196 CA01      		movw r24,r20
+ 407 0198 EA81      		ldd r30,Y+2
+ 408 019a FB81      		ldd r31,Y+3
+ 409 019c 9783      		std Z+7,r25
+ 410 019e 8683      		std Z+6,r24
+ 411               	.L9:
+  83:buffer.c      **** 		}
+  84:buffer.c      **** 		buffer->datalength -= numbytes;
+ 412               	26-.LFBB3
+ 413               	.LM26:
+ 414 01a0 EA81      		ldd r30,Y+2
+ 415 01a2 FB81      		ldd r31,Y+3
+ 416 01a4 2481      		ldd r18,Z+4
+ 417 01a6 3581      		ldd r19,Z+5
+ 418 01a8 8C81      		ldd r24,Y+4
+ 419 01aa 9D81      		ldd r25,Y+5
+ 420 01ac A901      		movw r20,r18
+ 421 01ae 481B      		sub r20,r24
+ 422 01b0 590B      		sbc r21,r25
+ 423 01b2 CA01      		movw r24,r20
+ 424 01b4 EA81      		ldd r30,Y+2
+ 425 01b6 FB81      		ldd r31,Y+3
+ 426 01b8 9583      		std Z+5,r25
+ 427 01ba 8483      		std Z+4,r24
+ 428 01bc 00C0      		rjmp .L10
+ 429               	.L8:
+  85:buffer.c      **** 	}
+  86:buffer.c      **** 	else
+  87:buffer.c      **** 	{
+  88:buffer.c      **** 		// flush the whole buffer
+  89:buffer.c      **** 		buffer->datalength = 0;
+ 430               	M27-.LFBB3
+ 431               	.LM27:
+ 432 01be EA81      		ldd r30,Y+2
+ 433 01c0 FB81      		ldd r31,Y+3
+ 434 01c2 1582      		std Z+5,__zero_reg__
+ 435 01c4 1482      		std Z+4,__zero_reg__
+ 436               	.L10:
+  90:buffer.c      **** 	}
+  91:buffer.c      **** 	// end critical section
+  92:buffer.c      **** 	CRITICAL_SECTION_END;
+ 437               		68,0,92,.LM28-.LFBB3
+ 438               	.LM28:
+ 439 01c6 EFE5      		ldi r30,lo8(95)
+ 440 01c8 F0E0      		ldi r31,hi8(95)
+ 441 01ca 8981      		ldd r24,Y+1
+ 442 01cc 8083      		st Z,r24
+ 443               	/* epilogue start */
+  93:buffer.c      **** }
+ 444               		68,0,93,.LM29-.LFBB3
+ 445               	.LM29:
+ 446 01ce 0F90      		pop __tmp_reg__
+ 447 01d0 0F90      		pop __tmp_reg__
+ 448 01d2 0F90      		pop __tmp_reg__
+ 449 01d4 0F90      		pop __tmp_reg__
+ 450 01d6 0F90      		pop __tmp_reg__
+ 451 01d8 CF91      		pop r28
+ 452 01da DF91      		pop r29
+ 453 01dc 0895      		ret
+ 458               	.Lscope3:
+ 462               	.global	bufferGetAtIndex
+ 464               	bufferGetAtIndex:
+  94:buffer.c      **** 
+  95:buffer.c      **** unsigned char bufferGetAtIndex(cBuffer* buffer, unsigned short index)
+  96:buffer.c      **** {
+ 465               	-.LFBB4
+ 466               	.LM30:
+ 467               	.LFBB4:
+ 468 01de 0F93      		push r16
+ 469 01e0 1F93      		push r17
+ 470 01e2 DF93      		push r29
+ 471 01e4 CF93      		push r28
+ 472 01e6 00D0      		rcall .
+ 473 01e8 00D0      		rcall .
+ 474 01ea 00D0      		rcall .
+ 475 01ec CDB7      		in r28,__SP_L__
+ 476 01ee DEB7      		in r29,__SP_H__
+ 477               	/* prologue: function */
+ 478               	/* frame size = 6 */
+ 479 01f0 9C83      		std Y+4,r25
+ 480 01f2 8B83      		std Y+3,r24
+ 481 01f4 7E83      		std Y+6,r23
+ 482 01f6 6D83      		std Y+5,r22
+  97:buffer.c      **** 	// begin critical section
+  98:buffer.c      **** 	CRITICAL_SECTION_START;
+ 483               	M31-.LFBB4
+ 484               	.LM31:
+ 485 01f8 EFE5      		ldi r30,lo8(95)
+ 486 01fa F0E0      		ldi r31,hi8(95)
+ 487 01fc 8081      		ld r24,Z
+ 488 01fe 8A83      		std Y+2,r24
+ 489               	/* #APP */
+ 490               	 ;  98 "buffer.c" 1
+ 491 0200 F894      		cli
+ 492               	 ;  0 "" 2
+  99:buffer.c      **** 	// return character at index in buffer
+ 100:buffer.c      **** 	unsigned char data = buffer->dataptr[(buffer->dataindex+index)%(buffer->size)];
+ 493               	,0,100,.LM32-.LFBB4
+ 494               	.LM32:
+ 495               	/* #NOAPP */
+ 496 0202 EB81      		ldd r30,Y+3
+ 497 0204 FC81      		ldd r31,Y+4
+ 498 0206 0081      		ld r16,Z
+ 499 0208 1181      		ldd r17,Z+1
+ 500 020a EB81      		ldd r30,Y+3
+ 501 020c FC81      		ldd r31,Y+4
+ 502 020e 2681      		ldd r18,Z+6
+ 503 0210 3781      		ldd r19,Z+7
+ 504 0212 8D81      		ldd r24,Y+5
+ 505 0214 9E81      		ldd r25,Y+6
+ 506 0216 820F      		add r24,r18
+ 507 0218 931F      		adc r25,r19
+ 508 021a EB81      		ldd r30,Y+3
+ 509 021c FC81      		ldd r31,Y+4
+ 510 021e 2281      		ldd r18,Z+2
+ 511 0220 3381      		ldd r19,Z+3
+ 512 0222 B901      		movw r22,r18
+ 513 0224 0E94 0000 		call __udivmodhi4
+ 514 0228 F801      		movw r30,r16
+ 515 022a E80F      		add r30,r24
+ 516 022c F91F      		adc r31,r25
+ 517 022e 8081      		ld r24,Z
+ 518 0230 8983      		std Y+1,r24
+ 101:buffer.c      **** 	// end critical section
+ 102:buffer.c      **** 	CRITICAL_SECTION_END;
+ 519               	BB4
+ 520               	.LM33:
+ 521 0232 EFE5      		ldi r30,lo8(95)
+ 522 0234 F0E0      		ldi r31,hi8(95)
+ 523 0236 8A81      		ldd r24,Y+2
+ 524 0238 8083      		st Z,r24
+ 103:buffer.c      **** 	return data;
+ 525               	n	68,0,103,.LM34-.LFBB4
+ 526               	.LM34:
+ 527 023a 8981      		ldd r24,Y+1
+ 528               	/* epilogue start */
+ 104:buffer.c      **** }
+ 529               	abn	68,0,104,.LM35-.LFBB4
+ 530               	.LM35:
+ 531 023c 2696      		adiw r28,6
+ 532 023e 0FB6      		in __tmp_reg__,__SREG__
+ 533 0240 F894      		cli
+ 534 0242 DEBF      		out __SP_H__,r29
+ 535 0244 0FBE      		out __SREG__,__tmp_reg__
+ 536 0246 CDBF      		out __SP_L__,r28
+ 537 0248 CF91      		pop r28
+ 538 024a DF91      		pop r29
+ 539 024c 1F91      		pop r17
+ 540 024e 0F91      		pop r16
+ 541 0250 0895      		ret
+ 547               	.Lscope4:
+ 551               	.global	bufferAddToEnd
+ 553               	bufferAddToEnd:
+ 105:buffer.c      **** 
+ 106:buffer.c      **** unsigned char bufferAddToEnd(cBuffer* buffer, unsigned char data)
+ 107:buffer.c      **** {
+ 554               	FBB5
+ 555               	.LM36:
+ 556               	.LFBB5:
+ 557 0252 0F93      		push r16
+ 558 0254 1F93      		push r17
+ 559 0256 DF93      		push r29
+ 560 0258 CF93      		push r28
+ 561 025a 00D0      		rcall .
+ 562 025c 00D0      		rcall .
+ 563 025e 0F92      		push __tmp_reg__
+ 564 0260 CDB7      		in r28,__SP_L__
+ 565 0262 DEB7      		in r29,__SP_H__
+ 566               	/* prologue: function */
+ 567               	/* frame size = 5 */
+ 568 0264 9B83      		std Y+3,r25
+ 569 0266 8A83      		std Y+2,r24
+ 570 0268 6C83      		std Y+4,r22
+ 108:buffer.c      **** 	// begin critical section
+ 109:buffer.c      **** 	CRITICAL_SECTION_START;
+ 571               		68,0,107,.LM36-.LFBB5
+ 572               	.LM36:
+ 573 026a EFE5      	.LFBB5:
+ 574 026c F0E0      		push r16
+ 575 026e 8081      		push r17
+ 576 0270 8983      		push r29
+ 577               		push r28
+ 578               		rcall .
+ 579 0272 F894      		rcall .
+ 580               		push __tmp_reg__
+ 110:buffer.c      **** 	// make sure the buffer has room
+ 111:buffer.c      **** 	if(buffer->datalength < buffer->size)
+ 581               	6)",160,0,0,2
+ 583               	.global	bufferAddToEnd
+ 585 0276 FB81      	bufferAddToEnd:
+ 587 027a 3581      	.LM36:
+ 588 027c EA81      	.LFBB5:
+ 589 027e FB81      		push r16
+ 590 0280 8281      		push r17
+ 591 0282 9381      		push r29
+ 592 0284 2817      		push r28
+ 593 0286 3907      		rcall .
+ 594 0288 00F4      		rcall .
+ 112:buffer.c      **** 	{
+ 113:buffer.c      **** 		// save data byte at end of buffer
+ 114:buffer.c      **** 		buffer->dataptr[(buffer->dataindex + buffer->datalength) % buffer->size] = data;
+ 595               	g__
+ 596               		in r28,__SP_L__
+ 597 028a EA81      		in r29,__SP_H__
+ 598 028c FB81      	/* prologue: function */
+ 599 028e 0081      	/* frame size = 5 */
+ 600 0290 1181      		std Y+3,r25
+ 601 0292 EA81      		std Y+2,r24
+ 602 0294 FB81      		std Y+4,r22
+ 604 0298 3781      	.LM37:
+ 605 029a EA81      		ldi r30,lo8(95)
+ 606 029c FB81      		ldi r31,hi8(95)
+ 607 029e 8481      		ld r24,Z
+ 608 02a0 9581      		std Y+1,r24
+ 609 02a2 820F      	/* #APP */
+ 610 02a4 931F      	 ;  109 "buffer.c" 1
+ 611 02a6 EA81      		cli
+ 612 02a8 FB81      	 ;  0 "" 2
+ 614 02ac 3381      	.LM38:
+ 615 02ae B901      	/* #NOAPP */
+ 616 02b0 0E94 0000 		ldd r30,Y+2
+ 617 02b4 F801      		ldd r31,Y+3
+ 618 02b6 E80F      		ldd r18,Z+4
+ 619 02b8 F91F      		ldd r19,Z+5
+ 620 02ba 8C81      		ldd r30,Y+2
+ 621 02bc 8083      		ldd r31,Y+3
+ 115:buffer.c      **** 		// increment the length
+ 116:buffer.c      **** 		buffer->datalength++;
+ 622               	di r31,hi8(95)
+ 623               		ld r24,Z
+ 624 02be EA81      		std Y+1,r24
+ 625 02c0 FB81      	/* #APP */
+ 626 02c2 8481      	 ;  109 "buffer.c" 1
+ 627 02c4 9581      		cli
+ 628 02c6 0196      	 ;  0 "" 2
+ 630 02ca FB81      	.LM38:
+ 631 02cc 9583      	/* #NOAPP */
+ 632 02ce 8483      		ldd r30,Y+2
+ 117:buffer.c      **** 		// end critical section
+ 118:buffer.c      **** 		CRITICAL_SECTION_END;
+ 633               	
+ 634               		std Y+4,r22
+ 636 02d2 F0E0      	.LM37:
+ 637 02d4 8981      		ldi r30,lo8(95)
+ 638 02d6 8083      		ldi r31,hi8(95)
+ 119:buffer.c      **** 		// return success
+ 120:buffer.c      **** 		return -1;
+ 639               	28
+ 640               		rcall .
+ 641 02d8 8FEF      		rcall .
+ 642 02da 8D83      		push __tmp_reg__
+ 643 02dc 00C0      		in r28,__SP_L__
+ 644               		in r29,__SP_H__
+ 121:buffer.c      **** 	}
+ 122:buffer.c      **** 	// end critical section
+ 123:buffer.c      **** 	CRITICAL_SECTION_END;
+ 645               	,160,0,0,4
+ 646               	.global	bufferAddToEnd
+ 648 02e0 F0E0      	bufferAddToEnd:
+ 650 02e4 8083      	.LM36:
+ 124:buffer.c      **** 	// return failure
+ 125:buffer.c      **** 	return 0;
+ 651               	:
+ 652               		push r16
+ 653 02e6 1D82      		push r17
+ 654               		push r29
+ 655 02e8 8D81      		push r28
+ 656               		rcall .
+ 126:buffer.c      **** }
+ 657               	ddToEnd
+ 660 02ec 0F90      	.global	bufferAddToEnd
+ 662 02f0 0F90      	bufferAddToEnd:
+ 664 02f4 CF91      	.LM36:
+ 665 02f6 DF91      	.LFBB5:
+ 666 02f8 1F91      		push r16
+ 667 02fa 0F91      		push r17
+ 668 02fc 0895      		push r29
+ 669               		push r28
+ 670               		rcall .
+ 671               		rcall .
+ 672               		push __tmp_reg__
+ 673               		in r28,__SP_L__
+ 674               		in r29,__SP_H__
+ 675               	/* prologue: function */
+ 676               	/* frame size = 5 */
+ 677               		std Y+3,r25
+ 678               		std Y+2,r24
+ 127:buffer.c      **** 
+ 128:buffer.c      **** unsigned short bufferIsNotFull(cBuffer* buffer)
+ 129:buffer.c      **** {
+ 679               	8,0,109,.LM37-.LFBB5
+ 680               	.LM37:
+ 681               		ldi r30,lo8(95)
+ 682 02fe DF93      		ldi r31,hi8(95)
+ 683 0300 CF93      		ld r24,Z
+ 684 0302 00D0      		std Y+1,r24
+ 685 0304 00D0      	/* #APP */
+ 686 0306 0F92      	 ;  109 "buffer.c" 1
+ 687 0308 CDB7      		cli
+ 688 030a DEB7      	 ;  0 "" 2
+ 690               	.LM38:
+ 691 030c 9D83      	/* #NOAPP */
+ 692 030e 8C83      		ldd r30,Y+2
+ 130:buffer.c      **** 	// begin critical section
+ 131:buffer.c      **** 	CRITICAL_SECTION_START;
+ 693               	
+ 694               		std Y+4,r22
+ 696 0312 F0E0      	.LM37:
+ 697 0314 8081      		ldi r30,lo8(95)
+ 698 0316 8B83      		ldi r31,hi8(95)
+ 699               		ld r24,Z
+ 700               		std Y+1,r24
+ 701 0318 F894      	/* #APP */
+ 702               	 ;  109 "buffer.c" 1
+ 132:buffer.c      **** 	// check to see if the buffer has room
+ 133:buffer.c      **** 	// return true if there is room
+ 134:buffer.c      **** 	unsigned short bytesleft = (buffer->size - buffer->datalength);
+ 703               	 r29,__SP_H__
+ 704               	/* prologue: function */
+ 705               	/* frame size = 5 */
+ 706 031a EC81      		std Y+3,r25
+ 707 031c FD81      		std Y+2,r24
+ 708 031e 2281      		std Y+4,r22
+ 710 0322 EC81      	.LM37:
+ 711 0324 FD81      		ldi r30,lo8(95)
+ 712 0326 8481      		ldi r31,hi8(95)
+ 713 0328 9581      		ld r24,Z
+ 714 032a A901      		std Y+1,r24
+ 715 032c 481B      	/* #APP */
+ 716 032e 590B      	 ;  109 "buffer.c" 1
+ 717 0330 CA01      		cli
+ 718 0332 9A83      	 ;  0 "" 2
+ 135:buffer.c      **** 	// end critical section
+ 136:buffer.c      **** 	CRITICAL_SECTION_END;
+ 720               	ize = 5 */
+ 721               		std Y+3,r25
+ 722 0336 EFE5      		std Y+2,r24
+ 723 0338 F0E0      		std Y+4,r22
+ 725 033c 8083      	.LM37:
+ 137:buffer.c      **** 	return bytesleft;
+ 726               	push r16
+ 727               		push r17
+ 728 033e 8981      		push r29
+ 729 0340 9A81      		push r28
+ 730               		rcall .
+ 138:buffer.c      **** }
+ 731               	ddToEnd
+ 734 0344 0F90      	.global	bufferAddToEnd
+ 736 0348 0F90      	bufferAddToEnd:
+ 738 034c CF91      	.LM36:
+ 739 034e DF91      	.LFBB5:
+ 740 0350 0895      		push r16
+ 741               		push r17
+ 742               		push r29
+ 743               		push r28
+ 744               		rcall .
+ 745               		rcall .
+ 746               		push __tmp_reg__
+ 747               		in r28,__SP_L__
+ 748               		in r29,__SP_H__
+ 749               	/* prologue: function */
+ 750               	/* frame size = 5 */
+ 751               		std Y+3,r25
+ 139:buffer.c      **** 
+ 140:buffer.c      **** void bufferFlush(cBuffer* buffer)
+ 141:buffer.c      **** {
+ 752               	,r22
+ 754               	.LM37:
+ 755 0352 DF93      		ldi r30,lo8(95)
+ 756 0354 CF93      		ldi r31,hi8(95)
+ 757 0356 00D0      		ld r24,Z
+ 758 0358 0F92      		std Y+1,r24
+ 759 035a CDB7      	/* #APP */
+ 760 035c DEB7      	 ;  109 "buffer.c" 1
+ 761               		cli
+ 762               	 ;  0 "" 2
+ 764 0360 8A83      	.LM38:
+ 142:buffer.c      **** 	// begin critical section
+ 143:buffer.c      **** 	CRITICAL_SECTION_START;
+ 765               	*/
+ 766               		std Y+3,r25
+ 767 0362 EFE5      		std Y+2,r24
+ 768 0364 F0E0      		std Y+4,r22
+ 770 0368 8983      	.LM37:
+ 771               		ldi r30,lo8(95)
+ 772               		ldi r31,hi8(95)
+ 773 036a F894      		ld r24,Z
+ 774               		std Y+1,r24
+ 144:buffer.c      **** 	// flush contents of the buffer
+ 145:buffer.c      **** 	buffer->datalength = 0;
+ 775               	h __tmp_reg__
+ 776               		in r28,__SP_L__
+ 777               		in r29,__SP_H__
+ 778 036c EA81      	/* prologue: function */
+ 779 036e FB81      	/* frame size = 5 */
+ 780 0370 1582      		std Y+3,r25
+ 781 0372 1482      		std Y+2,r24
+ 146:buffer.c      **** 	// end critical section
+ 147:buffer.c      **** 	CRITICAL_SECTION_END;
+ 782               	ToEnd:
+ 784 0374 EFE5      	.LM36:
+ 785 0376 F0E0      	.LFBB5:
+ 786 0378 8981      		push r16
+ 787 037a 8083      		push r17
+ 788               		push r29
+ 148:buffer.c      **** }
+ 789               	0,11)",36,0,0,bufferAddToEnd
+ 792 037e 0F90      	.global	bufferAddToEnd
+ 794 0382 CF91      	bufferAddToEnd:
+ 796 0386 0895      	.LM36:
+ 797               	.LFBB5:
+ 798               		push r16
+ 799               		push r17
+ 800               		push r29
+ 801               		push r28
+ 802               		rcall .
+ 803               		rcall .
+DEFINED SYMBOLS
+                            *ABS*:00000000 buffer.c
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:2      *ABS*:0000003f __SREG__
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:3      *ABS*:0000003e __SP_H__
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:4      *ABS*:0000003d __SP_L__
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:5      *ABS*:00000034 __CCP__
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:6      *ABS*:00000000 __tmp_reg__
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:7      *ABS*:00000001 __zero_reg__
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:103    .text:00000000 bufferInit
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:191    .text:0000006c bufferGetFromFront
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:327    .text:00000120 bufferDumpFromFront
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:464    .text:000001de bufferGetAtIndex
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:553    .text:00000252 bufferAddToEnd
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:678    .text:000002fe bufferIsNotFull
+C:\Users\Owner\AppData\Local\Temp/ccHHh7iT.s:751    .text:00000352 bufferFlush
+
+UNDEFINED SYMBOLS
+__do_copy_data
+__do_clear_bss
+__udivmodhi4

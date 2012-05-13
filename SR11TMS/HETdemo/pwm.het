@@ -1,0 +1,16 @@
+
+; lr = 8
+; hr = 1
+
+; 1000 us PWM (50% duty cycle)
+
+PWM1_PIN    .equ    4                           ; HET4 is used for PWM1
+
+L00: CNT  {next=L01, reg=A, irq=OFF, max=0x2000, data=0}
+;  PWM (50% duty cycle)
+L01: ECMP {next=L02, reg=A, hr_lr=LOW, en_pin_action=ON, pin=CC0, action=PULSEHI, irq=Off, data=0x1000}
+;  PWM (25% duty cycle)
+L02: ECMP {next=L03, reg=A, hr_lr=LOW, en_pin_action=ON, pin=PWM1_PIN, action=PULSEHI, irq=Off, data=0x208}
+
+L03: BR	  {next=L00, cond_addr=L00, event=NOCOND}
+

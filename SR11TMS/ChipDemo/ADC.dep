@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>2938359916</fileChecksum>
+  <configuration>
+    <name>RAM</name>
+    <outputs>
+      <file>$PROJ_DIR$\RAM\Obj\cstartup.o</file>
+      <file>$PROJ_DIR$\RAM\Obj\ADC.pbd</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\iotms470r1b1m.h</file>
+      <file>$PROJ_DIR$\RAM\Obj\tms470r1b1m_ADC10_03.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\tms470r1B1m_bit_definitions.h</file>
+      <file>$PROJ_DIR$\RAM\Obj\tms470r1b1m_ADC10_03.o</file>
+      <file>$PROJ_DIR$\RAM\Exe\ADC.out</file>
+      <file>$TOOLKIT_DIR$\inc\c\io_macros.h</file>
+      <file>$PROJ_DIR$\tms470r1b1m_ADC10_03.c</file>
+      <file>$PROJ_DIR$\cstartup.s</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\RAM\Obj\ADC.pbd</name>
+      <inputs>
+        <tool>
+          <name>BILINK</name>
+          <file> 4</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 7</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_ADC10_03.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 4</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 6</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 11 2 3 8 5</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\cstartup.s</name>
+      <outputs>
+        <tool>
+          <name>AARM</name>
+          <file> 0</file>
+        </tool>
+      </outputs>
+    </file>
+    <forcedrebuild>
+      <name>[MULTI_TOOL]</name>
+      <tool>ILINK</tool>
+    </forcedrebuild>
+  </configuration>
+  <configuration>
+    <name>flash</name>
+    <outputs>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_low_level_init_flash.o</file>
+      <file>$TOOLKIT_DIR$\lib\rt4t_ab.a</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_ADC10_03.o</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\iotms470r1b1m.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\tms470r1B1m_bit_definitions.h</file>
+      <file>$PROJ_DIR$\flash\Obj\ADC.pbd</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_ADC10_03.pbi</file>
+      <file>$TOOLKIT_DIR$\lib\shs_b.a</file>
+      <file>$PROJ_DIR$\flash\Exe\ADC.out</file>
+      <file>$PROJ_DIR$\flash\Obj\cstartup.o</file>
+      <file>$TOOLKIT_DIR$\examples\TexasInstruments\Configuration_Files\B1M_Files\tms470r1b1m_lnk_flash.icf</file>
+      <file>$TOOLKIT_DIR$\lib\dl4t_abn.a</file>
+      <file>$TOOLKIT_DIR$\lib\m4t_ab.a</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_low_level_init_flash.pbi</file>
+      <file>$PROJ_DIR$\tms470r1b1m_low_level_init_flash.c</file>
+      <file>$TOOLKIT_DIR$\inc\c\io_macros.h</file>
+      <file>$PROJ_DIR$\tms470r1b1m_ADC10_03.c</file>
+      <file>$PROJ_DIR$\cstartup.s</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\flash\Obj\ADC.pbd</name>
+      <inputs>
+        <tool>
+          <name>BILINK</name>
+          <file> 7 14</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\flash\Exe\ADC.out</name>
+      <inputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 11 10 2 0 8 1 13 12</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 9</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_low_level_init_flash.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 14</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 0</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 4 16 5</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_ADC10_03.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 7</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 2</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 19 3 4 16 5</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 19 3 4 16 5</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\cstartup.s</name>
+      <outputs>
+        <tool>
+          <name>AARM</name>
+          <file> 10</file>
+        </tool>
+      </outputs>
+    </file>
+  </configuration>
+</project>
+
+

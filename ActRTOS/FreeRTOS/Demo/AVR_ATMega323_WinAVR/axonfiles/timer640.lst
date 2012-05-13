@@ -1,0 +1,3452 @@
+   1               		.file	"timer640.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+   8               		.global __do_copy_data
+   9               		.global __do_clear_bss
+  11               		.text
+  12               	.Ltext0:
+ 123               	.global	TimerPrescaleFactor
+ 124               		.section	.progmem.data,"a",@progbits
+ 127               	TimerPrescaleFactor:
+ 128 0000 0000      		.word	0
+ 129 0002 0100      		.word	1
+ 130 0004 0800      		.word	8
+ 131 0006 4000      		.word	64
+ 132 0008 0001      		.word	256
+ 133 000a 0004      		.word	1024
+ 134               	.global	Timer2PrescaleFactor
+ 137               	Timer2PrescaleFactor:
+ 138 000c 0000      		.word	0
+ 139 000e 0100      		.word	1
+ 140 0010 0800      		.word	8
+ 141 0012 2000      		.word	32
+ 142 0014 4000      		.word	64
+ 143 0016 8000      		.word	128
+ 144 0018 0001      		.word	256
+ 145 001a 0004      		.word	1024
+ 147               		.text
+ 150               	.global	prescaler_hex_to_value
+ 152               	prescaler_hex_to_value:
+   1:timer640.c    **** #include "timer640.h"
+   2:timer640.c    **** 
+   3:timer640.c    **** #include <avr/pgmspace.h>
+   4:timer640.c    **** #include <avr/sleep.h>
+   5:timer640.c    **** #include <stdlib.h>
+   6:timer640.c    **** #include "global.h"
+   7:timer640.c    **** #include "rprintf.h"
+   8:timer640.c    **** 
+   9:timer640.c    **** #define TIMER_PRESCALE_MASK 0x07
+  10:timer640.c    **** #define RUN_USER_DEFINE_INTERRUPT(interrupt) if (TimerIntFunc[interrupt]) TimerIntFunc[interrupt]()
+  11:timer640.c    **** 
+  12:timer640.c    **** 
+  13:timer640.c    **** // Program ROM constants
+  14:timer640.c    **** // the prescale division values stored in order of timer control register index
+  15:timer640.c    **** // STOP, CLK, CLK/8, CLK/64, CLK/256, CLK/1024
+  16:timer640.c    **** uint16_t TimerPrescaleFactor[] PROGMEM = {0, 1, 8, 64, 256, 1024};
+  17:timer640.c    **** uint16_t Timer2PrescaleFactor[] PROGMEM = {0, 1, 8, 32, 64, 128, 256, 1024};
+  18:timer640.c    **** 
+  19:timer640.c    **** volatile uint32_t timer0_ovrflow_cnt;
+  20:timer640.c    **** volatile uint32_t timer1_ovrflow_cnt;
+  21:timer640.c    **** volatile uint32_t timer2_ovrflow_cnt;
+  22:timer640.c    **** volatile uint32_t timer3_ovrflow_cnt;
+  23:timer640.c    **** volatile uint32_t timer4_ovrflow_cnt;
+  24:timer640.c    **** volatile uint32_t timer5_ovrflow_cnt;
+  25:timer640.c    **** volatile uint32_t timer_sleep_cnt;
+  26:timer640.c    **** 
+  27:timer640.c    **** typedef void (*void_func_ptr)(void);
+  28:timer640.c    **** volatile static void_func_ptr TimerIntFunc[TIMER_MAX_ENUM];
+  29:timer640.c    **** 
+  30:timer640.c    **** uint16_t prescaler_hex_to_value(uint8_t hex)
+  31:timer640.c    **** {
+ 153               	ll .
+ 154               		push __tmp_reg__
+ 155               		in r28,__SP_L__
+ 156 0000 DF93      		in r29,__SP_H__
+ 157 0002 CF93      	/* prologue: function */
+ 158 0004 00D0      	/* frame size = 5 */
+ 159 0006 00D0      		std Y+5,r24
+ 160 0008 0F92      	.LBB2:
+ 162 000c DEB7      	.LM1:
+ 163               		ldd r24,Y+5
+ 164               		mov r24,r24
+ 165 000e 8D83      		ldi r25,lo8(0)
+ 166               		andi r24,lo8(7)
+  32:timer640.c    ****   // basically pgm_read_word will return a pointer to TimerPrescaleFactor in program space
+  33:timer640.c    ****   // and it will move the array to the correct position, then typecast it back
+  34:timer640.c    ****   // to uint16_t
+  35:timer640.c    ****   return (uint16_t)(pgm_read_word(TimerPrescaleFactor+(hex & TIMER_PRESCALE_MASK)));
+ 167               	7)
+ 168               		lsl r24
+ 169 0010 8D81      		rol r25
+ 170 0012 882F      		subi r24,lo8(-(TimerPrescaleFactor))
+ 171 0014 90E0      		sbci r25,hi8(-(TimerPrescaleFactor))
+ 172 0016 8770      		std Y+4,r25
+ 173 0018 9070      		std Y+3,r24
+ 174 001a 880F      		ldd r24,Y+3
+ 175 001c 991F      		ldd r25,Y+4
+ 176 001e 8050      		movw r30,r24
+ 177 0020 9040      	/* #APP */
+ 178 0022 9C83      	 ;  35 "timer640.c" 1
+ 179 0024 8B83      		lpm r24, Z+
+ 180 0026 8B81      		lpm r25, Z
+ 181 0028 9C81      		
+ 182 002a FC01      	 ;  0 "" 2
+ 183               	/* #NOAPP */
+ 184               		std Y+2,r25
+ 185 002c 8591      		std Y+1,r24
+ 186 002e 9491      		std Y+4,r31
+ 187               		std Y+3,r30
+ 188               		ldd r24,Y+1
+ 189               		ldd r25,Y+2
+ 190 0030 9A83      	/* epilogue start */
+ 191 0032 8983      	.LBE2:
+ 193 0036 EB83      	.LM2:
+ 194 0038 8981      		pop __tmp_reg__
+ 195 003a 9A81      		pop __tmp_reg__
+ 196               		pop __tmp_reg__
+ 197               		pop __tmp_reg__
+  36:timer640.c    **** }
+ 198               	r29
+ 199               		ret
+ 205 0046 CF91      	.Lscope1:
+ 208               	.global	prescaler_hex_to_value_for_timer2
+ 210               	prescaler_hex_to_value_for_timer2:
+ 212               	.LM3:
+ 213               	.LFBB2:
+ 214               		push r29
+ 215               		push r28
+ 216               		rcall .
+ 217               		rcall .
+ 218               		push __tmp_reg__
+  37:timer640.c    **** 
+  38:timer640.c    **** uint16_t prescaler_hex_to_value_for_timer2(uint8_t hex)
+  39:timer640.c    **** {
+ 219               	r29,__SP_H__
+ 220               	/* prologue: function */
+ 221               	/* frame size = 5 */
+ 222 004c DF93      		std Y+5,r24
+ 223 004e CF93      	.LBB3:
+ 225 0052 00D0      	.LM4:
+ 226 0054 0F92      		ldd r24,Y+5
+ 227 0056 CDB7      		mov r24,r24
+ 228 0058 DEB7      		ldi r25,lo8(0)
+ 229               		andi r24,lo8(7)
+ 230               		andi r25,hi8(7)
+ 231 005a 8D83      		lsl r24
+ 232               		rol r25
+  40:timer640.c    ****   // basically pgm_read_word will return a pointer to Timer2PrescaleFactor in program space
+  41:timer640.c    ****   // and it will move the array to the correct position, then typecast it back
+  42:timer640.c    ****   // to uint16_t
+  43:timer640.c    ****   return (uint16_t)(pgm_read_word(Timer2PrescaleFactor+(hex & TIMER_PRESCALE_MASK)));
+ 233               	-(Timer2PrescaleFactor))
+ 234               		sbci r25,hi8(-(Timer2PrescaleFactor))
+ 235 005c 8D81      		std Y+4,r25
+ 236 005e 882F      		std Y+3,r24
+ 237 0060 90E0      		ldd r24,Y+3
+ 238 0062 8770      		ldd r25,Y+4
+ 239 0064 9070      		movw r30,r24
+ 240 0066 880F      	/* #APP */
+ 241 0068 991F      	 ;  43 "timer640.c" 1
+ 242 006a 8050      		lpm r24, Z+
+ 243 006c 9040      		lpm r25, Z
+ 244 006e 9C83      		
+ 245 0070 8B83      	 ;  0 "" 2
+ 246 0072 8B81      	/* #NOAPP */
+ 247 0074 9C81      		std Y+2,r25
+ 248 0076 FC01      		std Y+1,r24
+ 249               		std Y+4,r31
+ 250               		std Y+3,r30
+ 251 0078 8591      		ldd r24,Y+1
+ 252 007a 9491      		ldd r25,Y+2
+ 253               	/* epilogue start */
+ 254               	.LBE3:
+ 256 007c 9A83      	.LM5:
+ 257 007e 8983      		pop __tmp_reg__
+ 258 0080 FC83      		pop __tmp_reg__
+ 259 0082 EB83      		pop __tmp_reg__
+ 260 0084 8981      		pop __tmp_reg__
+ 261 0086 9A81      		pop __tmp_reg__
+ 262               		pop r28
+ 263               		pop r29
+  44:timer640.c    **** }
+ 264               	lue_for_timer2, .-prescaler_hex_to_value_for_timer2
+ 269 008e 0F90      	.Lscope2:
+ 271 0092 CF91      	.global	get_timer0_prescaler
+ 273 0096 0895      	get_timer0_prescaler:
+ 275               	.LM6:
+ 276               	.LFBB3:
+ 277               		push r29
+ 278               		push r28
+ 279               		in r28,__SP_L__
+ 280               		in r29,__SP_H__
+ 281               	/* prologue: function */
+ 282               	/* frame size = 0 */
+  45:timer640.c    **** 
+  46:timer640.c    **** uint16_t get_timer0_prescaler(void)
+  47:timer640.c    **** {
+ 284               	9)
+ 285               		ldi r31,hi8(69)
+ 286               		ld r24,Z
+ 287 0098 DF93      		call prescaler_hex_to_value
+ 288 009a CF93      	/* epilogue start */
+ 290 009e DEB7      	.LM8:
+ 291               		pop r28
+ 292               		pop r29
+  48:timer640.c    ****   return prescaler_hex_to_value(TCCR0B);
+ 293               	ze	get_timer0_prescaler, .-get_timer0_prescaler
+ 294               	.Lscope3:
+ 296 00a2 F0E0      	.global	get_timer1_prescaler
+ 298 00a6 0E94 0000 	get_timer1_prescaler:
+  49:timer640.c    **** }
+ 300               	LFBB4:
+ 301               		push r29
+ 302 00aa CF91      		push r28
+ 303 00ac DF91      		in r28,__SP_L__
+ 304 00ae 0895      		in r29,__SP_H__
+ 305               	/* prologue: function */
+ 306               	/* frame size = 0 */
+ 308               	.LM10:
+ 309               		ldi r30,lo8(129)
+ 310               		ldi r31,hi8(129)
+  50:timer640.c    **** uint16_t get_timer1_prescaler(void)
+  51:timer640.c    **** {
+ 311               	call prescaler_hex_to_value
+ 312               	/* epilogue start */
+ 314 00b0 DF93      	.LM11:
+ 315 00b2 CF93      		pop r28
+ 316 00b4 CDB7      		pop r29
+ 317 00b6 DEB7      		ret
+ 319               	.Lscope4:
+  52:timer640.c    ****   return prescaler_hex_to_value(TCCR1B);
+ 320               	get_timer2_prescaler:F(6,4)",36,0,0,get_timer2_prescaler
+ 321               	.global	get_timer2_prescaler
+ 323 00ba F0E0      	get_timer2_prescaler:
+ 325 00be 0E94 0000 	.LM12:
+ 326               	.LFBB5:
+  53:timer640.c    **** }
+ 327               	29
+ 328               		push r28
+ 329 00c2 CF91      		in r28,__SP_L__
+ 330 00c4 DF91      		in r29,__SP_H__
+ 331 00c6 0895      	/* prologue: function */
+ 332               	/* frame size = 0 */
+ 334               	.LM13:
+ 335               		ldi r30,lo8(177)
+ 336               		ldi r31,hi8(177)
+ 337               		ld r24,Z
+  54:timer640.c    **** uint16_t get_timer2_prescaler(void)
+  55:timer640.c    **** {
+ 338               	aler_hex_to_value_for_timer2
+ 339               	/* epilogue start */
+ 341 00c8 DF93      	.LM14:
+ 342 00ca CF93      		pop r28
+ 343 00cc CDB7      		pop r29
+ 344 00ce DEB7      		ret
+ 346               	.Lscope5:
+  56:timer640.c    ****   return prescaler_hex_to_value_for_timer2(TCCR2B);
+ 347               	get_timer3_prescaler:F(6,4)",36,0,0,get_timer3_prescaler
+ 348               	.global	get_timer3_prescaler
+ 350 00d2 F0E0      	get_timer3_prescaler:
+ 352 00d6 0E94 0000 	.LM15:
+ 353               	.LFBB6:
+  57:timer640.c    **** }
+ 354               	29
+ 355               		push r28
+ 356 00da CF91      		in r28,__SP_L__
+ 357 00dc DF91      		in r29,__SP_H__
+ 358 00de 0895      	/* prologue: function */
+ 359               	/* frame size = 0 */
+ 361               	.LM16:
+ 362               		ldi r30,lo8(145)
+ 363               		ldi r31,hi8(145)
+ 364               		ld r24,Z
+  58:timer640.c    **** uint16_t get_timer3_prescaler(void)
+  59:timer640.c    **** {
+ 365               	aler_hex_to_value
+ 366               	/* epilogue start */
+ 368 00e0 DF93      	.LM17:
+ 369 00e2 CF93      		pop r28
+ 370 00e4 CDB7      		pop r29
+ 371 00e6 DEB7      		ret
+ 373               	.Lscope6:
+  60:timer640.c    ****   return prescaler_hex_to_value(TCCR3B);
+ 374               	get_timer4_prescaler:F(6,4)",36,0,0,get_timer4_prescaler
+ 375               	.global	get_timer4_prescaler
+ 377 00ea F0E0      	get_timer4_prescaler:
+ 379 00ee 0E94 0000 	.LM18:
+ 380               	.LFBB7:
+  61:timer640.c    **** }
+ 381               	29
+ 382               		push r28
+ 383 00f2 CF91      		in r28,__SP_L__
+ 384 00f4 DF91      		in r29,__SP_H__
+ 385 00f6 0895      	/* prologue: function */
+ 386               	/* frame size = 0 */
+ 388               	.LM19:
+ 389               		ldi r30,lo8(161)
+ 390               		ldi r31,hi8(161)
+ 391               		ld r24,Z
+  62:timer640.c    **** uint16_t get_timer4_prescaler(void)
+  63:timer640.c    **** {
+ 392               	aler_hex_to_value
+ 393               	/* epilogue start */
+ 395 00f8 DF93      	.LM20:
+ 396 00fa CF93      		pop r28
+ 397 00fc CDB7      		pop r29
+ 398 00fe DEB7      		ret
+ 400               	.Lscope7:
+  64:timer640.c    ****   return prescaler_hex_to_value(TCCR4B);
+ 401               	get_timer5_prescaler:F(6,4)",36,0,0,get_timer5_prescaler
+ 402               	.global	get_timer5_prescaler
+ 404 0102 F0E0      	get_timer5_prescaler:
+ 406 0106 0E94 0000 	.LM21:
+ 407               	.LFBB8:
+  65:timer640.c    **** }
+ 408               	29
+ 409               		push r28
+ 410 010a CF91      		in r28,__SP_L__
+ 411 010c DF91      		in r29,__SP_H__
+ 412 010e 0895      	/* prologue: function */
+ 413               	/* frame size = 0 */
+ 415               	.LM22:
+ 416               		ldi r30,lo8(289)
+ 417               		ldi r31,hi8(289)
+ 418               		ld r24,Z
+  66:timer640.c    **** uint16_t get_timer5_prescaler(void)
+  67:timer640.c    **** {
+ 419               	aler_hex_to_value
+ 420               	/* epilogue start */
+ 422 0110 DF93      	.LM23:
+ 423 0112 CF93      		pop r28
+ 424 0114 CDB7      		pop r29
+ 425 0116 DEB7      		ret
+ 427               	.Lscope8:
+  68:timer640.c    ****   return prescaler_hex_to_value(TCCR5B);
+ 428               	get_timer0_overflow:F(6,6)",36,0,0,get_timer0_overflow
+ 429               	.global	get_timer0_overflow
+ 431 011a F1E0      	get_timer0_overflow:
+ 433 011e 0E94 0000 	.LM24:
+ 434               	.LFBB9:
+  69:timer640.c    **** }
+ 435               	29
+ 436               		push r28
+ 437 0122 CF91      		in r28,__SP_L__
+ 438 0124 DF91      		in r29,__SP_H__
+ 439 0126 0895      	/* prologue: function */
+ 440               	/* frame size = 0 */
+ 442               	.LM25:
+ 443               		lds r24,timer0_ovrflow_cnt
+ 444               		lds r25,(timer0_ovrflow_cnt)+1
+ 445               		lds r26,(timer0_ovrflow_cnt)+2
+  70:timer640.c    **** 
+  71:timer640.c    **** const uint32_t get_timer0_overflow(void)
+  72:timer640.c    **** {
+ 446               	imer0_ovrflow_cnt)+3
+ 448               	.LM26:
+ 449 0128 DF93      		movw r22,r24
+ 450 012a CF93      		movw r24,r26
+ 451 012c CDB7      	/* epilogue start */
+ 452 012e DEB7      		pop r28
+ 453               		pop r29
+ 454               		ret
+  73:timer640.c    ****     return timer0_ovrflow_cnt;
+ 455               	t_timer0_overflow, .-get_timer0_overflow
+ 456               	.Lscope9:
+ 458 0134 9091 0000 	.global	get_timer1_overflow
+ 460 013c B091 0000 	get_timer1_overflow:
+  74:timer640.c    **** }
+ 461               	n	68,0,76,.LM27-.LFBB10
+ 462               	.LM27:
+ 463 0140 BC01      	.LFBB10:
+ 464 0142 CD01      		push r29
+ 465               		push r28
+ 466 0144 CF91      		in r28,__SP_L__
+ 467 0146 DF91      		in r29,__SP_H__
+ 468 0148 0895      	/* prologue: function */
+ 469               	/* frame size = 0 */
+ 471               	.LM28:
+ 472               		lds r24,timer1_ovrflow_cnt
+ 473               		lds r25,(timer1_ovrflow_cnt)+1
+ 474               		lds r26,(timer1_ovrflow_cnt)+2
+  75:timer640.c    **** const uint32_t get_timer1_overflow(void)
+  76:timer640.c    **** {
+ 475               	r1_ovrflow_cnt)+3
+ 477               	.LM29:
+ 478 014a DF93      		movw r22,r24
+ 479 014c CF93      		movw r24,r26
+ 480 014e CDB7      	/* epilogue start */
+ 481 0150 DEB7      		pop r28
+ 482               		pop r29
+ 483               		ret
+  77:timer640.c    ****     return timer1_ovrflow_cnt;
+ 484               	t_timer1_overflow, .-get_timer1_overflow
+ 485               	.Lscope10:
+ 487 0156 9091 0000 	.global	get_timer2_overflow
+ 489 015e B091 0000 	get_timer2_overflow:
+  78:timer640.c    **** }
+ 490               	n	68,0,80,.LM30-.LFBB11
+ 491               	.LM30:
+ 492 0162 BC01      	.LFBB11:
+ 493 0164 CD01      		push r29
+ 494               		push r28
+ 495 0166 CF91      		in r28,__SP_L__
+ 496 0168 DF91      		in r29,__SP_H__
+ 497 016a 0895      	/* prologue: function */
+ 498               	/* frame size = 0 */
+ 500               	.LM31:
+ 501               		lds r24,timer2_ovrflow_cnt
+ 502               		lds r25,(timer2_ovrflow_cnt)+1
+ 503               		lds r26,(timer2_ovrflow_cnt)+2
+  79:timer640.c    **** const uint32_t get_timer2_overflow(void)
+  80:timer640.c    **** {
+ 504               	r2_ovrflow_cnt)+3
+ 506               	.LM32:
+ 507 016c DF93      		movw r22,r24
+ 508 016e CF93      		movw r24,r26
+ 509 0170 CDB7      	/* epilogue start */
+ 510 0172 DEB7      		pop r28
+ 511               		pop r29
+ 512               		ret
+  81:timer640.c    ****     return timer2_ovrflow_cnt;
+ 513               	t_timer2_overflow, .-get_timer2_overflow
+ 514               	.Lscope11:
+ 516 0178 9091 0000 	.global	get_timer3_overflow
+ 518 0180 B091 0000 	get_timer3_overflow:
+  82:timer640.c    **** }
+ 519               	n	68,0,84,.LM33-.LFBB12
+ 520               	.LM33:
+ 521 0184 BC01      	.LFBB12:
+ 522 0186 CD01      		push r29
+ 523               		push r28
+ 524 0188 CF91      		in r28,__SP_L__
+ 525 018a DF91      		in r29,__SP_H__
+ 526 018c 0895      	/* prologue: function */
+ 527               	/* frame size = 0 */
+ 529               	.LM34:
+ 530               		lds r24,timer3_ovrflow_cnt
+ 531               		lds r25,(timer3_ovrflow_cnt)+1
+ 532               		lds r26,(timer3_ovrflow_cnt)+2
+  83:timer640.c    **** const uint32_t get_timer3_overflow(void)
+  84:timer640.c    **** {
+ 533               	r3_ovrflow_cnt)+3
+ 535               	.LM35:
+ 536 018e DF93      		movw r22,r24
+ 537 0190 CF93      		movw r24,r26
+ 538 0192 CDB7      	/* epilogue start */
+ 539 0194 DEB7      		pop r28
+ 540               		pop r29
+ 541               		ret
+  85:timer640.c    ****     return timer3_ovrflow_cnt;
+ 542               	t_timer3_overflow, .-get_timer3_overflow
+ 543               	.Lscope12:
+ 545 019a 9091 0000 	.global	get_timer4_overflow
+ 547 01a2 B091 0000 	get_timer4_overflow:
+  86:timer640.c    **** }
+ 548               	n	68,0,88,.LM36-.LFBB13
+ 549               	.LM36:
+ 550 01a6 BC01      	.LFBB13:
+ 551 01a8 CD01      		push r29
+ 552               		push r28
+ 553 01aa CF91      		in r28,__SP_L__
+ 554 01ac DF91      		in r29,__SP_H__
+ 555 01ae 0895      	/* prologue: function */
+ 556               	/* frame size = 0 */
+ 558               	.LM37:
+ 559               		lds r24,timer4_ovrflow_cnt
+ 560               		lds r25,(timer4_ovrflow_cnt)+1
+ 561               		lds r26,(timer4_ovrflow_cnt)+2
+  87:timer640.c    **** const uint32_t get_timer4_overflow(void)
+  88:timer640.c    **** {
+ 562               	r4_ovrflow_cnt)+3
+ 564               	.LM38:
+ 565 01b0 DF93      		movw r22,r24
+ 566 01b2 CF93      		movw r24,r26
+ 567 01b4 CDB7      	/* epilogue start */
+ 568 01b6 DEB7      		pop r28
+ 569               		pop r29
+ 570               		ret
+  89:timer640.c    ****     return timer4_ovrflow_cnt;
+ 571               	t_timer4_overflow, .-get_timer4_overflow
+ 572               	.Lscope13:
+ 574 01bc 9091 0000 	.global	get_timer5_overflow
+ 576 01c4 B091 0000 	get_timer5_overflow:
+  90:timer640.c    **** }
+ 577               	n	68,0,92,.LM39-.LFBB14
+ 578               	.LM39:
+ 579 01c8 BC01      	.LFBB14:
+ 580 01ca CD01      		push r29
+ 581               		push r28
+ 582 01cc CF91      		in r28,__SP_L__
+ 583 01ce DF91      		in r29,__SP_H__
+ 584 01d0 0895      	/* prologue: function */
+ 585               	/* frame size = 0 */
+ 587               	.LM40:
+ 588               		lds r24,timer5_ovrflow_cnt
+ 589               		lds r25,(timer5_ovrflow_cnt)+1
+ 590               		lds r26,(timer5_ovrflow_cnt)+2
+  91:timer640.c    **** const uint32_t get_timer5_overflow(void)
+  92:timer640.c    **** {
+ 591               	r5_ovrflow_cnt)+3
+ 593               	.LM41:
+ 594 01d2 DF93      		movw r22,r24
+ 595 01d4 CF93      		movw r24,r26
+ 596 01d6 CDB7      	/* epilogue start */
+ 597 01d8 DEB7      		pop r28
+ 598               		pop r29
+ 599               		ret
+  93:timer640.c    ****     return timer5_ovrflow_cnt;
+ 600               	t_timer5_overflow, .-get_timer5_overflow
+ 601               	.Lscope14:
+ 603 01de 9091 0000 	.global	get_timer0_counter
+ 605 01e6 B091 0000 	get_timer0_counter:
+  94:timer640.c    **** }
+ 606               	n	68,0,97,.LM42-.LFBB15
+ 607               	.LM42:
+ 608 01ea BC01      	.LFBB15:
+ 609 01ec CD01      		push r29
+ 610               		push r28
+ 611 01ee CF91      		in r28,__SP_L__
+ 612 01f0 DF91      		in r29,__SP_H__
+ 613 01f2 0895      	/* prologue: function */
+ 614               	/* frame size = 0 */
+ 616               	.LM43:
+ 617               		ldi r30,lo8(70)
+ 618               		ldi r31,hi8(70)
+ 619               		ld r24,Z
+  95:timer640.c    **** 
+  96:timer640.c    **** const uint8_t get_timer0_counter(void)
+  97:timer640.c    **** {
+ 620               	art */
+ 622               	.LM44:
+ 623 01f4 DF93      		pop r28
+ 624 01f6 CF93      		pop r29
+ 625 01f8 CDB7      		ret
+ 627               	.Lscope15:
+  98:timer640.c    ****     return TCNT0;
+ 629               	et_timer1_counter
+ 631 01fc E6E4      	get_timer1_counter:
+ 633 0200 8081      	.LM45:
+ 634               	.LFBB16:
+  99:timer640.c    **** }
+ 635               	r29
+ 636               		push r28
+ 637 0202 CF91      		in r28,__SP_L__
+ 638 0204 DF91      		in r29,__SP_H__
+ 639 0206 0895      	/* prologue: function */
+ 640               	/* frame size = 0 */
+ 642               	.LM46:
+ 643               		ldi r30,lo8(132)
+ 644               		ldi r31,hi8(132)
+ 645               		ld r24,Z
+ 100:timer640.c    **** const uint16_t get_timer1_counter(void)
+ 101:timer640.c    **** {
+ 646               	1
+ 647               	/* epilogue start */
+ 649 0208 DF93      	.LM47:
+ 650 020a CF93      		pop r28
+ 651 020c CDB7      		pop r29
+ 652 020e DEB7      		ret
+ 654               	.Lscope16:
+ 102:timer640.c    ****     return TCNT1;
+ 655               	get_timer2_counter:F(6,2)",36,0,0,get_timer2_counter
+ 656               	.global	get_timer2_counter
+ 658 0212 F0E0      	get_timer2_counter:
+ 660 0216 9181      	.LM48:
+ 661               	.LFBB17:
+ 103:timer640.c    **** }
+ 662               	29
+ 663               		push r28
+ 664 0218 CF91      		in r28,__SP_L__
+ 665 021a DF91      		in r29,__SP_H__
+ 666 021c 0895      	/* prologue: function */
+ 667               	/* frame size = 0 */
+ 669               	.LM49:
+ 670               		ldi r30,lo8(178)
+ 671               		ldi r31,hi8(178)
+ 672               		ld r24,Z
+ 104:timer640.c    **** const uint8_t get_timer2_counter(void)
+ 105:timer640.c    **** {
+ 673               	 start */
+ 675               	.LM50:
+ 676 021e DF93      		pop r28
+ 677 0220 CF93      		pop r29
+ 678 0222 CDB7      		ret
+ 680               	.Lscope17:
+ 106:timer640.c    ****     return TCNT2;
+ 682               	et_timer3_counter
+ 684 0226 E2EB      	get_timer3_counter:
+ 686 022a 8081      	.LM51:
+ 687               	.LFBB18:
+ 107:timer640.c    **** }
+ 688               	r29
+ 689               		push r28
+ 690 022c CF91      		in r28,__SP_L__
+ 691 022e DF91      		in r29,__SP_H__
+ 692 0230 0895      	/* prologue: function */
+ 693               	/* frame size = 0 */
+ 695               	.LM52:
+ 696               		ldi r30,lo8(148)
+ 697               		ldi r31,hi8(148)
+ 698               		ld r24,Z
+ 108:timer640.c    **** const uint16_t get_timer3_counter(void)
+ 109:timer640.c    **** {
+ 699               	1
+ 700               	/* epilogue start */
+ 702 0232 DF93      	.LM53:
+ 703 0234 CF93      		pop r28
+ 704 0236 CDB7      		pop r29
+ 705 0238 DEB7      		ret
+ 707               	.Lscope18:
+ 110:timer640.c    ****     return TCNT3;
+ 708               	get_timer4_counter:F(6,4)",36,0,0,get_timer4_counter
+ 709               	.global	get_timer4_counter
+ 711 023c F0E0      	get_timer4_counter:
+ 713 0240 9181      	.LM54:
+ 714               	.LFBB19:
+ 111:timer640.c    **** }
+ 715               	29
+ 716               		push r28
+ 717 0242 CF91      		in r28,__SP_L__
+ 718 0244 DF91      		in r29,__SP_H__
+ 719 0246 0895      	/* prologue: function */
+ 720               	/* frame size = 0 */
+ 722               	.LM55:
+ 723               		ldi r30,lo8(164)
+ 724               		ldi r31,hi8(164)
+ 725               		ld r24,Z
+ 112:timer640.c    **** const uint16_t get_timer4_counter(void)
+ 113:timer640.c    **** {
+ 726               	1
+ 727               	/* epilogue start */
+ 729 0248 DF93      	.LM56:
+ 730 024a CF93      		pop r28
+ 731 024c CDB7      		pop r29
+ 732 024e DEB7      		ret
+ 734               	.Lscope19:
+ 114:timer640.c    ****     return TCNT4;
+ 735               	get_timer5_counter:F(6,4)",36,0,0,get_timer5_counter
+ 736               	.global	get_timer5_counter
+ 738 0252 F0E0      	get_timer5_counter:
+ 740 0256 9181      	.LM57:
+ 741               	.LFBB20:
+ 115:timer640.c    **** }
+ 742               	29
+ 743               		push r28
+ 744 0258 CF91      		in r28,__SP_L__
+ 745 025a DF91      		in r29,__SP_H__
+ 746 025c 0895      	/* prologue: function */
+ 747               	/* frame size = 0 */
+ 749               	.LM58:
+ 750               		ldi r30,lo8(292)
+ 751               		ldi r31,hi8(292)
+ 752               		ld r24,Z
+ 116:timer640.c    **** const uint16_t get_timer5_counter(void)
+ 117:timer640.c    **** {
+ 753               	1
+ 754               	/* epilogue start */
+ 756 025e DF93      	.LM59:
+ 757 0260 CF93      		pop r28
+ 758 0262 CDB7      		pop r29
+ 759 0264 DEB7      		ret
+ 761               	.Lscope20:
+ 118:timer640.c    ****     return TCNT5;
+ 762               	reset_timer0:F(0,15)",36,0,0,reset_timer0
+ 763               	.global	reset_timer0
+ 765 0268 F1E0      	reset_timer0:
+ 767 026c 9181      	.LM60:
+ 768               	.LFBB21:
+ 119:timer640.c    **** }
+ 769               	29
+ 770               		push r28
+ 771 026e CF91      		in r28,__SP_L__
+ 772 0270 DF91      		in r29,__SP_H__
+ 773 0272 0895      	/* prologue: function */
+ 774               	/* frame size = 0 */
+ 776               	.LM61:
+ 777               		sts timer0_ovrflow_cnt,__zero_reg__
+ 778               		sts (timer0_ovrflow_cnt)+1,__zero_reg__
+ 779               		sts (timer0_ovrflow_cnt)+2,__zero_reg__
+ 120:timer640.c    **** 
+ 121:timer640.c    **** void reset_timer0(void)
+ 122:timer640.c    **** {
+ 780               	0_ovrflow_cnt)+3,__zero_reg__
+ 781               		ldi r30,lo8(70)
+ 782               		ldi r31,hi8(70)
+ 783 0274 DF93      		st Z,__zero_reg__
+ 784 0276 CF93      	/* epilogue start */
+ 786 027a DEB7      	.LM62:
+ 787               		pop r28
+ 788               		pop r29
+ 123:timer640.c    ****     TCNT0 = timer0_ovrflow_cnt = 0;
+ 789               	ze	reset_timer0, .-reset_timer0
+ 790               	.Lscope21:
+ 792 0280 1092 0000 	.global	reset_timer1
+ 794 0288 1092 0000 	reset_timer1:
+ 796 028e F0E0      	.LM63:
+ 797 0290 1082      	.LFBB22:
+ 798               		push r29
+ 124:timer640.c    **** }
+ 799               		in r28,__SP_L__
+ 800               		in r29,__SP_H__
+ 801 0292 CF91      	/* prologue: function */
+ 802 0294 DF91      	/* frame size = 0 */
+ 804               	.LM64:
+ 805               		sts timer1_ovrflow_cnt,__zero_reg__
+ 806               		sts (timer1_ovrflow_cnt)+1,__zero_reg__
+ 807               		sts (timer1_ovrflow_cnt)+2,__zero_reg__
+ 808               		sts (timer1_ovrflow_cnt)+3,__zero_reg__
+ 809               		ldi r30,lo8(132)
+ 125:timer640.c    **** void reset_timer1(void)
+ 126:timer640.c    **** {
+ 810               	8(132)
+ 811               		std Z+1,__zero_reg__
+ 812               		st Z,__zero_reg__
+ 813 0298 DF93      	/* epilogue start */
+ 815 029c CDB7      	.LM65:
+ 816 029e DEB7      		pop r28
+ 817               		pop r29
+ 818               		ret
+ 127:timer640.c    ****     TCNT1 = timer1_ovrflow_cnt = 0;
+ 819               	set_timer1, .-reset_timer1
+ 820               	.Lscope22:
+ 822 02a4 1092 0000 	.global	reset_timer2
+ 824 02ac 1092 0000 	reset_timer2:
+ 826 02b2 F0E0      	.LM66:
+ 827 02b4 1182      	.LFBB23:
+ 828 02b6 1082      		push r29
+ 829               		push r28
+ 128:timer640.c    **** }
+ 830               	P_L__
+ 831               		in r29,__SP_H__
+ 832 02b8 CF91      	/* prologue: function */
+ 833 02ba DF91      	/* frame size = 0 */
+ 835               	.LM67:
+ 836               		sts timer2_ovrflow_cnt,__zero_reg__
+ 837               		sts (timer2_ovrflow_cnt)+1,__zero_reg__
+ 838               		sts (timer2_ovrflow_cnt)+2,__zero_reg__
+ 839               		sts (timer2_ovrflow_cnt)+3,__zero_reg__
+ 840               		ldi r30,lo8(178)
+ 129:timer640.c    **** void reset_timer2(void)
+ 130:timer640.c    **** {
+ 841               	8(178)
+ 842               		st Z,__zero_reg__
+ 843               	/* epilogue start */
+ 845 02c0 CF93      	.LM68:
+ 846 02c2 CDB7      		pop r28
+ 847 02c4 DEB7      		pop r29
+ 848               		ret
+ 131:timer640.c    ****     TCNT2 = timer2_ovrflow_cnt = 0;
+ 850               	:
+ 852 02c6 1092 0000 	.global	reset_timer3
+ 854 02ce 1092 0000 	reset_timer3:
+ 856 02d6 E2EB      	.LM69:
+ 857 02d8 F0E0      	.LFBB24:
+ 858 02da 1082      		push r29
+ 859               		push r28
+ 132:timer640.c    **** }
+ 860               	SP_L__
+ 861               		in r29,__SP_H__
+ 862 02dc CF91      	/* prologue: function */
+ 863 02de DF91      	/* frame size = 0 */
+ 865               	.LM70:
+ 866               		sts timer3_ovrflow_cnt,__zero_reg__
+ 867               		sts (timer3_ovrflow_cnt)+1,__zero_reg__
+ 868               		sts (timer3_ovrflow_cnt)+2,__zero_reg__
+ 869               		sts (timer3_ovrflow_cnt)+3,__zero_reg__
+ 870               		ldi r30,lo8(148)
+ 133:timer640.c    **** void reset_timer3(void)
+ 134:timer640.c    **** {
+ 871               	8(148)
+ 872               		std Z+1,__zero_reg__
+ 873               		st Z,__zero_reg__
+ 874 02e2 DF93      	/* epilogue start */
+ 876 02e6 CDB7      	.LM71:
+ 877 02e8 DEB7      		pop r28
+ 878               		pop r29
+ 879               		ret
+ 135:timer640.c    ****     TCNT3 = timer3_ovrflow_cnt = 0;
+ 880               	set_timer3, .-reset_timer3
+ 881               	.Lscope24:
+ 883 02ee 1092 0000 	.global	reset_timer4
+ 885 02f6 1092 0000 	reset_timer4:
+ 887 02fc F0E0      	.LM72:
+ 888 02fe 1182      	.LFBB25:
+ 889 0300 1082      		push r29
+ 890               		push r28
+ 136:timer640.c    **** }
+ 891               	P_L__
+ 892               		in r29,__SP_H__
+ 893 0302 CF91      	/* prologue: function */
+ 894 0304 DF91      	/* frame size = 0 */
+ 896               	.LM73:
+ 897               		sts timer4_ovrflow_cnt,__zero_reg__
+ 898               		sts (timer4_ovrflow_cnt)+1,__zero_reg__
+ 899               		sts (timer4_ovrflow_cnt)+2,__zero_reg__
+ 900               		sts (timer4_ovrflow_cnt)+3,__zero_reg__
+ 901               		ldi r30,lo8(164)
+ 137:timer640.c    **** void reset_timer4(void)
+ 138:timer640.c    **** {
+ 902               	8(164)
+ 903               		std Z+1,__zero_reg__
+ 904               		st Z,__zero_reg__
+ 905 0308 DF93      	/* epilogue start */
+ 907 030c CDB7      	.LM74:
+ 908 030e DEB7      		pop r28
+ 909               		pop r29
+ 910               		ret
+ 139:timer640.c    ****     TCNT4 = timer4_ovrflow_cnt = 0;
+ 911               	set_timer4, .-reset_timer4
+ 912               	.Lscope25:
+ 914 0314 1092 0000 	.global	reset_timer5
+ 916 031c 1092 0000 	reset_timer5:
+ 918 0322 F0E0      	.LM75:
+ 919 0324 1182      	.LFBB26:
+ 920 0326 1082      		push r29
+ 921               		push r28
+ 140:timer640.c    **** }
+ 922               	P_L__
+ 923               		in r29,__SP_H__
+ 924 0328 CF91      	/* prologue: function */
+ 925 032a DF91      	/* frame size = 0 */
+ 927               	.LM76:
+ 928               		sts timer5_ovrflow_cnt,__zero_reg__
+ 929               		sts (timer5_ovrflow_cnt)+1,__zero_reg__
+ 930               		sts (timer5_ovrflow_cnt)+2,__zero_reg__
+ 931               		sts (timer5_ovrflow_cnt)+3,__zero_reg__
+ 932               		ldi r30,lo8(292)
+ 141:timer640.c    **** void reset_timer5(void)
+ 142:timer640.c    **** {
+ 933               	8(292)
+ 934               		std Z+1,__zero_reg__
+ 935               		st Z,__zero_reg__
+ 936 032e DF93      	/* epilogue start */
+ 938 0332 CDB7      	.LM77:
+ 939 0334 DEB7      		pop r28
+ 940               		pop r29
+ 941               		ret
+ 143:timer640.c    ****     TCNT5 = timer5_ovrflow_cnt = 0;
+ 942               	set_timer5, .-reset_timer5
+ 943               	.Lscope26:
+ 946 033e 1092 0000 	.global	delay_us
+ 948 0346 E4E2      	delay_us:
+ 950 034a 1182      	.LM78:
+ 951 034c 1082      	.LFBB27:
+ 952               		push r29
+ 144:timer640.c    **** }
+ 953               	rcall .
+ 954               		rcall .
+ 955 034e CF91      		rcall .
+ 956 0350 DF91      		in r28,__SP_L__
+ 957 0352 0895      		in r29,__SP_H__
+ 958               	/* prologue: function */
+ 959               	/* frame size = 6 */
+ 960               		std Y+4,r25
+ 961               		std Y+3,r24
+ 963               	.LM79:
+ 964               		ldd r24,Y+3
+ 145:timer640.c    **** 
+ 146:timer640.c    **** void delay_us(unsigned short time_us) 
+ 147:timer640.c    **** {
+ 965               	
+ 966               		movw r24,r24
+ 967               		ldi r26,lo8(0)
+ 968 0354 DF93      		ldi r27,hi8(0)
+ 969 0356 CF93      		add r24,r24
+ 970 0358 00D0      		adc r25,r25
+ 971 035a 00D0      		adc r26,r26
+ 972 035c 00D0      		adc r27,r27
+ 973 035e CDB7      		add r24,r24
+ 974 0360 DEB7      		adc r25,r25
+ 975               		adc r26,r26
+ 976               		adc r27,r27
+ 977 0362 9C83      		add r24,r24
+ 978 0364 8B83      		adc r25,r25
+ 148:timer640.c    **** 	unsigned short delay_loops;
+ 149:timer640.c    **** 	register unsigned short i;
+ 150:timer640.c    **** 
+ 151:timer640.c    **** 	delay_loops = ((time_us * CYCLES_PER_US)+3) / 5; // +3 for rounding up (dirty) 
+ 979               		adc r27,r27
+ 980               		add r24,r24
+ 981 0366 8B81      		adc r25,r25
+ 982 0368 9C81      		adc r26,r26
+ 983 036a CC01      		adc r27,r27
+ 984 036c A0E0      		adiw r24,3
+ 985 036e B0E0      		adc r26,__zero_reg__
+ 986 0370 880F      		adc r27,__zero_reg__
+ 987 0372 991F      		ldi r18,lo8(5)
+ 988 0374 AA1F      		ldi r19,hi8(5)
+ 989 0376 BB1F      		ldi r20,hlo8(5)
+ 990 0378 880F      		ldi r21,hhi8(5)
+ 991 037a 991F      		movw r22,r24
+ 992 037c AA1F      		movw r24,r26
+ 993 037e BB1F      		call __divmodsi4
+ 994 0380 880F      		movw r26,r20
+ 995 0382 991F      		movw r24,r18
+ 996 0384 AA1F      		std Y+2,r25
+ 997 0386 BB1F      		std Y+1,r24
+ 999 038a 991F      	.LM80:
+ 1000 038c AA1F      		std Y+6,__zero_reg__
+ 1001 038e BB1F      		std Y+5,__zero_reg__
+ 1002 0390 0396      		rjmp .L54
+ 1003 0392 A11D      	.L55:
+ 1004 0394 B11D      		ldd r18,Y+5
+ 1005 0396 25E0      		ldd r19,Y+6
+ 1006 0398 30E0      		subi r18,lo8(-(1))
+ 1007 039a 40E0      		sbci r19,hi8(-(1))
+ 1008 039c 50E0      		std Y+6,r19
+ 1009 039e BC01      		std Y+5,r18
+ 1010 03a0 CD01      	.L54:
+ 1011 03a2 0E94 0000 		ldd r24,Y+1
+ 1012 03a6 DA01      		ldd r25,Y+2
+ 1013 03a8 C901      		ldd r18,Y+5
+ 1014 03aa 9A83      		ldd r19,Y+6
+ 1015 03ac 8983      		cp r18,r24
+ 152:timer640.c    **** 
+ 153:timer640.c    **** 	// one loop takes 5 cpu cycles 
+ 154:timer640.c    **** 	for (i=0; i < delay_loops; i++) {};
+ 1016               	tart */
+ 1018 03ae 1E82      	.LM81:
+ 1019 03b0 1D82      		adiw r28,6
+ 1020 03b2 00C0      		in __tmp_reg__,__SREG__
+ 1021               		cli
+ 1022 03b4 2D81      		out __SP_H__,r29
+ 1023 03b6 3E81      		out __SREG__,__tmp_reg__
+ 1024 03b8 2F5F      		out __SP_L__,r28
+ 1025 03ba 3F4F      		pop r28
+ 1026 03bc 3E83      		pop r29
+ 1027 03be 2D83      		ret
+ 1033 03c8 2817      	.Lscope27:
+ 1036               	.global	init_timer0
+ 155:timer640.c    **** }
+ 1037               	function
+ 1038               	init_timer0:
+ 1040 03d0 0FB6      	.LM82:
+ 1041 03d2 F894      	.LFBB28:
+ 1042 03d4 DEBF      		push r29
+ 1043 03d6 0FBE      		push r28
+ 1044 03d8 CDBF      		push __tmp_reg__
+ 1045 03da CF91      		in r28,__SP_L__
+ 1046 03dc DF91      		in r29,__SP_H__
+ 1047 03de 0895      	/* prologue: function */
+ 1048               	/* frame size = 1 */
+ 1049               		std Y+1,r24
+ 1051               	.LM83:
+ 1052               		ldi r30,lo8(69)
+ 1053               		ldi r31,hi8(69)
+ 1054               		ldd r24,Y+1
+ 1055               		st Z,r24
+ 1057               	.LM84:
+ 1058               		ldi r30,lo8(110)
+ 156:timer640.c    **** 
+ 157:timer640.c    **** void init_timer0(const uint8_t prescaler)
+ 158:timer640.c    **** {
+ 1059               	 r24,lo8(1)
+ 1060               		st Z,r24
+ 1062 03e0 DF93      	.LM85:
+ 1063 03e2 CF93      		call reset_timer0
+ 1064 03e4 0F92      	/* epilogue start */
+ 1066 03e8 DEB7      	.LM86:
+ 1067               		pop __tmp_reg__
+ 1068               		pop r28
+ 1069 03ea 8983      		pop r29
+ 159:timer640.c    ****   TCCR0B = prescaler;
+ 1070               		init_timer0, .-init_timer0
+ 1071               	.Lscope28:
+ 1074 03f0 8981      	.global	init_timer1
+ 160:timer640.c    ****   TIMSK0 = _BV(TOIE0); // enable interrupts
+ 1076               	imer1:
+ 1078 03f4 EEE6      	.LM87:
+ 1079 03f6 F0E0      	.LFBB29:
+ 1080 03f8 81E0      		push r29
+ 1081 03fa 8083      		push r28
+ 161:timer640.c    ****   reset_timer0(); // reset counter
+ 1082               	__tmp_reg__
+ 1083               		in r28,__SP_L__
+ 1084 03fc 0E94 0000 		in r29,__SP_H__
+ 1085               	/* prologue: function */
+ 162:timer640.c    **** }
+ 1086               	rame size = 1 */
+ 1087               		std Y+1,r24
+ 1089 0402 CF91      	.LM88:
+ 1090 0404 DF91      		ldi r30,lo8(129)
+ 1091 0406 0895      		ldi r31,hi8(129)
+ 1092               		ldd r24,Y+1
+ 1093               		st Z,r24
+ 1095               	.LM89:
+ 1096               		ldi r30,lo8(111)
+ 1097               		ldi r31,hi8(111)
+ 1098               		ldi r24,lo8(1)
+ 163:timer640.c    **** void init_timer1(const uint8_t prescaler)
+ 164:timer640.c    **** {
+ 1099               	tabn	68,0,167,.LM90-.LFBB29
+ 1100               	.LM90:
+ 1101               		call reset_timer1
+ 1102 0408 DF93      	/* epilogue start */
+ 1104 040c 0F92      	.LM91:
+ 1105 040e CDB7      		pop __tmp_reg__
+ 1106 0410 DEB7      		pop r28
+ 1107               		pop r29
+ 1108               		ret
+ 165:timer640.c    ****   TCCR1B = prescaler;
+ 1112 0414 E1E8      	.global	init_timer2
+ 1114 0418 8981      	init_timer2:
+ 166:timer640.c    ****   TIMSK1 = _BV(TOIE1); // enable interrupts
+ 1116               	
+ 1117               	.LFBB30:
+ 1118 041c EFE6      		push r29
+ 1119 041e F0E0      		push r28
+ 1120 0420 81E0      		push __tmp_reg__
+ 1121 0422 8083      		in r28,__SP_L__
+ 167:timer640.c    ****   reset_timer1(); // reset counter
+ 1122               	29,__SP_H__
+ 1123               	/* prologue: function */
+ 1124 0424 0E94 0000 	/* frame size = 1 */
+ 1125               		std Y+1,r24
+ 168:timer640.c    **** }
+ 1126               	abn	68,0,171,.LM93-.LFBB30
+ 1127               	.LM93:
+ 1128 0428 0F90      		ldi r30,lo8(177)
+ 1129 042a CF91      		ldi r31,hi8(177)
+ 1130 042c DF91      		ldd r24,Y+1
+ 1131 042e 0895      		st Z,r24
+ 1133               	.LM94:
+ 1134               		ldi r30,lo8(112)
+ 1135               		ldi r31,hi8(112)
+ 1136               		ldi r24,lo8(1)
+ 1137               		st Z,r24
+ 169:timer640.c    **** void init_timer2(const uint8_t prescaler)
+ 170:timer640.c    **** {
+ 1139               	reset_timer2
+ 1140               	/* epilogue start */
+ 1142 0430 DF93      	.LM96:
+ 1143 0432 CF93      		pop __tmp_reg__
+ 1144 0434 0F92      		pop r28
+ 1145 0436 CDB7      		pop r29
+ 1146 0438 DEB7      		ret
+ 1148               	.Lscope30:
+ 171:timer640.c    ****   TCCR2B = prescaler;
+ 1150               	escaler:p(6,2)",160,0,0,1
+ 1151               	.global	init_timer3
+ 1153 043e F0E0      	init_timer3:
+ 1155 0442 8083      	.LM97:
+ 172:timer640.c    ****   TIMSK2 = _BV(TOIE2); // enable interrupts
+ 1156               	1:
+ 1157               		push r29
+ 1158 0444 E0E7      		push r28
+ 1159 0446 F0E0      		push __tmp_reg__
+ 1160 0448 81E0      		in r28,__SP_L__
+ 1161 044a 8083      		in r29,__SP_H__
+ 173:timer640.c    ****   reset_timer2(); // reset counter
+ 1162               	logue: function */
+ 1163               	/* frame size = 1 */
+ 1164 044c 0E94 0000 		std Y+1,r24
+ 174:timer640.c    **** }
+ 1166               	8:
+ 1167               		ldi r30,lo8(145)
+ 1168 0450 0F90      		ldi r31,hi8(145)
+ 1169 0452 CF91      		ldd r24,Y+1
+ 1170 0454 DF91      		st Z,r24
+ 1172               	.LM99:
+ 1173               		ldi r30,lo8(113)
+ 1174               		ldi r31,hi8(113)
+ 1175               		ldi r24,lo8(1)
+ 1176               		st Z,r24
+ 1178               	.LM100:
+ 175:timer640.c    **** void init_timer3(const uint8_t prescaler)
+ 176:timer640.c    **** {
+ 1179               	imer3
+ 1180               	/* epilogue start */
+ 1182 0458 DF93      	.LM101:
+ 1183 045a CF93      		pop __tmp_reg__
+ 1184 045c 0F92      		pop r28
+ 1185 045e CDB7      		pop r29
+ 1186 0460 DEB7      		ret
+ 1188               	.Lscope31:
+ 177:timer640.c    ****   TCCR3B = prescaler;
+ 1190               	escaler:p(6,2)",160,0,0,1
+ 1191               	.global	init_timer4
+ 1193 0466 F0E0      	init_timer4:
+ 1195 046a 8083      	.LM102:
+ 178:timer640.c    ****   TIMSK3 = _BV(TOIE3); // enable interrupts
+ 1196               	2:
+ 1197               		push r29
+ 1198 046c E1E7      		push r28
+ 1199 046e F0E0      		push __tmp_reg__
+ 1200 0470 81E0      		in r28,__SP_L__
+ 1201 0472 8083      		in r29,__SP_H__
+ 179:timer640.c    ****   reset_timer3(); // reset counter
+ 1202               	logue: function */
+ 1203               	/* frame size = 1 */
+ 1204 0474 0E94 0000 		std Y+1,r24
+ 180:timer640.c    **** }
+ 1206               	03:
+ 1207               		ldi r30,lo8(161)
+ 1208 0478 0F90      		ldi r31,hi8(161)
+ 1209 047a CF91      		ldd r24,Y+1
+ 1210 047c DF91      		st Z,r24
+ 1212               	.LM104:
+ 1213               		ldi r30,lo8(114)
+ 1214               		ldi r31,hi8(114)
+ 1215               		ldi r24,lo8(1)
+ 1216               		st Z,r24
+ 1218               	.LM105:
+ 181:timer640.c    **** void init_timer4(const uint8_t prescaler)
+ 182:timer640.c    **** {
+ 1219               	imer4
+ 1220               	/* epilogue start */
+ 1222 0480 DF93      	.LM106:
+ 1223 0482 CF93      		pop __tmp_reg__
+ 1224 0484 0F92      		pop r28
+ 1225 0486 CDB7      		pop r29
+ 1226 0488 DEB7      		ret
+ 1228               	.Lscope32:
+ 183:timer640.c    ****   TCCR4B = prescaler;
+ 1230               	escaler:p(6,2)",160,0,0,1
+ 1231               	.global	init_timer5
+ 1233 048e F0E0      	init_timer5:
+ 1235 0492 8083      	.LM107:
+ 184:timer640.c    ****   TIMSK4 = _BV(TOIE4); // enable interrupts
+ 1236               	3:
+ 1237               		push r29
+ 1238 0494 E2E7      		push r28
+ 1239 0496 F0E0      		push __tmp_reg__
+ 1240 0498 81E0      		in r28,__SP_L__
+ 1241 049a 8083      		in r29,__SP_H__
+ 185:timer640.c    ****   reset_timer4(); // reset counter
+ 1242               	logue: function */
+ 1243               	/* frame size = 1 */
+ 1244 049c 0E94 0000 		std Y+1,r24
+ 186:timer640.c    **** }
+ 1246               	08:
+ 1247               		ldi r30,lo8(289)
+ 1248 04a0 0F90      		ldi r31,hi8(289)
+ 1249 04a2 CF91      		ldd r24,Y+1
+ 1250 04a4 DF91      		st Z,r24
+ 1252               	.LM109:
+ 1253               		ldi r30,lo8(115)
+ 1254               		ldi r31,hi8(115)
+ 1255               		ldi r24,lo8(1)
+ 1256               		st Z,r24
+ 1258               	.LM110:
+ 187:timer640.c    **** void init_timer5(const uint8_t prescaler)
+ 188:timer640.c    **** {
+ 1259               	imer5
+ 1260               	/* epilogue start */
+ 1262 04a8 DF93      	.LM111:
+ 1263 04aa CF93      		pop __tmp_reg__
+ 1264 04ac 0F92      		pop r28
+ 1265 04ae CDB7      		pop r29
+ 1266 04b0 DEB7      		ret
+ 1268               	.Lscope33:
+ 189:timer640.c    ****   TCCR5B = prescaler;
+ 1270               	terrupt:p(1,2)",160,0,0,1
+ 1272 04b4 E1E2      	.global	timer_attach
+ 1274 04b8 8981      	timer_attach:
+ 190:timer640.c    ****   TIMSK5 = _BV(TOIE5); // enable interrupts
+ 1276               	:
+ 1277               	.LFBB34:
+ 1278 04bc E3E7      		push r29
+ 1279 04be F0E0      		push r28
+ 1280 04c0 81E0      		rcall .
+ 1281 04c2 8083      		push __tmp_reg__
+ 191:timer640.c    ****   reset_timer5(); // reset counter
+ 1282               	8,__SP_L__
+ 1283               		in r29,__SP_H__
+ 1284 04c4 0E94 0000 	/* prologue: function */
+ 1285               	/* frame size = 3 */
+ 192:timer640.c    **** }
+ 1286               	 Y+1,r24
+ 1287               		std Y+3,r23
+ 1288 04c8 0F90      		std Y+2,r22
+ 1290 04cc DF91      	.LM113:
+ 1291 04ce 0895      		ldd r24,Y+1
+ 1292               		mov r24,r24
+ 1293               		ldi r25,lo8(0)
+ 1294               		lsl r24
+ 1295               		rol r25
+ 1296               		movw r30,r24
+ 1297               		subi r30,lo8(-(TimerIntFunc))
+ 1298               		sbci r31,hi8(-(TimerIntFunc))
+ 1299               		ldd r24,Y+2
+ 193:timer640.c    **** 
+ 194:timer640.c    **** void timer_attach(TimerInterrupt_t interrupt, void (*user_func)(void) )
+ 195:timer640.c    **** {
+ 1300               	std Z+1,r25
+ 1301               		st Z,r24
+ 1302               	/* epilogue start */
+ 1304 04d2 CF93      	.LM114:
+ 1305 04d4 00D0      		pop __tmp_reg__
+ 1306 04d6 0F92      		pop __tmp_reg__
+ 1307 04d8 CDB7      		pop __tmp_reg__
+ 1308 04da DEB7      		pop r28
+ 1309               		pop r29
+ 1310               		ret
+ 1312 04de 7B83      	.Lscope34:
+ 196:timer640.c    ****   // set the interrupt function to run
+ 197:timer640.c    ****   // the supplied user's function
+ 198:timer640.c    ****   TimerIntFunc[interrupt] = user_func;
+ 1314               	rupt:p(1,2)",160,0,0,1
+ 1315               	.global	timer_detach
+ 1317 04e4 882F      	timer_detach:
+ 1319 04e8 880F      	.LM115:
+ 1320 04ea 991F      	.LFBB35:
+ 1321 04ec FC01      		push r29
+ 1322 04ee E050      		push r28
+ 1323 04f0 F040      		push __tmp_reg__
+ 1324 04f2 8A81      		in r28,__SP_L__
+ 1325 04f4 9B81      		in r29,__SP_H__
+ 1326 04f6 9183      	/* prologue: function */
+ 1327 04f8 8083      	/* frame size = 1 */
+ 1328               		std Y+1,r24
+ 199:timer640.c    **** }
+ 1329               	4,.LM116-.LFBB35
+ 1330               	.LM116:
+ 1331 04fa 0F90      		ldd r24,Y+1
+ 1332 04fc 0F90      		mov r24,r24
+ 1333 04fe 0F90      		ldi r25,lo8(0)
+ 1334 0500 CF91      		lsl r24
+ 1335 0502 DF91      		rol r25
+ 1336 0504 0895      		movw r30,r24
+ 1337               		subi r30,lo8(-(TimerIntFunc))
+ 1338               		sbci r31,hi8(-(TimerIntFunc))
+ 1339               		std Z+1,__zero_reg__
+ 1340               		st Z,__zero_reg__
+ 1341               	/* epilogue start */
+ 1343               	.LM117:
+ 200:timer640.c    **** 
+ 201:timer640.c    **** void timer_detach(TimerInterrupt_t interrupt)
+ 202:timer640.c    **** {
+ 1344               	_
+ 1345               		pop r28
+ 1346               		pop r29
+ 1347 0506 DF93      		ret
+ 1349 050a 0F92      	.Lscope35:
+ 1352               	.global	_delay_loop_2
+ 1354 0510 8983      	_delay_loop_2:
+ 203:timer640.c    ****   // clear the user defined interrupt function
+ 204:timer640.c    ****   TimerIntFunc[interrupt] = NULL;
+ 1355               	0,209,.LM118-.LFBB36
+ 1356               	.LM118:
+ 1357 0512 8981      	.LFBB36:
+ 1358 0514 882F      		push r29
+ 1359 0516 90E0      		push r28
+ 1360 0518 880F      		rcall .
+ 1361 051a 991F      		in r28,__SP_L__
+ 1362 051c FC01      		in r29,__SP_H__
+ 1363 051e E050      	/* prologue: function */
+ 1364 0520 F040      	/* frame size = 2 */
+ 1365 0522 1182      		std Y+2,r25
+ 1366 0524 1082      		std Y+1,r24
+ 205:timer640.c    **** }
+ 1368               	r24,Y+1
+ 1369               		ldd r25,Y+2
+ 1370 0526 0F90      	/* #APP */
+ 1371 0528 CF91      	 ;  210 "timer640.c" 1
+ 1372 052a DF91      		1: sbiw r24,1
+ 1373 052c 0895      		brne 1b
+ 1374               	 ;  0 "" 2
+ 1375               	/* #NOAPP */
+ 1376               		std Y+2,r25
+ 1377               		std Y+1,r24
+ 1378               	/* epilogue start */
+ 1380               	.LM120:
+ 206:timer640.c    **** 
+ 207:timer640.c    **** void
+ 208:timer640.c    **** _delay_loop_2(uint16_t __count)
+ 209:timer640.c    **** {
+ 1381               	g__
+ 1382               		pop __tmp_reg__
+ 1383               		pop r28
+ 1384 052e DF93      		pop r29
+ 1385 0530 CF93      		ret
+ 1387 0534 CDB7      	.Lscope36:
+ 1390               	.global	sleep
+ 1392 053a 8983      	sleep:
+ 210:timer640.c    **** 	__asm__ volatile (
+ 1393               	,219,.LM121-.LFBB37
+ 1394               	.LM121:
+ 1395 053c 8981      	.LFBB37:
+ 1396 053e 9A81      		push r29
+ 1397               		push r28
+ 1398               		in r28,__SP_L__
+ 1399 0540 0197      		in r29,__SP_H__
+ 1400 0542 01F4      		sbiw r28,8
+ 1401               		in __tmp_reg__,__SREG__
+ 1402               		cli
+ 1403 0544 9A83      		out __SP_H__,r29
+ 1404 0546 8983      		out __SREG__,__tmp_reg__
+ 1405               		out __SP_L__,r28
+ 211:timer640.c    **** 		"1: sbiw %0,1" "\n\t"
+ 212:timer640.c    **** 		"brne 1b"
+ 213:timer640.c    **** 		: "=w" (__count)
+ 214:timer640.c    **** 		: "0" (__count)
+ 215:timer640.c    **** 	);
+ 216:timer640.c    **** }
+ 1406               	function */
+ 1407               	/* frame size = 8 */
+ 1408 0548 0F90      		std Y+8,r25
+ 1409 054a 0F90      		std Y+7,r24
+ 1411 054e DF91      	.LM122:
+ 1412 0550 0895      		ldd r24,Y+7
+ 1413               		ldd r25,Y+8
+ 1414               		movw r24,r24
+ 1415               		ldi r26,lo8(0)
+ 1416               		ldi r27,hi8(0)
+ 1417               		movw r22,r24
+ 1418               		movw r24,r26
+ 1419               		call __floatunsisf
+ 217:timer640.c    **** 
+ 218:timer640.c    **** void sleep(uint16_t time_ms)
+ 219:timer640.c    **** {
+ 1420               		movw r24,r22
+ 1421               		movw r22,r24
+ 1422               		movw r24,r26
+ 1423 0552 DF93      		ldi r18,lo8(0x457a0000)
+ 1424 0554 CF93      		ldi r19,hi8(0x457a0000)
+ 1425 0556 CDB7      		ldi r20,hlo8(0x457a0000)
+ 1426 0558 DEB7      		ldi r21,hhi8(0x457a0000)
+ 1427 055a 2897      		call __mulsf3
+ 1428 055c 0FB6      		movw r26,r24
+ 1429 055e F894      		movw r24,r22
+ 1430 0560 DEBF      		std Y+1,r24
+ 1431 0562 0FBE      		std Y+2,r25
+ 1432 0564 CDBF      		std Y+3,r26
+ 1433               		std Y+4,r27
+ 1435 0566 9887      	.LM123:
+ 1436 0568 8F83      		ldd r22,Y+1
+ 220:timer640.c    **** 	uint16_t __ticks;
+ 221:timer640.c    **** 	double __tmp = ((F_CPU) / 4e3) * time_ms;
+ 1437               	 r24,Y+3
+ 1438               		ldd r25,Y+4
+ 1439 056a 8F81      		ldi r18,lo8(0x3f800000)
+ 1440 056c 9885      		ldi r19,hi8(0x3f800000)
+ 1441 056e CC01      		ldi r20,hlo8(0x3f800000)
+ 1442 0570 A0E0      		ldi r21,hhi8(0x3f800000)
+ 1443 0572 B0E0      		call __ltsf2
+ 1444 0574 BC01      		tst r24
+ 1445 0576 CD01      		brge .L87
+ 1446 0578 0E94 0000 	.L85:
+ 1448 057e CB01      	.LM124:
+ 1449 0580 BC01      		ldi r24,lo8(1)
+ 1450 0582 CD01      		ldi r25,hi8(1)
+ 1451 0584 20E0      		std Y+6,r25
+ 1452 0586 30E0      		std Y+5,r24
+ 1453 0588 4AE7      		rjmp .L78
+ 1454 058a 55E4      	.L87:
+ 1456 0590 DC01      	.LM125:
+ 1457 0592 CB01      		ldd r22,Y+1
+ 1458 0594 8983      		ldd r23,Y+2
+ 1459 0596 9A83      		ldd r24,Y+3
+ 1460 0598 AB83      		ldd r25,Y+4
+ 1461 059a BC83      		ldi r18,lo8(0x477fff00)
+ 222:timer640.c    **** 	if (__tmp < 1.0)
+ 1462               		ldi r20,hlo8(0x477fff00)
+ 1463               		ldi r21,hhi8(0x477fff00)
+ 1464 059c 6981      		call __gtsf2
+ 1465 059e 7A81      		cp __zero_reg__,r24
+ 1466 05a0 8B81      		brge .L88
+ 1467 05a2 9C81      	.L86:
+ 1469 05a6 30E0      	.LM126:
+ 1470 05a8 40E8      		ldd r24,Y+7
+ 1471 05aa 5FE3      		ldd r25,Y+8
+ 1472 05ac 0E94 0000 		movw r24,r24
+ 1473 05b0 8823      		ldi r26,lo8(0)
+ 1474 05b2 04F4      		ldi r27,hi8(0)
+ 1475               		movw r22,r24
+ 223:timer640.c    **** 		__ticks = 1;
+ 1476               		call __floatunsisf
+ 1477               		movw r26,r24
+ 1478 05b4 81E0      		movw r24,r22
+ 1479 05b6 90E0      		movw r22,r24
+ 1480 05b8 9E83      		movw r24,r26
+ 1481 05ba 8D83      		ldi r18,lo8(0x41200000)
+ 1482 05bc 00C0      		ldi r19,hi8(0x41200000)
+ 1483               		ldi r20,hlo8(0x41200000)
+ 224:timer640.c    **** 	else if (__tmp > 65535)
+ 1484               	,hhi8(0x41200000)
+ 1485               		call __mulsf3
+ 1486 05be 6981      		movw r26,r24
+ 1487 05c0 7A81      		movw r24,r22
+ 1488 05c2 8B81      		movw r22,r24
+ 1489 05c4 9C81      		movw r24,r26
+ 1490 05c6 20E0      		call __fixunssfsi
+ 1491 05c8 3FEF      		movw r26,r24
+ 1492 05ca 4FE7      		movw r24,r22
+ 1493 05cc 57E4      		std Y+6,r25
+ 1494 05ce 0E94 0000 		std Y+5,r24
+ 1495 05d2 1816      		rjmp .L81
+ 1496 05d4 04F4      	.L82:
+ 225:timer640.c    **** 	{
+ 226:timer640.c    **** 		//	__ticks = requested delay in 1/10 ms
+ 227:timer640.c    **** 		__ticks = (uint16_t) (time_ms * 10.0);
+ 1498               	24,lo8(400)
+ 1499               		ldi r25,hi8(400)
+ 1500 05d6 8F81      		call _delay_loop_2
+ 1502 05da CC01      	.LM128:
+ 1503 05dc A0E0      		ldd r24,Y+5
+ 1504 05de B0E0      		ldd r25,Y+6
+ 1505 05e0 BC01      		sbiw r24,1
+ 1506 05e2 CD01      		std Y+6,r25
+ 1507 05e4 0E94 0000 		std Y+5,r24
+ 1508 05e8 DC01      	.L81:
+ 1510 05ec BC01      	.LM129:
+ 1511 05ee CD01      		ldd r24,Y+5
+ 1512 05f0 20E0      		ldd r25,Y+6
+ 1513 05f2 30E0      		sbiw r24,0
+ 1514 05f4 40E2      		brne .L82
+ 1515 05f6 51E4      		rjmp .L84
+ 1516 05f8 0E94 0000 	.L88:
+ 1518 05fe CB01      	.LM130:
+ 1519 0600 BC01      		ldd r22,Y+1
+ 1520 0602 CD01      		ldd r23,Y+2
+ 1521 0604 0E94 0000 		ldd r24,Y+3
+ 1522 0608 DC01      		ldd r25,Y+4
+ 1523 060a CB01      		call __fixunssfsi
+ 1524 060c 9E83      		movw r26,r24
+ 1525 060e 8D83      		movw r24,r22
+ 1526 0610 00C0      		std Y+6,r25
+ 1527               		std Y+5,r24
+ 228:timer640.c    **** 		while(__ticks)
+ 229:timer640.c    **** 		{
+ 230:timer640.c    **** 			// wait 1/10 ms
+ 231:timer640.c    **** 			_delay_loop_2(((F_CPU) / 4e3) / 10);
+ 1528               	.LFBB37
+ 1529               	.LM131:
+ 1530 0612 80E9      		ldd r24,Y+5
+ 1531 0614 91E0      		ldd r25,Y+6
+ 1532 0616 0E94 0000 		call _delay_loop_2
+ 232:timer640.c    **** 			__ticks --;
+ 1533               	
+ 1534               	/* epilogue start */
+ 1536 061c 9E81      	.LM132:
+ 1537 061e 0197      		adiw r28,8
+ 1538 0620 9E83      		in __tmp_reg__,__SREG__
+ 1539 0622 8D83      		cli
+ 1540               		out __SP_H__,r29
+ 1541               		out __SREG__,__tmp_reg__
+ 1542               		out __SP_L__,r28
+ 1543 0624 8D81      		pop r28
+ 1544 0626 9E81      		pop r29
+ 1545 0628 0097      		ret
+ 233:timer640.c    **** 		}
+ 234:timer640.c    **** 		return;
+ 235:timer640.c    **** 	}
+ 236:timer640.c    **** 	else
+ 237:timer640.c    **** 		__ticks = (uint16_t)__tmp;
+ 1549               	,.LFBB37-.LFBB37
+ 1551 062e 6981      	.Lscope37:
+ 1553 0632 8B81      	.global	__vector_23
+ 1555 0636 0E94 0000 	__vector_23:
+ 1557 063c CB01      	.LM133:
+ 1558 063e 9E83      	.LFBB38:
+ 1559 0640 8D83      		push __zero_reg__
+ 1560               		push r0
+ 238:timer640.c    **** 	_delay_loop_2(__ticks);
+ 1561               	G__
+ 1562               		push r0
+ 1563 0642 8D81      		clr __zero_reg__
+ 1564 0644 9E81      		push r18
+ 1565 0646 0E94 0000 		push r19
+ 1566               		push r20
+ 1567               		push r21
+ 239:timer640.c    **** }
+ 1568               	22
+ 1569               		push r23
+ 1570 064a 2896      		push r24
+ 1571 064c 0FB6      		push r25
+ 1572 064e F894      		push r26
+ 1573 0650 DEBF      		push r27
+ 1574 0652 0FBE      		push r30
+ 1575 0654 CDBF      		push r31
+ 1576 0656 CF91      		push r29
+ 1577 0658 DF91      		push r28
+ 1578 065a 0895      		in r28,__SP_L__
+ 1579               		in r29,__SP_H__
+ 1580               	/* prologue: Signal */
+ 1581               	/* frame size = 0 */
+ 1583               	.LM134:
+ 1584               		lds r24,timer0_ovrflow_cnt
+ 1585               		lds r25,(timer0_ovrflow_cnt)+1
+ 1586               		lds r26,(timer0_ovrflow_cnt)+2
+ 1587               		lds r27,(timer0_ovrflow_cnt)+3
+ 1588               		adiw r24,1
+ 240:timer640.c    **** /*{
+ 241:timer640.c    ****   // pauses for exactly <time_ms> number of milliseconds
+ 242:timer640.c    ****   uint8_t timerThres;
+ 243:timer640.c    ****   uint32_t ticRateHz;
+ 244:timer640.c    ****   uint32_t pause;
+ 245:timer640.c    **** 
+ 246:timer640.c    ****   // capture current pause timer value
+ 247:timer640.c    ****   timerThres = TCNT0;
+ 248:timer640.c    ****   // reset pause timer overflow count
+ 249:timer640.c    ****   timer_sleep_cnt = 0;
+ 250:timer640.c    ****   // calculate delay for [pause_ms] milliseconds
+ 251:timer640.c    ****   // prescaler division = 1<<(pgm_read_byte(TimerPrescaleFactor+inb(TCCR0)))
+ 252:timer640.c    ****   ticRateHz = F_CPU/get_timer0_prescaler();
+ 253:timer640.c    ****   // precision management
+ 254:timer640.c    ****   // prevent overflow and precision underflow
+ 255:timer640.c    ****   //	-could add more conditions to improve accuracy
+ 256:timer640.c    ****   if( ((ticRateHz < 429497) && (time_ms <= 10000)) )
+ 257:timer640.c    ****     pause = (time_ms*ticRateHz)/1000;
+ 258:timer640.c    ****   else
+ 259:timer640.c    ****     pause = time_ms*(ticRateHz/1000);
+ 260:timer640.c    **** 
+ 261:timer640.c    ****   // loop until time expires
+ 262:timer640.c    ****   while( ((timer_sleep_cnt<<8) | (TCNT0)) < (pause+timerThres) )
+ 263:timer640.c    ****   {
+ 264:timer640.c    ****     if( timer_sleep_cnt < (pause>>8));
+ 265:timer640.c    ****     {
+ 266:timer640.c    **** //      rprintf("putting axon to sleep...\n");
+ 267:timer640.c    ****       // save power by idling the processor
+ 268:timer640.c    ****       set_sleep_mode(SLEEP_MODE_IDLE);
+ 269:timer640.c    ****       sleep_mode();
+ 270:timer640.c    **** //      rprintf("done with sleep_mode()...\n");
+ 271:timer640.c    ****     }
+ 272:timer640.c    ****   }
+ 273:timer640.c    **** }*/
+ 274:timer640.c    **** 
+ 275:timer640.c    **** ISR(TIMER0_OVF_vect) 
+ 276:timer640.c    **** {
+ 1589               	
+ 1590               		adc r27,__zero_reg__
+ 1591               		sts timer0_ovrflow_cnt,r24
+ 1592 065c 1F92      		sts (timer0_ovrflow_cnt)+1,r25
+ 1593 065e 0F92      		sts (timer0_ovrflow_cnt)+2,r26
+ 1594 0660 0FB6      		sts (timer0_ovrflow_cnt)+3,r27
+ 1596 0664 1124      	.LM135:
+ 1597 0666 2F93      		lds r24,timer_sleep_cnt
+ 1598 0668 3F93      		lds r25,(timer_sleep_cnt)+1
+ 1599 066a 4F93      		lds r26,(timer_sleep_cnt)+2
+ 1600 066c 5F93      		lds r27,(timer_sleep_cnt)+3
+ 1601 066e 6F93      		adiw r24,1
+ 1602 0670 7F93      		adc r26,__zero_reg__
+ 1603 0672 8F93      		adc r27,__zero_reg__
+ 1604 0674 9F93      		sts timer_sleep_cnt,r24
+ 1605 0676 AF93      		sts (timer_sleep_cnt)+1,r25
+ 1606 0678 BF93      		sts (timer_sleep_cnt)+2,r26
+ 1607 067a EF93      		sts (timer_sleep_cnt)+3,r27
+ 1609 067e DF93      	.LM136:
+ 1610 0680 CF93      		lds r24,TimerIntFunc+4
+ 1611 0682 CDB7      		lds r25,(TimerIntFunc+4)+1
+ 1612 0684 DEB7      		sbiw r24,0
+ 1613               		breq .L91
+ 1614               		lds r30,TimerIntFunc+4
+ 277:timer640.c    ****   timer0_ovrflow_cnt++;
+ 1615               	+1
+ 1616               		icall
+ 1617 0686 8091 0000 	.L91:
+ 1618 068a 9091 0000 	/* epilogue start */
+ 1620 0692 B091 0000 	.LM137:
+ 1621 0696 0196      		pop r28
+ 1622 0698 A11D      		pop r29
+ 1623 069a B11D      		pop r31
+ 1624 069c 8093 0000 		pop r30
+ 1625 06a0 9093 0000 		pop r27
+ 1626 06a4 A093 0000 		pop r26
+ 1627 06a8 B093 0000 		pop r25
+ 278:timer640.c    ****   timer_sleep_cnt++;
+ 1628               	 r23
+ 1629               		pop r22
+ 1630 06ac 8091 0000 		pop r21
+ 1631 06b0 9091 0000 		pop r20
+ 1632 06b4 A091 0000 		pop r19
+ 1633 06b8 B091 0000 		pop r18
+ 1634 06bc 0196      		pop r0
+ 1635 06be A11D      		out __SREG__,r0
+ 1636 06c0 B11D      		pop r0
+ 1637 06c2 8093 0000 		pop __zero_reg__
+ 1638 06c6 9093 0000 		reti
+ 1640 06ce B093 0000 	.Lscope38:
+ 279:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER0_OVF_interrupt);
+ 1641               	ctor_20:F(0,15)",36,0,0,__vector_20
+ 1642               	.global	__vector_20
+ 1644 06d6 9091 0000 	__vector_20:
+ 1646 06dc 01F0      	.LM138:
+ 1647 06de E091 0000 	.LFBB39:
+ 1648 06e2 F091 0000 		push __zero_reg__
+ 1649 06e6 0995      		push r0
+ 1650               		in r0,__SREG__
+ 1651               		push r0
+ 280:timer640.c    **** }
+ 1652               	_reg__
+ 1653               		push r18
+ 1654 06e8 CF91      		push r19
+ 1655 06ea DF91      		push r20
+ 1656 06ec FF91      		push r21
+ 1657 06ee EF91      		push r22
+ 1658 06f0 BF91      		push r23
+ 1659 06f2 AF91      		push r24
+ 1660 06f4 9F91      		push r25
+ 1661 06f6 8F91      		push r26
+ 1662 06f8 7F91      		push r27
+ 1663 06fa 6F91      		push r30
+ 1664 06fc 5F91      		push r31
+ 1665 06fe 4F91      		push r29
+ 1666 0700 3F91      		push r28
+ 1667 0702 2F91      		in r28,__SP_L__
+ 1668 0704 0F90      		in r29,__SP_H__
+ 1669 0706 0FBE      	/* prologue: Signal */
+ 1670 0708 0F90      	/* frame size = 0 */
+ 1672 070c 1895      	.LM139:
+ 1673               		lds r24,timer1_ovrflow_cnt
+ 1674               		lds r25,(timer1_ovrflow_cnt)+1
+ 1675               		lds r26,(timer1_ovrflow_cnt)+2
+ 1676               		lds r27,(timer1_ovrflow_cnt)+3
+ 1677               		adiw r24,1
+ 1678               		adc r26,__zero_reg__
+ 281:timer640.c    **** ISR(TIMER1_OVF_vect) 
+ 282:timer640.c    **** {
+ 1679               	timer1_ovrflow_cnt,r24
+ 1680               		sts (timer1_ovrflow_cnt)+1,r25
+ 1681               		sts (timer1_ovrflow_cnt)+2,r26
+ 1682 070e 1F92      		sts (timer1_ovrflow_cnt)+3,r27
+ 1684 0712 0FB6      	.LM140:
+ 1685 0714 0F92      		lds r24,TimerIntFunc+14
+ 1686 0716 1124      		lds r25,(TimerIntFunc+14)+1
+ 1687 0718 2F93      		sbiw r24,0
+ 1688 071a 3F93      		breq .L94
+ 1689 071c 4F93      		lds r30,TimerIntFunc+14
+ 1690 071e 5F93      		lds r31,(TimerIntFunc+14)+1
+ 1691 0720 6F93      		icall
+ 1692 0722 7F93      	.L94:
+ 1693 0724 8F93      	/* epilogue start */
+ 1695 0728 AF93      	.LM141:
+ 1696 072a BF93      		pop r28
+ 1697 072c EF93      		pop r29
+ 1698 072e FF93      		pop r31
+ 1699 0730 DF93      		pop r30
+ 1700 0732 CF93      		pop r27
+ 1701 0734 CDB7      		pop r26
+ 1702 0736 DEB7      		pop r25
+ 1703               		pop r24
+ 1704               		pop r23
+ 283:timer640.c    ****   timer1_ovrflow_cnt++;
+ 1705               	
+ 1706               		pop r19
+ 1707 0738 8091 0000 		pop r18
+ 1708 073c 9091 0000 		pop r0
+ 1709 0740 A091 0000 		out __SREG__,r0
+ 1710 0744 B091 0000 		pop r0
+ 1711 0748 0196      		pop __zero_reg__
+ 1712 074a A11D      		reti
+ 1714 074e 8093 0000 	.Lscope39:
+ 1716 0756 A093 0000 	.global	__vector_15
+ 284:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER1_OVF_interrupt);
+ 1718               	
+ 1720 075e 8091 0000 	.LM142:
+ 1721 0762 9091 0000 	.LFBB40:
+ 1722 0766 0097      		push __zero_reg__
+ 1723 0768 01F0      		push r0
+ 1724 076a E091 0000 		in r0,__SREG__
+ 1725 076e F091 0000 		push r0
+ 1726 0772 0995      		clr __zero_reg__
+ 1727               		push r18
+ 1728               		push r19
+ 285:timer640.c    **** }
+ 1729               		push r21
+ 1730               		push r22
+ 1731 0774 CF91      		push r23
+ 1732 0776 DF91      		push r24
+ 1733 0778 FF91      		push r25
+ 1734 077a EF91      		push r26
+ 1735 077c BF91      		push r27
+ 1736 077e AF91      		push r30
+ 1737 0780 9F91      		push r31
+ 1738 0782 8F91      		push r29
+ 1739 0784 7F91      		push r28
+ 1740 0786 6F91      		in r28,__SP_L__
+ 1741 0788 5F91      		in r29,__SP_H__
+ 1742 078a 4F91      	/* prologue: Signal */
+ 1743 078c 3F91      	/* frame size = 0 */
+ 1745 0790 0F90      	.LM143:
+ 1746 0792 0FBE      		lds r24,timer2_ovrflow_cnt
+ 1747 0794 0F90      		lds r25,(timer2_ovrflow_cnt)+1
+ 1748 0796 1F90      		lds r26,(timer2_ovrflow_cnt)+2
+ 1749 0798 1895      		lds r27,(timer2_ovrflow_cnt)+3
+ 1750               		adiw r24,1
+ 1751               		adc r26,__zero_reg__
+ 1752               		adc r27,__zero_reg__
+ 1753               		sts timer2_ovrflow_cnt,r24
+ 1754               		sts (timer2_ovrflow_cnt)+1,r25
+ 1755               		sts (timer2_ovrflow_cnt)+2,r26
+ 286:timer640.c    **** ISR(TIMER2_OVF_vect) 
+ 287:timer640.c    **** {
+ 1756               	,r27
+ 1758               	.LM144:
+ 1759 079a 1F92      		lds r24,TimerIntFunc+20
+ 1760 079c 0F92      		lds r25,(TimerIntFunc+20)+1
+ 1761 079e 0FB6      		sbiw r24,0
+ 1762 07a0 0F92      		breq .L97
+ 1763 07a2 1124      		lds r30,TimerIntFunc+20
+ 1764 07a4 2F93      		lds r31,(TimerIntFunc+20)+1
+ 1765 07a6 3F93      		icall
+ 1766 07a8 4F93      	.L97:
+ 1767 07aa 5F93      	/* epilogue start */
+ 1769 07ae 7F93      	.LM145:
+ 1770 07b0 8F93      		pop r28
+ 1771 07b2 9F93      		pop r29
+ 1772 07b4 AF93      		pop r31
+ 1773 07b6 BF93      		pop r30
+ 1774 07b8 EF93      		pop r27
+ 1775 07ba FF93      		pop r26
+ 1776 07bc DF93      		pop r25
+ 1777 07be CF93      		pop r24
+ 1778 07c0 CDB7      		pop r23
+ 1779 07c2 DEB7      		pop r22
+ 1780               		pop r21
+ 1781               		pop r20
+ 288:timer640.c    ****   timer2_ovrflow_cnt++;
+ 1782               		out __SREG__,r0
+ 1783               		pop r0
+ 1784 07c4 8091 0000 		pop __zero_reg__
+ 1785 07c8 9091 0000 		reti
+ 1787 07d0 B091 0000 	.Lscope40:
+ 1789 07d6 A11D      	.global	__vector_35
+ 1791 07da 8093 0000 	__vector_35:
+ 1793 07e2 A093 0000 	.LM146:
+ 1794 07e6 B093 0000 	.LFBB41:
+ 289:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER2_OVF_interrupt);
+ 1795               	reg__
+ 1796               		push r0
+ 1797 07ea 8091 0000 		in r0,__SREG__
+ 1798 07ee 9091 0000 		push r0
+ 1799 07f2 0097      		clr __zero_reg__
+ 1800 07f4 01F0      		push r18
+ 1801 07f6 E091 0000 		push r19
+ 1802 07fa F091 0000 		push r20
+ 1803 07fe 0995      		push r21
+ 1804               		push r22
+ 1805               		push r23
+ 290:timer640.c    **** }
+ 1806               	push r25
+ 1807               		push r26
+ 1808 0800 CF91      		push r27
+ 1809 0802 DF91      		push r30
+ 1810 0804 FF91      		push r31
+ 1811 0806 EF91      		push r29
+ 1812 0808 BF91      		push r28
+ 1813 080a AF91      		in r28,__SP_L__
+ 1814 080c 9F91      		in r29,__SP_H__
+ 1815 080e 8F91      	/* prologue: Signal */
+ 1816 0810 7F91      	/* frame size = 0 */
+ 1818 0814 5F91      	.LM147:
+ 1819 0816 4F91      		lds r24,timer3_ovrflow_cnt
+ 1820 0818 3F91      		lds r25,(timer3_ovrflow_cnt)+1
+ 1821 081a 2F91      		lds r26,(timer3_ovrflow_cnt)+2
+ 1822 081c 0F90      		lds r27,(timer3_ovrflow_cnt)+3
+ 1823 081e 0FBE      		adiw r24,1
+ 1824 0820 0F90      		adc r26,__zero_reg__
+ 1825 0822 1F90      		adc r27,__zero_reg__
+ 1826 0824 1895      		sts timer3_ovrflow_cnt,r24
+ 1827               		sts (timer3_ovrflow_cnt)+1,r25
+ 1828               		sts (timer3_ovrflow_cnt)+2,r26
+ 1829               		sts (timer3_ovrflow_cnt)+3,r27
+ 1831               	.LM148:
+ 1832               		lds r24,TimerIntFunc+30
+ 291:timer640.c    **** ISR(TIMER3_OVF_vect) 
+ 292:timer640.c    **** {
+ 1833               	1
+ 1834               		sbiw r24,0
+ 1835               		breq .L100
+ 1836 0826 1F92      		lds r30,TimerIntFunc+30
+ 1837 0828 0F92      		lds r31,(TimerIntFunc+30)+1
+ 1838 082a 0FB6      		icall
+ 1839 082c 0F92      	.L100:
+ 1840 082e 1124      	/* epilogue start */
+ 1842 0832 3F93      	.LM149:
+ 1843 0834 4F93      		pop r28
+ 1844 0836 5F93      		pop r29
+ 1845 0838 6F93      		pop r31
+ 1846 083a 7F93      		pop r30
+ 1847 083c 8F93      		pop r27
+ 1848 083e 9F93      		pop r26
+ 1849 0840 AF93      		pop r25
+ 1850 0842 BF93      		pop r24
+ 1851 0844 EF93      		pop r23
+ 1852 0846 FF93      		pop r22
+ 1853 0848 DF93      		pop r21
+ 1854 084a CF93      		pop r20
+ 1855 084c CDB7      		pop r19
+ 1856 084e DEB7      		pop r18
+ 1857               		pop r0
+ 1858               		out __SREG__,r0
+ 293:timer640.c    ****   timer3_ovrflow_cnt++;
+ 1859               		reti
+ 1861 0850 8091 0000 	.Lscope41:
+ 1863 0858 A091 0000 	.global	__vector_45
+ 1865 0860 0196      	__vector_45:
+ 1867 0864 B11D      	.LM150:
+ 1868 0866 8093 0000 	.LFBB42:
+ 1869 086a 9093 0000 		push __zero_reg__
+ 1870 086e A093 0000 		push r0
+ 1871 0872 B093 0000 		in r0,__SREG__
+ 294:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER3_OVF_interrupt);
+ 1872               	 __zero_reg__
+ 1873               		push r18
+ 1874 0876 8091 0000 		push r19
+ 1875 087a 9091 0000 		push r20
+ 1876 087e 0097      		push r21
+ 1877 0880 01F0      		push r22
+ 1878 0882 E091 0000 		push r23
+ 1879 0886 F091 0000 		push r24
+ 1880 088a 0995      		push r25
+ 1881               		push r26
+ 1882               		push r27
+ 295:timer640.c    **** }
+ 1883               	push r31
+ 1884               		push r29
+ 1885 088c CF91      		push r28
+ 1886 088e DF91      		in r28,__SP_L__
+ 1887 0890 FF91      		in r29,__SP_H__
+ 1888 0892 EF91      	/* prologue: Signal */
+ 1889 0894 BF91      	/* frame size = 0 */
+ 1891 0898 9F91      	.LM151:
+ 1892 089a 8F91      		lds r24,timer4_ovrflow_cnt
+ 1893 089c 7F91      		lds r25,(timer4_ovrflow_cnt)+1
+ 1894 089e 6F91      		lds r26,(timer4_ovrflow_cnt)+2
+ 1895 08a0 5F91      		lds r27,(timer4_ovrflow_cnt)+3
+ 1896 08a2 4F91      		adiw r24,1
+ 1897 08a4 3F91      		adc r26,__zero_reg__
+ 1898 08a6 2F91      		adc r27,__zero_reg__
+ 1899 08a8 0F90      		sts timer4_ovrflow_cnt,r24
+ 1900 08aa 0FBE      		sts (timer4_ovrflow_cnt)+1,r25
+ 1901 08ac 0F90      		sts (timer4_ovrflow_cnt)+2,r26
+ 1902 08ae 1F90      		sts (timer4_ovrflow_cnt)+3,r27
+ 1904               	.LM152:
+ 1905               		lds r24,TimerIntFunc+40
+ 1906               		lds r25,(TimerIntFunc+40)+1
+ 1907               		sbiw r24,0
+ 1908               		breq .L103
+ 1909               		lds r30,TimerIntFunc+40
+ 296:timer640.c    **** ISR(TIMER4_OVF_vect) 
+ 297:timer640.c    **** {
+ 1910               	1
+ 1911               		icall
+ 1912               	.L103:
+ 1913 08b2 1F92      	/* epilogue start */
+ 1915 08b6 0FB6      	.LM153:
+ 1916 08b8 0F92      		pop r28
+ 1917 08ba 1124      		pop r29
+ 1918 08bc 2F93      		pop r31
+ 1919 08be 3F93      		pop r30
+ 1920 08c0 4F93      		pop r27
+ 1921 08c2 5F93      		pop r26
+ 1922 08c4 6F93      		pop r25
+ 1923 08c6 7F93      		pop r24
+ 1924 08c8 8F93      		pop r23
+ 1925 08ca 9F93      		pop r22
+ 1926 08cc AF93      		pop r21
+ 1927 08ce BF93      		pop r20
+ 1928 08d0 EF93      		pop r19
+ 1929 08d2 FF93      		pop r18
+ 1930 08d4 DF93      		pop r0
+ 1931 08d6 CF93      		out __SREG__,r0
+ 1932 08d8 CDB7      		pop r0
+ 1933 08da DEB7      		pop __zero_reg__
+ 1934               		reti
+ 298:timer640.c    ****   timer4_ovrflow_cnt++;
+ 1936               	or_50:F(0,15)",36,0,0,__vector_50
+ 1937               	.global	__vector_50
+ 1939 08e0 9091 0000 	__vector_50:
+ 1941 08e8 B091 0000 	.LM154:
+ 1942 08ec 0196      	.LFBB43:
+ 1943 08ee A11D      		push __zero_reg__
+ 1944 08f0 B11D      		push r0
+ 1945 08f2 8093 0000 		in r0,__SREG__
+ 1946 08f6 9093 0000 		push r0
+ 1947 08fa A093 0000 		clr __zero_reg__
+ 1948 08fe B093 0000 		push r18
+ 299:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER4_OVF_interrupt);
+ 1949               	sh r20
+ 1950               		push r21
+ 1951 0902 8091 0000 		push r22
+ 1952 0906 9091 0000 		push r23
+ 1953 090a 0097      		push r24
+ 1954 090c 01F0      		push r25
+ 1955 090e E091 0000 		push r26
+ 1956 0912 F091 0000 		push r27
+ 1957 0916 0995      		push r30
+ 1958               		push r31
+ 1959               		push r29
+ 300:timer640.c    **** }
+ 1960               	in r28,__SP_L__
+ 1961               		in r29,__SP_H__
+ 1962 0918 CF91      	/* prologue: Signal */
+ 1963 091a DF91      	/* frame size = 0 */
+ 1965 091e EF91      	.LM155:
+ 1966 0920 BF91      		lds r24,timer5_ovrflow_cnt
+ 1967 0922 AF91      		lds r25,(timer5_ovrflow_cnt)+1
+ 1968 0924 9F91      		lds r26,(timer5_ovrflow_cnt)+2
+ 1969 0926 8F91      		lds r27,(timer5_ovrflow_cnt)+3
+ 1970 0928 7F91      		adiw r24,1
+ 1971 092a 6F91      		adc r26,__zero_reg__
+ 1972 092c 5F91      		adc r27,__zero_reg__
+ 1973 092e 4F91      		sts timer5_ovrflow_cnt,r24
+ 1974 0930 3F91      		sts (timer5_ovrflow_cnt)+1,r25
+ 1975 0932 2F91      		sts (timer5_ovrflow_cnt)+2,r26
+ 1976 0934 0F90      		sts (timer5_ovrflow_cnt)+3,r27
+ 1978 0938 0F90      	.LM156:
+ 1979 093a 1F90      		lds r24,TimerIntFunc+50
+ 1980 093c 1895      		lds r25,(TimerIntFunc+50)+1
+ 1981               		sbiw r24,0
+ 1982               		breq .L106
+ 1983               		lds r30,TimerIntFunc+50
+ 1984               		lds r31,(TimerIntFunc+50)+1
+ 1985               		icall
+ 1986               	.L106:
+ 301:timer640.c    **** ISR(TIMER5_OVF_vect) 
+ 302:timer640.c    **** {
+ 1987               	n	68,0,305,.LM157-.LFBB43
+ 1988               	.LM157:
+ 1989               		pop r28
+ 1990 093e 1F92      		pop r29
+ 1991 0940 0F92      		pop r31
+ 1992 0942 0FB6      		pop r30
+ 1993 0944 0F92      		pop r27
+ 1994 0946 1124      		pop r26
+ 1995 0948 2F93      		pop r25
+ 1996 094a 3F93      		pop r24
+ 1997 094c 4F93      		pop r23
+ 1998 094e 5F93      		pop r22
+ 1999 0950 6F93      		pop r21
+ 2000 0952 7F93      		pop r20
+ 2001 0954 8F93      		pop r19
+ 2002 0956 9F93      		pop r18
+ 2003 0958 AF93      		pop r0
+ 2004 095a BF93      		out __SREG__,r0
+ 2005 095c EF93      		pop r0
+ 2006 095e FF93      		pop __zero_reg__
+ 2007 0960 DF93      		reti
+ 2009 0964 CDB7      	.Lscope43:
+ 2011               	.global	__vector_21
+ 303:timer640.c    ****   timer5_ovrflow_cnt++;
+ 2013               	307,.LM158-.LFBB44
+ 2014               	.LM158:
+ 2015 0968 8091 0000 	.LFBB44:
+ 2016 096c 9091 0000 		push __zero_reg__
+ 2017 0970 A091 0000 		push r0
+ 2018 0974 B091 0000 		in r0,__SREG__
+ 2019 0978 0196      		push r0
+ 2020 097a A11D      		clr __zero_reg__
+ 2021 097c B11D      		push r18
+ 2022 097e 8093 0000 		push r19
+ 2023 0982 9093 0000 		push r20
+ 2024 0986 A093 0000 		push r21
+ 2025 098a B093 0000 		push r22
+ 304:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER5_OVF_interrupt);
+ 2026               	sh r24
+ 2027               		push r25
+ 2028 098e 8091 0000 		push r26
+ 2029 0992 9091 0000 		push r27
+ 2030 0996 0097      		push r30
+ 2031 0998 01F0      		push r31
+ 2032 099a E091 0000 		push r29
+ 2033 099e F091 0000 		push r28
+ 2034 09a2 0995      		in r28,__SP_L__
+ 2035               		in r29,__SP_H__
+ 2036               	/* prologue: Signal */
+ 305:timer640.c    **** }
+ 2037               	ze = 0 */
+ 2039 09a4 CF91      	.LM159:
+ 2040 09a6 DF91      		lds r24,TimerIntFunc
+ 2041 09a8 FF91      		lds r25,(TimerIntFunc)+1
+ 2042 09aa EF91      		sbiw r24,0
+ 2043 09ac BF91      		breq .L109
+ 2044 09ae AF91      		lds r30,TimerIntFunc
+ 2045 09b0 9F91      		lds r31,(TimerIntFunc)+1
+ 2046 09b2 8F91      		icall
+ 2047 09b4 7F91      	.L109:
+ 2048 09b6 6F91      	/* epilogue start */
+ 2050 09ba 4F91      	.LM160:
+ 2051 09bc 3F91      		pop r28
+ 2052 09be 2F91      		pop r29
+ 2053 09c0 0F90      		pop r31
+ 2054 09c2 0FBE      		pop r30
+ 2055 09c4 0F90      		pop r27
+ 2056 09c6 1F90      		pop r26
+ 2057 09c8 1895      		pop r25
+ 2058               		pop r24
+ 2059               		pop r23
+ 2060               		pop r22
+ 2061               		pop r21
+ 2062               		pop r20
+ 2063               		pop r19
+ 306:timer640.c    **** ISR(TIMER0_COMPA_vect)
+ 307:timer640.c    **** {
+ 2064               	G__,r0
+ 2065               		pop r0
+ 2066               		pop __zero_reg__
+ 2067 09ca 1F92      		reti
+ 2069 09ce 0FB6      	.Lscope44:
+ 2071 09d2 1124      	.global	__vector_22
+ 2073 09d6 3F93      	__vector_22:
+ 2075 09da 5F93      	.LM161:
+ 2076 09dc 6F93      	.LFBB45:
+ 2077 09de 7F93      		push __zero_reg__
+ 2078 09e0 8F93      		push r0
+ 2079 09e2 9F93      		in r0,__SREG__
+ 2080 09e4 AF93      		push r0
+ 2081 09e6 BF93      		clr __zero_reg__
+ 2082 09e8 EF93      		push r18
+ 2083 09ea FF93      		push r19
+ 2084 09ec DF93      		push r20
+ 2085 09ee CF93      		push r21
+ 2086 09f0 CDB7      		push r22
+ 2087 09f2 DEB7      		push r23
+ 2088               		push r24
+ 2089               		push r25
+ 308:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER0_COMPA_interrupt);
+ 2090               	r30
+ 2091               		push r31
+ 2092 09f4 8091 0000 		push r29
+ 2093 09f8 9091 0000 		push r28
+ 2094 09fc 0097      		in r28,__SP_L__
+ 2095 09fe 01F0      		in r29,__SP_H__
+ 2096 0a00 E091 0000 	/* prologue: Signal */
+ 2097 0a04 F091 0000 	/* frame size = 0 */
+ 2099               	.LM162:
+ 2100               		lds r24,TimerIntFunc+2
+ 309:timer640.c    **** }
+ 2101               	imerIntFunc+2)+1
+ 2102               		sbiw r24,0
+ 2103 0a0a CF91      		breq .L112
+ 2104 0a0c DF91      		lds r30,TimerIntFunc+2
+ 2105 0a0e FF91      		lds r31,(TimerIntFunc+2)+1
+ 2106 0a10 EF91      		icall
+ 2107 0a12 BF91      	.L112:
+ 2108 0a14 AF91      	/* epilogue start */
+ 2110 0a18 8F91      	.LM163:
+ 2111 0a1a 7F91      		pop r28
+ 2112 0a1c 6F91      		pop r29
+ 2113 0a1e 5F91      		pop r31
+ 2114 0a20 4F91      		pop r30
+ 2115 0a22 3F91      		pop r27
+ 2116 0a24 2F91      		pop r26
+ 2117 0a26 0F90      		pop r25
+ 2118 0a28 0FBE      		pop r24
+ 2119 0a2a 0F90      		pop r23
+ 2120 0a2c 1F90      		pop r22
+ 2121 0a2e 1895      		pop r21
+ 2122               		pop r20
+ 2123               		pop r19
+ 2124               		pop r18
+ 2125               		pop r0
+ 2126               		out __SREG__,r0
+ 2127               		pop r0
+ 310:timer640.c    **** ISR(TIMER0_COMPB_vect)
+ 311:timer640.c    **** {
+ 2128               	ize	__vector_22, .-__vector_22
+ 2129               	.Lscope45:
+ 2131 0a30 1F92      	.global	__vector_16
+ 2133 0a34 0FB6      	__vector_16:
+ 2135 0a38 1124      	.LM164:
+ 2136 0a3a 2F93      	.LFBB46:
+ 2137 0a3c 3F93      		push __zero_reg__
+ 2138 0a3e 4F93      		push r0
+ 2139 0a40 5F93      		in r0,__SREG__
+ 2140 0a42 6F93      		push r0
+ 2141 0a44 7F93      		clr __zero_reg__
+ 2142 0a46 8F93      		push r18
+ 2143 0a48 9F93      		push r19
+ 2144 0a4a AF93      		push r20
+ 2145 0a4c BF93      		push r21
+ 2146 0a4e EF93      		push r22
+ 2147 0a50 FF93      		push r23
+ 2148 0a52 DF93      		push r24
+ 2149 0a54 CF93      		push r25
+ 2150 0a56 CDB7      		push r26
+ 2151 0a58 DEB7      		push r27
+ 2152               		push r30
+ 2153               		push r31
+ 312:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER0_COMPB_interrupt);
+ 2154               	8,__SP_L__
+ 2155               		in r29,__SP_H__
+ 2156 0a5a 8091 0000 	/* prologue: Signal */
+ 2157 0a5e 9091 0000 	/* frame size = 0 */
+ 2159 0a64 01F0      	.LM165:
+ 2160 0a66 E091 0000 		lds r24,TimerIntFunc+6
+ 2161 0a6a F091 0000 		lds r25,(TimerIntFunc+6)+1
+ 2162 0a6e 0995      		sbiw r24,0
+ 2163               		breq .L115
+ 2164               		lds r30,TimerIntFunc+6
+ 313:timer640.c    **** }
+ 2165               	imerIntFunc+6)+1
+ 2166               		icall
+ 2167 0a70 CF91      	.L115:
+ 2168 0a72 DF91      	/* epilogue start */
+ 2170 0a76 EF91      	.LM166:
+ 2171 0a78 BF91      		pop r28
+ 2172 0a7a AF91      		pop r29
+ 2173 0a7c 9F91      		pop r31
+ 2174 0a7e 8F91      		pop r30
+ 2175 0a80 7F91      		pop r27
+ 2176 0a82 6F91      		pop r26
+ 2177 0a84 5F91      		pop r25
+ 2178 0a86 4F91      		pop r24
+ 2179 0a88 3F91      		pop r23
+ 2180 0a8a 2F91      		pop r22
+ 2181 0a8c 0F90      		pop r21
+ 2182 0a8e 0FBE      		pop r20
+ 2183 0a90 0F90      		pop r19
+ 2184 0a92 1F90      		pop r18
+ 2185 0a94 1895      		pop r0
+ 2186               		out __SREG__,r0
+ 2187               		pop r0
+ 2188               		pop __zero_reg__
+ 2189               		reti
+ 2191               	.Lscope46:
+ 314:timer640.c    **** ISR(TIMER1_CAPT_vect)
+ 315:timer640.c    **** {
+ 2192               	)",36,0,0,__vector_17
+ 2193               	.global	__vector_17
+ 2195 0a96 1F92      	__vector_17:
+ 2197 0a9a 0FB6      	.LM167:
+ 2198 0a9c 0F92      	.LFBB47:
+ 2199 0a9e 1124      		push __zero_reg__
+ 2200 0aa0 2F93      		push r0
+ 2201 0aa2 3F93      		in r0,__SREG__
+ 2202 0aa4 4F93      		push r0
+ 2203 0aa6 5F93      		clr __zero_reg__
+ 2204 0aa8 6F93      		push r18
+ 2205 0aaa 7F93      		push r19
+ 2206 0aac 8F93      		push r20
+ 2207 0aae 9F93      		push r21
+ 2208 0ab0 AF93      		push r22
+ 2209 0ab2 BF93      		push r23
+ 2210 0ab4 EF93      		push r24
+ 2211 0ab6 FF93      		push r25
+ 2212 0ab8 DF93      		push r26
+ 2213 0aba CF93      		push r27
+ 2214 0abc CDB7      		push r30
+ 2215 0abe DEB7      		push r31
+ 2216               		push r29
+ 2217               		push r28
+ 316:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER1_CAPT_interrupt);
+ 2218               	_SP_H__
+ 2219               	/* prologue: Signal */
+ 2220 0ac0 8091 0000 	/* frame size = 0 */
+ 2222 0ac8 0097      	.LM168:
+ 2223 0aca 01F0      		lds r24,TimerIntFunc+8
+ 2224 0acc E091 0000 		lds r25,(TimerIntFunc+8)+1
+ 2225 0ad0 F091 0000 		sbiw r24,0
+ 2226 0ad4 0995      		breq .L118
+ 2227               		lds r30,TimerIntFunc+8
+ 2228               		lds r31,(TimerIntFunc+8)+1
+ 317:timer640.c    **** }
+ 2229               	8:
+ 2230               	/* epilogue start */
+ 2232 0ad8 DF91      	.LM169:
+ 2233 0ada FF91      		pop r28
+ 2234 0adc EF91      		pop r29
+ 2235 0ade BF91      		pop r31
+ 2236 0ae0 AF91      		pop r30
+ 2237 0ae2 9F91      		pop r27
+ 2238 0ae4 8F91      		pop r26
+ 2239 0ae6 7F91      		pop r25
+ 2240 0ae8 6F91      		pop r24
+ 2241 0aea 5F91      		pop r23
+ 2242 0aec 4F91      		pop r22
+ 2243 0aee 3F91      		pop r21
+ 2244 0af0 2F91      		pop r20
+ 2245 0af2 0F90      		pop r19
+ 2246 0af4 0FBE      		pop r18
+ 2247 0af6 0F90      		pop r0
+ 2248 0af8 1F90      		out __SREG__,r0
+ 2249 0afa 1895      		pop r0
+ 2250               		pop __zero_reg__
+ 2251               		reti
+ 2253               	.Lscope47:
+ 2255               	.global	__vector_18
+ 318:timer640.c    **** ISR(TIMER1_COMPA_vect)
+ 319:timer640.c    **** {
+ 2256               	on
+ 2257               	__vector_18:
+ 2259 0afc 1F92      	.LM170:
+ 2260 0afe 0F92      	.LFBB48:
+ 2261 0b00 0FB6      		push __zero_reg__
+ 2262 0b02 0F92      		push r0
+ 2263 0b04 1124      		in r0,__SREG__
+ 2264 0b06 2F93      		push r0
+ 2265 0b08 3F93      		clr __zero_reg__
+ 2266 0b0a 4F93      		push r18
+ 2267 0b0c 5F93      		push r19
+ 2268 0b0e 6F93      		push r20
+ 2269 0b10 7F93      		push r21
+ 2270 0b12 8F93      		push r22
+ 2271 0b14 9F93      		push r23
+ 2272 0b16 AF93      		push r24
+ 2273 0b18 BF93      		push r25
+ 2274 0b1a EF93      		push r26
+ 2275 0b1c FF93      		push r27
+ 2276 0b1e DF93      		push r30
+ 2277 0b20 CF93      		push r31
+ 2278 0b22 CDB7      		push r29
+ 2279 0b24 DEB7      		push r28
+ 2280               		in r28,__SP_L__
+ 2281               		in r29,__SP_H__
+ 320:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER1_COMPA_interrupt);
+ 2282               	frame size = 0 */
+ 2284 0b26 8091 0000 	.LM171:
+ 2285 0b2a 9091 0000 		lds r24,TimerIntFunc+10
+ 2286 0b2e 0097      		lds r25,(TimerIntFunc+10)+1
+ 2287 0b30 01F0      		sbiw r24,0
+ 2288 0b32 E091 0000 		breq .L121
+ 2289 0b36 F091 0000 		lds r30,TimerIntFunc+10
+ 2290 0b3a 0995      		lds r31,(TimerIntFunc+10)+1
+ 2291               		icall
+ 2292               	.L121:
+ 321:timer640.c    **** }
+ 2293               	 start */
+ 2295 0b3c CF91      	.LM172:
+ 2296 0b3e DF91      		pop r28
+ 2297 0b40 FF91      		pop r29
+ 2298 0b42 EF91      		pop r31
+ 2299 0b44 BF91      		pop r30
+ 2300 0b46 AF91      		pop r27
+ 2301 0b48 9F91      		pop r26
+ 2302 0b4a 8F91      		pop r25
+ 2303 0b4c 7F91      		pop r24
+ 2304 0b4e 6F91      		pop r23
+ 2305 0b50 5F91      		pop r22
+ 2306 0b52 4F91      		pop r21
+ 2307 0b54 3F91      		pop r20
+ 2308 0b56 2F91      		pop r19
+ 2309 0b58 0F90      		pop r18
+ 2310 0b5a 0FBE      		pop r0
+ 2311 0b5c 0F90      		out __SREG__,r0
+ 2312 0b5e 1F90      		pop r0
+ 2313 0b60 1895      		pop __zero_reg__
+ 2314               		reti
+ 2316               	.Lscope48:
+ 2318               	.global	__vector_19
+ 322:timer640.c    **** ISR(TIMER1_COMPB_vect)
+ 323:timer640.c    **** {
+ 2320               	27,.LM173-.LFBB49
+ 2321               	.LM173:
+ 2322               	.LFBB49:
+ 2323 0b62 1F92      		push __zero_reg__
+ 2324 0b64 0F92      		push r0
+ 2325 0b66 0FB6      		in r0,__SREG__
+ 2326 0b68 0F92      		push r0
+ 2327 0b6a 1124      		clr __zero_reg__
+ 2328 0b6c 2F93      		push r18
+ 2329 0b6e 3F93      		push r19
+ 2330 0b70 4F93      		push r20
+ 2331 0b72 5F93      		push r21
+ 2332 0b74 6F93      		push r22
+ 2333 0b76 7F93      		push r23
+ 2334 0b78 8F93      		push r24
+ 2335 0b7a 9F93      		push r25
+ 2336 0b7c AF93      		push r26
+ 2337 0b7e BF93      		push r27
+ 2338 0b80 EF93      		push r30
+ 2339 0b82 FF93      		push r31
+ 2340 0b84 DF93      		push r29
+ 2341 0b86 CF93      		push r28
+ 2342 0b88 CDB7      		in r28,__SP_L__
+ 2343 0b8a DEB7      		in r29,__SP_H__
+ 2344               	/* prologue: Signal */
+ 2345               	/* frame size = 0 */
+ 324:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER1_COMPB_interrupt);
+ 2346               	FBB49
+ 2347               	.LM174:
+ 2348 0b8c 8091 0000 		lds r24,TimerIntFunc+12
+ 2349 0b90 9091 0000 		lds r25,(TimerIntFunc+12)+1
+ 2350 0b94 0097      		sbiw r24,0
+ 2351 0b96 01F0      		breq .L124
+ 2352 0b98 E091 0000 		lds r30,TimerIntFunc+12
+ 2353 0b9c F091 0000 		lds r31,(TimerIntFunc+12)+1
+ 2354 0ba0 0995      		icall
+ 2355               	.L124:
+ 2356               	/* epilogue start */
+ 325:timer640.c    **** }
+ 2357               	0,329,.LM175-.LFBB49
+ 2358               	.LM175:
+ 2359 0ba2 CF91      		pop r28
+ 2360 0ba4 DF91      		pop r29
+ 2361 0ba6 FF91      		pop r31
+ 2362 0ba8 EF91      		pop r30
+ 2363 0baa BF91      		pop r27
+ 2364 0bac AF91      		pop r26
+ 2365 0bae 9F91      		pop r25
+ 2366 0bb0 8F91      		pop r24
+ 2367 0bb2 7F91      		pop r23
+ 2368 0bb4 6F91      		pop r22
+ 2369 0bb6 5F91      		pop r21
+ 2370 0bb8 4F91      		pop r20
+ 2371 0bba 3F91      		pop r19
+ 2372 0bbc 2F91      		pop r18
+ 2373 0bbe 0F90      		pop r0
+ 2374 0bc0 0FBE      		out __SREG__,r0
+ 2375 0bc2 0F90      		pop r0
+ 2376 0bc4 1F90      		pop __zero_reg__
+ 2377 0bc6 1895      		reti
+ 2379               	.Lscope49:
+ 2381               	.global	__vector_13
+ 2383               	__vector_13:
+ 326:timer640.c    **** ISR(TIMER1_COMPC_vect)
+ 327:timer640.c    **** {
+ 2384               	BB50
+ 2385               	.LM176:
+ 2386               	.LFBB50:
+ 2387 0bc8 1F92      		push __zero_reg__
+ 2388 0bca 0F92      		push r0
+ 2389 0bcc 0FB6      		in r0,__SREG__
+ 2390 0bce 0F92      		push r0
+ 2391 0bd0 1124      		clr __zero_reg__
+ 2392 0bd2 2F93      		push r18
+ 2393 0bd4 3F93      		push r19
+ 2394 0bd6 4F93      		push r20
+ 2395 0bd8 5F93      		push r21
+ 2396 0bda 6F93      		push r22
+ 2397 0bdc 7F93      		push r23
+ 2398 0bde 8F93      		push r24
+ 2399 0be0 9F93      		push r25
+ 2400 0be2 AF93      		push r26
+ 2401 0be4 BF93      		push r27
+ 2402 0be6 EF93      		push r30
+ 2403 0be8 FF93      		push r31
+ 2404 0bea DF93      		push r29
+ 2405 0bec CF93      		push r28
+ 2406 0bee CDB7      		in r28,__SP_L__
+ 2407 0bf0 DEB7      		in r29,__SP_H__
+ 2408               	/* prologue: Signal */
+ 2409               	/* frame size = 0 */
+ 328:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER1_COMPC_interrupt);
+ 2410               	FBB50
+ 2411               	.LM177:
+ 2412 0bf2 8091 0000 		lds r24,TimerIntFunc+16
+ 2413 0bf6 9091 0000 		lds r25,(TimerIntFunc+16)+1
+ 2414 0bfa 0097      		sbiw r24,0
+ 2415 0bfc 01F0      		breq .L127
+ 2416 0bfe E091 0000 		lds r30,TimerIntFunc+16
+ 2417 0c02 F091 0000 		lds r31,(TimerIntFunc+16)+1
+ 2418 0c06 0995      		icall
+ 2419               	.L127:
+ 2420               	/* epilogue start */
+ 329:timer640.c    **** }
+ 2421               	0,333,.LM178-.LFBB50
+ 2422               	.LM178:
+ 2423 0c08 CF91      		pop r28
+ 2424 0c0a DF91      		pop r29
+ 2425 0c0c FF91      		pop r31
+ 2426 0c0e EF91      		pop r30
+ 2427 0c10 BF91      		pop r27
+ 2428 0c12 AF91      		pop r26
+ 2429 0c14 9F91      		pop r25
+ 2430 0c16 8F91      		pop r24
+ 2431 0c18 7F91      		pop r23
+ 2432 0c1a 6F91      		pop r22
+ 2433 0c1c 5F91      		pop r21
+ 2434 0c1e 4F91      		pop r20
+ 2435 0c20 3F91      		pop r19
+ 2436 0c22 2F91      		pop r18
+ 2437 0c24 0F90      		pop r0
+ 2438 0c26 0FBE      		out __SREG__,r0
+ 2439 0c28 0F90      		pop r0
+ 2440 0c2a 1F90      		pop __zero_reg__
+ 2441 0c2c 1895      		reti
+ 2443               	.Lscope50:
+ 2445               	.global	__vector_14
+ 2447               	__vector_14:
+ 330:timer640.c    **** ISR(TIMER2_COMPA_vect)
+ 331:timer640.c    **** {
+ 2448               	BB51
+ 2449               	.LM179:
+ 2450               	.LFBB51:
+ 2451 0c2e 1F92      		push __zero_reg__
+ 2452 0c30 0F92      		push r0
+ 2453 0c32 0FB6      		in r0,__SREG__
+ 2454 0c34 0F92      		push r0
+ 2455 0c36 1124      		clr __zero_reg__
+ 2456 0c38 2F93      		push r18
+ 2457 0c3a 3F93      		push r19
+ 2458 0c3c 4F93      		push r20
+ 2459 0c3e 5F93      		push r21
+ 2460 0c40 6F93      		push r22
+ 2461 0c42 7F93      		push r23
+ 2462 0c44 8F93      		push r24
+ 2463 0c46 9F93      		push r25
+ 2464 0c48 AF93      		push r26
+ 2465 0c4a BF93      		push r27
+ 2466 0c4c EF93      		push r30
+ 2467 0c4e FF93      		push r31
+ 2468 0c50 DF93      		push r29
+ 2469 0c52 CF93      		push r28
+ 2470 0c54 CDB7      		in r28,__SP_L__
+ 2471 0c56 DEB7      		in r29,__SP_H__
+ 2472               	/* prologue: Signal */
+ 2473               	/* frame size = 0 */
+ 332:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER2_COMPA_interrupt);
+ 2474               	FBB51
+ 2475               	.LM180:
+ 2476 0c58 8091 0000 		lds r24,TimerIntFunc+18
+ 2477 0c5c 9091 0000 		lds r25,(TimerIntFunc+18)+1
+ 2478 0c60 0097      		sbiw r24,0
+ 2479 0c62 01F0      		breq .L130
+ 2480 0c64 E091 0000 		lds r30,TimerIntFunc+18
+ 2481 0c68 F091 0000 		lds r31,(TimerIntFunc+18)+1
+ 2482 0c6c 0995      		icall
+ 2483               	.L130:
+ 2484               	/* epilogue start */
+ 333:timer640.c    **** }
+ 2485               	0,337,.LM181-.LFBB51
+ 2486               	.LM181:
+ 2487 0c6e CF91      		pop r28
+ 2488 0c70 DF91      		pop r29
+ 2489 0c72 FF91      		pop r31
+ 2490 0c74 EF91      		pop r30
+ 2491 0c76 BF91      		pop r27
+ 2492 0c78 AF91      		pop r26
+ 2493 0c7a 9F91      		pop r25
+ 2494 0c7c 8F91      		pop r24
+ 2495 0c7e 7F91      		pop r23
+ 2496 0c80 6F91      		pop r22
+ 2497 0c82 5F91      		pop r21
+ 2498 0c84 4F91      		pop r20
+ 2499 0c86 3F91      		pop r19
+ 2500 0c88 2F91      		pop r18
+ 2501 0c8a 0F90      		pop r0
+ 2502 0c8c 0FBE      		out __SREG__,r0
+ 2503 0c8e 0F90      		pop r0
+ 2504 0c90 1F90      		pop __zero_reg__
+ 2505 0c92 1895      		reti
+ 2507               	.Lscope51:
+ 2509               	.global	__vector_31
+ 2511               	__vector_31:
+ 334:timer640.c    **** ISR(TIMER2_COMPB_vect)
+ 335:timer640.c    **** {
+ 2512               	BB52
+ 2513               	.LM182:
+ 2514               	.LFBB52:
+ 2515 0c94 1F92      		push __zero_reg__
+ 2516 0c96 0F92      		push r0
+ 2517 0c98 0FB6      		in r0,__SREG__
+ 2518 0c9a 0F92      		push r0
+ 2519 0c9c 1124      		clr __zero_reg__
+ 2520 0c9e 2F93      		push r18
+ 2521 0ca0 3F93      		push r19
+ 2522 0ca2 4F93      		push r20
+ 2523 0ca4 5F93      		push r21
+ 2524 0ca6 6F93      		push r22
+ 2525 0ca8 7F93      		push r23
+ 2526 0caa 8F93      		push r24
+ 2527 0cac 9F93      		push r25
+ 2528 0cae AF93      		push r26
+ 2529 0cb0 BF93      		push r27
+ 2530 0cb2 EF93      		push r30
+ 2531 0cb4 FF93      		push r31
+ 2532 0cb6 DF93      		push r29
+ 2533 0cb8 CF93      		push r28
+ 2534 0cba CDB7      		in r28,__SP_L__
+ 2535 0cbc DEB7      		in r29,__SP_H__
+ 2536               	/* prologue: Signal */
+ 2537               	/* frame size = 0 */
+ 336:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER2_COMPB_interrupt);
+ 2538               	FBB52
+ 2539               	.LM183:
+ 2540 0cbe 8091 0000 		lds r24,TimerIntFunc+22
+ 2541 0cc2 9091 0000 		lds r25,(TimerIntFunc+22)+1
+ 2542 0cc6 0097      		sbiw r24,0
+ 2543 0cc8 01F0      		breq .L133
+ 2544 0cca E091 0000 		lds r30,TimerIntFunc+22
+ 2545 0cce F091 0000 		lds r31,(TimerIntFunc+22)+1
+ 2546 0cd2 0995      		icall
+ 2547               	.L133:
+ 2548               	/* epilogue start */
+ 337:timer640.c    **** }
+ 2549               	0,341,.LM184-.LFBB52
+ 2550               	.LM184:
+ 2551 0cd4 CF91      		pop r28
+ 2552 0cd6 DF91      		pop r29
+ 2553 0cd8 FF91      		pop r31
+ 2554 0cda EF91      		pop r30
+ 2555 0cdc BF91      		pop r27
+ 2556 0cde AF91      		pop r26
+ 2557 0ce0 9F91      		pop r25
+ 2558 0ce2 8F91      		pop r24
+ 2559 0ce4 7F91      		pop r23
+ 2560 0ce6 6F91      		pop r22
+ 2561 0ce8 5F91      		pop r21
+ 2562 0cea 4F91      		pop r20
+ 2563 0cec 3F91      		pop r19
+ 2564 0cee 2F91      		pop r18
+ 2565 0cf0 0F90      		pop r0
+ 2566 0cf2 0FBE      		out __SREG__,r0
+ 2567 0cf4 0F90      		pop r0
+ 2568 0cf6 1F90      		pop __zero_reg__
+ 2569 0cf8 1895      		reti
+ 2571               	.Lscope52:
+ 2573               	.global	__vector_32
+ 2575               	__vector_32:
+ 338:timer640.c    **** ISR(TIMER3_CAPT_vect)
+ 339:timer640.c    **** {
+ 2576               	BB53
+ 2577               	.LM185:
+ 2578               	.LFBB53:
+ 2579 0cfa 1F92      		push __zero_reg__
+ 2580 0cfc 0F92      		push r0
+ 2581 0cfe 0FB6      		in r0,__SREG__
+ 2582 0d00 0F92      		push r0
+ 2583 0d02 1124      		clr __zero_reg__
+ 2584 0d04 2F93      		push r18
+ 2585 0d06 3F93      		push r19
+ 2586 0d08 4F93      		push r20
+ 2587 0d0a 5F93      		push r21
+ 2588 0d0c 6F93      		push r22
+ 2589 0d0e 7F93      		push r23
+ 2590 0d10 8F93      		push r24
+ 2591 0d12 9F93      		push r25
+ 2592 0d14 AF93      		push r26
+ 2593 0d16 BF93      		push r27
+ 2594 0d18 EF93      		push r30
+ 2595 0d1a FF93      		push r31
+ 2596 0d1c DF93      		push r29
+ 2597 0d1e CF93      		push r28
+ 2598 0d20 CDB7      		in r28,__SP_L__
+ 2599 0d22 DEB7      		in r29,__SP_H__
+ 2600               	/* prologue: Signal */
+ 2601               	/* frame size = 0 */
+ 340:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER3_CAPT_interrupt);
+ 2602               	FBB53
+ 2603               	.LM186:
+ 2604 0d24 8091 0000 		lds r24,TimerIntFunc+24
+ 2605 0d28 9091 0000 		lds r25,(TimerIntFunc+24)+1
+ 2606 0d2c 0097      		sbiw r24,0
+ 2607 0d2e 01F0      		breq .L136
+ 2608 0d30 E091 0000 		lds r30,TimerIntFunc+24
+ 2609 0d34 F091 0000 		lds r31,(TimerIntFunc+24)+1
+ 2610 0d38 0995      		icall
+ 2611               	.L136:
+ 2612               	/* epilogue start */
+ 341:timer640.c    **** }
+ 2613               	0,345,.LM187-.LFBB53
+ 2614               	.LM187:
+ 2615 0d3a CF91      		pop r28
+ 2616 0d3c DF91      		pop r29
+ 2617 0d3e FF91      		pop r31
+ 2618 0d40 EF91      		pop r30
+ 2619 0d42 BF91      		pop r27
+ 2620 0d44 AF91      		pop r26
+ 2621 0d46 9F91      		pop r25
+ 2622 0d48 8F91      		pop r24
+ 2623 0d4a 7F91      		pop r23
+ 2624 0d4c 6F91      		pop r22
+ 2625 0d4e 5F91      		pop r21
+ 2626 0d50 4F91      		pop r20
+ 2627 0d52 3F91      		pop r19
+ 2628 0d54 2F91      		pop r18
+ 2629 0d56 0F90      		pop r0
+ 2630 0d58 0FBE      		out __SREG__,r0
+ 2631 0d5a 0F90      		pop r0
+ 2632 0d5c 1F90      		pop __zero_reg__
+ 2633 0d5e 1895      		reti
+ 2635               	.Lscope53:
+ 2637               	.global	__vector_33
+ 2639               	__vector_33:
+ 342:timer640.c    **** ISR(TIMER3_COMPA_vect)
+ 343:timer640.c    **** {
+ 2640               	BB54
+ 2641               	.LM188:
+ 2642               	.LFBB54:
+ 2643 0d60 1F92      		push __zero_reg__
+ 2644 0d62 0F92      		push r0
+ 2645 0d64 0FB6      		in r0,__SREG__
+ 2646 0d66 0F92      		push r0
+ 2647 0d68 1124      		clr __zero_reg__
+ 2648 0d6a 2F93      		push r18
+ 2649 0d6c 3F93      		push r19
+ 2650 0d6e 4F93      		push r20
+ 2651 0d70 5F93      		push r21
+ 2652 0d72 6F93      		push r22
+ 2653 0d74 7F93      		push r23
+ 2654 0d76 8F93      		push r24
+ 2655 0d78 9F93      		push r25
+ 2656 0d7a AF93      		push r26
+ 2657 0d7c BF93      		push r27
+ 2658 0d7e EF93      		push r30
+ 2659 0d80 FF93      		push r31
+ 2660 0d82 DF93      		push r29
+ 2661 0d84 CF93      		push r28
+ 2662 0d86 CDB7      		in r28,__SP_L__
+ 2663 0d88 DEB7      		in r29,__SP_H__
+ 2664               	/* prologue: Signal */
+ 2665               	/* frame size = 0 */
+ 344:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER3_COMPA_interrupt);
+ 2666               	FBB54
+ 2667               	.LM189:
+ 2668 0d8a 8091 0000 		lds r24,TimerIntFunc+26
+ 2669 0d8e 9091 0000 		lds r25,(TimerIntFunc+26)+1
+ 2670 0d92 0097      		sbiw r24,0
+ 2671 0d94 01F0      		breq .L139
+ 2672 0d96 E091 0000 		lds r30,TimerIntFunc+26
+ 2673 0d9a F091 0000 		lds r31,(TimerIntFunc+26)+1
+ 2674 0d9e 0995      		icall
+ 2675               	.L139:
+ 2676               	/* epilogue start */
+ 345:timer640.c    **** }
+ 2677               	0,349,.LM190-.LFBB54
+ 2678               	.LM190:
+ 2679 0da0 CF91      		pop r28
+ 2680 0da2 DF91      		pop r29
+ 2681 0da4 FF91      		pop r31
+ 2682 0da6 EF91      		pop r30
+ 2683 0da8 BF91      		pop r27
+ 2684 0daa AF91      		pop r26
+ 2685 0dac 9F91      		pop r25
+ 2686 0dae 8F91      		pop r24
+ 2687 0db0 7F91      		pop r23
+ 2688 0db2 6F91      		pop r22
+ 2689 0db4 5F91      		pop r21
+ 2690 0db6 4F91      		pop r20
+ 2691 0db8 3F91      		pop r19
+ 2692 0dba 2F91      		pop r18
+ 2693 0dbc 0F90      		pop r0
+ 2694 0dbe 0FBE      		out __SREG__,r0
+ 2695 0dc0 0F90      		pop r0
+ 2696 0dc2 1F90      		pop __zero_reg__
+ 2697 0dc4 1895      		reti
+ 2699               	.Lscope54:
+ 2701               	.global	__vector_34
+ 2703               	__vector_34:
+ 346:timer640.c    **** ISR(TIMER3_COMPB_vect)
+ 347:timer640.c    **** {
+ 2704               	BB55
+ 2705               	.LM191:
+ 2706               	.LFBB55:
+ 2707 0dc6 1F92      		push __zero_reg__
+ 2708 0dc8 0F92      		push r0
+ 2709 0dca 0FB6      		in r0,__SREG__
+ 2710 0dcc 0F92      		push r0
+ 2711 0dce 1124      		clr __zero_reg__
+ 2712 0dd0 2F93      		push r18
+ 2713 0dd2 3F93      		push r19
+ 2714 0dd4 4F93      		push r20
+ 2715 0dd6 5F93      		push r21
+ 2716 0dd8 6F93      		push r22
+ 2717 0dda 7F93      		push r23
+ 2718 0ddc 8F93      		push r24
+ 2719 0dde 9F93      		push r25
+ 2720 0de0 AF93      		push r26
+ 2721 0de2 BF93      		push r27
+ 2722 0de4 EF93      		push r30
+ 2723 0de6 FF93      		push r31
+ 2724 0de8 DF93      		push r29
+ 2725 0dea CF93      		push r28
+ 2726 0dec CDB7      		in r28,__SP_L__
+ 2727 0dee DEB7      		in r29,__SP_H__
+ 2728               	/* prologue: Signal */
+ 2729               	/* frame size = 0 */
+ 348:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER3_COMPB_interrupt);
+ 2730               	FBB55
+ 2731               	.LM192:
+ 2732 0df0 8091 0000 		lds r24,TimerIntFunc+28
+ 2733 0df4 9091 0000 		lds r25,(TimerIntFunc+28)+1
+ 2734 0df8 0097      		sbiw r24,0
+ 2735 0dfa 01F0      		breq .L142
+ 2736 0dfc E091 0000 		lds r30,TimerIntFunc+28
+ 2737 0e00 F091 0000 		lds r31,(TimerIntFunc+28)+1
+ 2738 0e04 0995      		icall
+ 2739               	.L142:
+ 2740               	/* epilogue start */
+ 349:timer640.c    **** }
+ 2741               	0,353,.LM193-.LFBB55
+ 2742               	.LM193:
+ 2743 0e06 CF91      		pop r28
+ 2744 0e08 DF91      		pop r29
+ 2745 0e0a FF91      		pop r31
+ 2746 0e0c EF91      		pop r30
+ 2747 0e0e BF91      		pop r27
+ 2748 0e10 AF91      		pop r26
+ 2749 0e12 9F91      		pop r25
+ 2750 0e14 8F91      		pop r24
+ 2751 0e16 7F91      		pop r23
+ 2752 0e18 6F91      		pop r22
+ 2753 0e1a 5F91      		pop r21
+ 2754 0e1c 4F91      		pop r20
+ 2755 0e1e 3F91      		pop r19
+ 2756 0e20 2F91      		pop r18
+ 2757 0e22 0F90      		pop r0
+ 2758 0e24 0FBE      		out __SREG__,r0
+ 2759 0e26 0F90      		pop r0
+ 2760 0e28 1F90      		pop __zero_reg__
+ 2761 0e2a 1895      		reti
+ 2763               	.Lscope55:
+ 2765               	.global	__vector_41
+ 2767               	__vector_41:
+ 350:timer640.c    **** ISR(TIMER3_COMPC_vect)
+ 351:timer640.c    **** {
+ 2768               	BB56
+ 2769               	.LM194:
+ 2770               	.LFBB56:
+ 2771 0e2c 1F92      		push __zero_reg__
+ 2772 0e2e 0F92      		push r0
+ 2773 0e30 0FB6      		in r0,__SREG__
+ 2774 0e32 0F92      		push r0
+ 2775 0e34 1124      		clr __zero_reg__
+ 2776 0e36 2F93      		push r18
+ 2777 0e38 3F93      		push r19
+ 2778 0e3a 4F93      		push r20
+ 2779 0e3c 5F93      		push r21
+ 2780 0e3e 6F93      		push r22
+ 2781 0e40 7F93      		push r23
+ 2782 0e42 8F93      		push r24
+ 2783 0e44 9F93      		push r25
+ 2784 0e46 AF93      		push r26
+ 2785 0e48 BF93      		push r27
+ 2786 0e4a EF93      		push r30
+ 2787 0e4c FF93      		push r31
+ 2788 0e4e DF93      		push r29
+ 2789 0e50 CF93      		push r28
+ 2790 0e52 CDB7      		in r28,__SP_L__
+ 2791 0e54 DEB7      		in r29,__SP_H__
+ 2792               	/* prologue: Signal */
+ 2793               	/* frame size = 0 */
+ 352:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER3_COMPC_interrupt);
+ 2794               	FBB56
+ 2795               	.LM195:
+ 2796 0e56 8091 0000 		lds r24,TimerIntFunc+32
+ 2797 0e5a 9091 0000 		lds r25,(TimerIntFunc+32)+1
+ 2798 0e5e 0097      		sbiw r24,0
+ 2799 0e60 01F0      		breq .L145
+ 2800 0e62 E091 0000 		lds r30,TimerIntFunc+32
+ 2801 0e66 F091 0000 		lds r31,(TimerIntFunc+32)+1
+ 2802 0e6a 0995      		icall
+ 2803               	.L145:
+ 2804               	/* epilogue start */
+ 353:timer640.c    **** }
+ 2805               	0,357,.LM196-.LFBB56
+ 2806               	.LM196:
+ 2807 0e6c CF91      		pop r28
+ 2808 0e6e DF91      		pop r29
+ 2809 0e70 FF91      		pop r31
+ 2810 0e72 EF91      		pop r30
+ 2811 0e74 BF91      		pop r27
+ 2812 0e76 AF91      		pop r26
+ 2813 0e78 9F91      		pop r25
+ 2814 0e7a 8F91      		pop r24
+ 2815 0e7c 7F91      		pop r23
+ 2816 0e7e 6F91      		pop r22
+ 2817 0e80 5F91      		pop r21
+ 2818 0e82 4F91      		pop r20
+ 2819 0e84 3F91      		pop r19
+ 2820 0e86 2F91      		pop r18
+ 2821 0e88 0F90      		pop r0
+ 2822 0e8a 0FBE      		out __SREG__,r0
+ 2823 0e8c 0F90      		pop r0
+ 2824 0e8e 1F90      		pop __zero_reg__
+ 2825 0e90 1895      		reti
+ 2827               	.Lscope56:
+ 2829               	.global	__vector_42
+ 2831               	__vector_42:
+ 354:timer640.c    **** ISR(TIMER4_CAPT_vect)
+ 355:timer640.c    **** {
+ 2832               	BB57
+ 2833               	.LM197:
+ 2834               	.LFBB57:
+ 2835 0e92 1F92      		push __zero_reg__
+ 2836 0e94 0F92      		push r0
+ 2837 0e96 0FB6      		in r0,__SREG__
+ 2838 0e98 0F92      		push r0
+ 2839 0e9a 1124      		clr __zero_reg__
+ 2840 0e9c 2F93      		push r18
+ 2841 0e9e 3F93      		push r19
+ 2842 0ea0 4F93      		push r20
+ 2843 0ea2 5F93      		push r21
+ 2844 0ea4 6F93      		push r22
+ 2845 0ea6 7F93      		push r23
+ 2846 0ea8 8F93      		push r24
+ 2847 0eaa 9F93      		push r25
+ 2848 0eac AF93      		push r26
+ 2849 0eae BF93      		push r27
+ 2850 0eb0 EF93      		push r30
+ 2851 0eb2 FF93      		push r31
+ 2852 0eb4 DF93      		push r29
+ 2853 0eb6 CF93      		push r28
+ 2854 0eb8 CDB7      		in r28,__SP_L__
+ 2855 0eba DEB7      		in r29,__SP_H__
+ 2856               	/* prologue: Signal */
+ 2857               	/* frame size = 0 */
+ 356:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER4_CAPT_interrupt);
+ 2858               	FBB57
+ 2859               	.LM198:
+ 2860 0ebc 8091 0000 		lds r24,TimerIntFunc+34
+ 2861 0ec0 9091 0000 		lds r25,(TimerIntFunc+34)+1
+ 2862 0ec4 0097      		sbiw r24,0
+ 2863 0ec6 01F0      		breq .L148
+ 2864 0ec8 E091 0000 		lds r30,TimerIntFunc+34
+ 2865 0ecc F091 0000 		lds r31,(TimerIntFunc+34)+1
+ 2866 0ed0 0995      		icall
+ 2867               	.L148:
+ 2868               	/* epilogue start */
+ 357:timer640.c    **** }
+ 2869               	0,361,.LM199-.LFBB57
+ 2870               	.LM199:
+ 2871 0ed2 CF91      		pop r28
+ 2872 0ed4 DF91      		pop r29
+ 2873 0ed6 FF91      		pop r31
+ 2874 0ed8 EF91      		pop r30
+ 2875 0eda BF91      		pop r27
+ 2876 0edc AF91      		pop r26
+ 2877 0ede 9F91      		pop r25
+ 2878 0ee0 8F91      		pop r24
+ 2879 0ee2 7F91      		pop r23
+ 2880 0ee4 6F91      		pop r22
+ 2881 0ee6 5F91      		pop r21
+ 2882 0ee8 4F91      		pop r20
+ 2883 0eea 3F91      		pop r19
+ 2884 0eec 2F91      		pop r18
+ 2885 0eee 0F90      		pop r0
+ 2886 0ef0 0FBE      		out __SREG__,r0
+ 2887 0ef2 0F90      		pop r0
+ 2888 0ef4 1F90      		pop __zero_reg__
+ 2889 0ef6 1895      		reti
+ 2891               	.Lscope57:
+ 2893               	.global	__vector_43
+ 2895               	__vector_43:
+ 358:timer640.c    **** ISR(TIMER4_COMPA_vect)
+ 359:timer640.c    **** {
+ 2896               	BB58
+ 2897               	.LM200:
+ 2898               	.LFBB58:
+ 2899 0ef8 1F92      		push __zero_reg__
+ 2900 0efa 0F92      		push r0
+ 2901 0efc 0FB6      		in r0,__SREG__
+ 2902 0efe 0F92      		push r0
+ 2903 0f00 1124      		clr __zero_reg__
+ 2904 0f02 2F93      		push r18
+ 2905 0f04 3F93      		push r19
+ 2906 0f06 4F93      		push r20
+ 2907 0f08 5F93      		push r21
+ 2908 0f0a 6F93      		push r22
+ 2909 0f0c 7F93      		push r23
+ 2910 0f0e 8F93      		push r24
+ 2911 0f10 9F93      		push r25
+ 2912 0f12 AF93      		push r26
+ 2913 0f14 BF93      		push r27
+ 2914 0f16 EF93      		push r30
+ 2915 0f18 FF93      		push r31
+ 2916 0f1a DF93      		push r29
+ 2917 0f1c CF93      		push r28
+ 2918 0f1e CDB7      		in r28,__SP_L__
+ 2919 0f20 DEB7      		in r29,__SP_H__
+ 2920               	/* prologue: Signal */
+ 2921               	/* frame size = 0 */
+ 360:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER4_COMPA_interrupt);
+ 2922               	FBB58
+ 2923               	.LM201:
+ 2924 0f22 8091 0000 		lds r24,TimerIntFunc+36
+ 2925 0f26 9091 0000 		lds r25,(TimerIntFunc+36)+1
+ 2926 0f2a 0097      		sbiw r24,0
+ 2927 0f2c 01F0      		breq .L151
+ 2928 0f2e E091 0000 		lds r30,TimerIntFunc+36
+ 2929 0f32 F091 0000 		lds r31,(TimerIntFunc+36)+1
+ 2930 0f36 0995      		icall
+ 2931               	.L151:
+ 2932               	/* epilogue start */
+ 361:timer640.c    **** }
+ 2933               	0,365,.LM202-.LFBB58
+ 2934               	.LM202:
+ 2935 0f38 CF91      		pop r28
+ 2936 0f3a DF91      		pop r29
+ 2937 0f3c FF91      		pop r31
+ 2938 0f3e EF91      		pop r30
+ 2939 0f40 BF91      		pop r27
+ 2940 0f42 AF91      		pop r26
+ 2941 0f44 9F91      		pop r25
+ 2942 0f46 8F91      		pop r24
+ 2943 0f48 7F91      		pop r23
+ 2944 0f4a 6F91      		pop r22
+ 2945 0f4c 5F91      		pop r21
+ 2946 0f4e 4F91      		pop r20
+ 2947 0f50 3F91      		pop r19
+ 2948 0f52 2F91      		pop r18
+ 2949 0f54 0F90      		pop r0
+ 2950 0f56 0FBE      		out __SREG__,r0
+ 2951 0f58 0F90      		pop r0
+ 2952 0f5a 1F90      		pop __zero_reg__
+ 2953 0f5c 1895      		reti
+ 2955               	.Lscope58:
+ 2957               	.global	__vector_44
+ 2959               	__vector_44:
+ 362:timer640.c    **** ISR(TIMER4_COMPB_vect)
+ 363:timer640.c    **** {
+ 2960               	BB59
+ 2961               	.LM203:
+ 2962               	.LFBB59:
+ 2963 0f5e 1F92      		push __zero_reg__
+ 2964 0f60 0F92      		push r0
+ 2965 0f62 0FB6      		in r0,__SREG__
+ 2966 0f64 0F92      		push r0
+ 2967 0f66 1124      		clr __zero_reg__
+ 2968 0f68 2F93      		push r18
+ 2969 0f6a 3F93      		push r19
+ 2970 0f6c 4F93      		push r20
+ 2971 0f6e 5F93      		push r21
+ 2972 0f70 6F93      		push r22
+ 2973 0f72 7F93      		push r23
+ 2974 0f74 8F93      		push r24
+ 2975 0f76 9F93      		push r25
+ 2976 0f78 AF93      		push r26
+ 2977 0f7a BF93      		push r27
+ 2978 0f7c EF93      		push r30
+ 2979 0f7e FF93      		push r31
+ 2980 0f80 DF93      		push r29
+ 2981 0f82 CF93      		push r28
+ 2982 0f84 CDB7      		in r28,__SP_L__
+ 2983 0f86 DEB7      		in r29,__SP_H__
+ 2984               	/* prologue: Signal */
+ 2985               	/* frame size = 0 */
+ 364:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER4_COMPB_interrupt);
+ 2986               	FBB59
+ 2987               	.LM204:
+ 2988 0f88 8091 0000 		lds r24,TimerIntFunc+38
+ 2989 0f8c 9091 0000 		lds r25,(TimerIntFunc+38)+1
+ 2990 0f90 0097      		sbiw r24,0
+ 2991 0f92 01F0      		breq .L154
+ 2992 0f94 E091 0000 		lds r30,TimerIntFunc+38
+ 2993 0f98 F091 0000 		lds r31,(TimerIntFunc+38)+1
+ 2994 0f9c 0995      		icall
+ 2995               	.L154:
+ 2996               	/* epilogue start */
+ 365:timer640.c    **** }
+ 2997               	0,369,.LM205-.LFBB59
+ 2998               	.LM205:
+ 2999 0f9e CF91      		pop r28
+ 3000 0fa0 DF91      		pop r29
+ 3001 0fa2 FF91      		pop r31
+ 3002 0fa4 EF91      		pop r30
+ 3003 0fa6 BF91      		pop r27
+ 3004 0fa8 AF91      		pop r26
+ 3005 0faa 9F91      		pop r25
+ 3006 0fac 8F91      		pop r24
+ 3007 0fae 7F91      		pop r23
+ 3008 0fb0 6F91      		pop r22
+ 3009 0fb2 5F91      		pop r21
+ 3010 0fb4 4F91      		pop r20
+ 3011 0fb6 3F91      		pop r19
+ 3012 0fb8 2F91      		pop r18
+ 3013 0fba 0F90      		pop r0
+ 3014 0fbc 0FBE      		out __SREG__,r0
+ 3015 0fbe 0F90      		pop r0
+ 3016 0fc0 1F90      		pop __zero_reg__
+ 3017 0fc2 1895      		reti
+ 3019               	.Lscope59:
+ 3021               	.global	__vector_46
+ 3023               	__vector_46:
+ 366:timer640.c    **** ISR(TIMER4_COMPC_vect)
+ 367:timer640.c    **** {
+ 3024               	BB60
+ 3025               	.LM206:
+ 3026               	.LFBB60:
+ 3027 0fc4 1F92      		push __zero_reg__
+ 3028 0fc6 0F92      		push r0
+ 3029 0fc8 0FB6      		in r0,__SREG__
+ 3030 0fca 0F92      		push r0
+ 3031 0fcc 1124      		clr __zero_reg__
+ 3032 0fce 2F93      		push r18
+ 3033 0fd0 3F93      		push r19
+ 3034 0fd2 4F93      		push r20
+ 3035 0fd4 5F93      		push r21
+ 3036 0fd6 6F93      		push r22
+ 3037 0fd8 7F93      		push r23
+ 3038 0fda 8F93      		push r24
+ 3039 0fdc 9F93      		push r25
+ 3040 0fde AF93      		push r26
+ 3041 0fe0 BF93      		push r27
+ 3042 0fe2 EF93      		push r30
+ 3043 0fe4 FF93      		push r31
+ 3044 0fe6 DF93      		push r29
+ 3045 0fe8 CF93      		push r28
+ 3046 0fea CDB7      		in r28,__SP_L__
+ 3047 0fec DEB7      		in r29,__SP_H__
+ 3048               	/* prologue: Signal */
+ 3049               	/* frame size = 0 */
+ 368:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER4_COMPC_interrupt);
+ 3050               	FBB60
+ 3051               	.LM207:
+ 3052 0fee 8091 0000 		lds r24,TimerIntFunc+42
+ 3053 0ff2 9091 0000 		lds r25,(TimerIntFunc+42)+1
+ 3054 0ff6 0097      		sbiw r24,0
+ 3055 0ff8 01F0      		breq .L157
+ 3056 0ffa E091 0000 		lds r30,TimerIntFunc+42
+ 3057 0ffe F091 0000 		lds r31,(TimerIntFunc+42)+1
+ 3058 1002 0995      		icall
+ 3059               	.L157:
+ 3060               	/* epilogue start */
+ 369:timer640.c    **** }
+ 3061               	0,373,.LM208-.LFBB60
+ 3062               	.LM208:
+ 3063 1004 CF91      		pop r28
+ 3064 1006 DF91      		pop r29
+ 3065 1008 FF91      		pop r31
+ 3066 100a EF91      		pop r30
+ 3067 100c BF91      		pop r27
+ 3068 100e AF91      		pop r26
+ 3069 1010 9F91      		pop r25
+ 3070 1012 8F91      		pop r24
+ 3071 1014 7F91      		pop r23
+ 3072 1016 6F91      		pop r22
+ 3073 1018 5F91      		pop r21
+ 3074 101a 4F91      		pop r20
+ 3075 101c 3F91      		pop r19
+ 3076 101e 2F91      		pop r18
+ 3077 1020 0F90      		pop r0
+ 3078 1022 0FBE      		out __SREG__,r0
+ 3079 1024 0F90      		pop r0
+ 3080 1026 1F90      		pop __zero_reg__
+ 3081 1028 1895      		reti
+ 3083               	.Lscope60:
+ 3085               	.global	__vector_47
+ 3087               	__vector_47:
+ 370:timer640.c    **** ISR(TIMER5_CAPT_vect)
+ 371:timer640.c    **** {
+ 3088               	BB61
+ 3089               	.LM209:
+ 3090               	.LFBB61:
+ 3091 102a 1F92      		push __zero_reg__
+ 3092 102c 0F92      		push r0
+ 3093 102e 0FB6      		in r0,__SREG__
+ 3094 1030 0F92      		push r0
+ 3095 1032 1124      		clr __zero_reg__
+ 3096 1034 2F93      		push r18
+ 3097 1036 3F93      		push r19
+ 3098 1038 4F93      		push r20
+ 3099 103a 5F93      		push r21
+ 3100 103c 6F93      		push r22
+ 3101 103e 7F93      		push r23
+ 3102 1040 8F93      		push r24
+ 3103 1042 9F93      		push r25
+ 3104 1044 AF93      		push r26
+ 3105 1046 BF93      		push r27
+ 3106 1048 EF93      		push r30
+ 3107 104a FF93      		push r31
+ 3108 104c DF93      		push r29
+ 3109 104e CF93      		push r28
+ 3110 1050 CDB7      		in r28,__SP_L__
+ 3111 1052 DEB7      		in r29,__SP_H__
+ 3112               	/* prologue: Signal */
+ 3113               	/* frame size = 0 */
+ 372:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER5_CAPT_interrupt);
+ 3114               	FBB61
+ 3115               	.LM210:
+ 3116 1054 8091 0000 		lds r24,TimerIntFunc+44
+ 3117 1058 9091 0000 		lds r25,(TimerIntFunc+44)+1
+ 3118 105c 0097      		sbiw r24,0
+ 3119 105e 01F0      		breq .L160
+ 3120 1060 E091 0000 		lds r30,TimerIntFunc+44
+ 3121 1064 F091 0000 		lds r31,(TimerIntFunc+44)+1
+ 3122 1068 0995      		icall
+ 3123               	.L160:
+ 3124               	/* epilogue start */
+ 373:timer640.c    **** }
+ 3125               	0,377,.LM211-.LFBB61
+ 3126               	.LM211:
+ 3127 106a CF91      		pop r28
+ 3128 106c DF91      		pop r29
+ 3129 106e FF91      		pop r31
+ 3130 1070 EF91      		pop r30
+ 3131 1072 BF91      		pop r27
+ 3132 1074 AF91      		pop r26
+ 3133 1076 9F91      		pop r25
+ 3134 1078 8F91      		pop r24
+ 3135 107a 7F91      		pop r23
+ 3136 107c 6F91      		pop r22
+ 3137 107e 5F91      		pop r21
+ 3138 1080 4F91      		pop r20
+ 3139 1082 3F91      		pop r19
+ 3140 1084 2F91      		pop r18
+ 3141 1086 0F90      		pop r0
+ 3142 1088 0FBE      		out __SREG__,r0
+ 3143 108a 0F90      		pop r0
+ 3144 108c 1F90      		pop __zero_reg__
+ 3145 108e 1895      		reti
+ 3147               	.Lscope61:
+ 3149               	.global	__vector_48
+ 3151               	__vector_48:
+ 374:timer640.c    **** ISR(TIMER5_COMPA_vect)
+ 375:timer640.c    **** {
+ 3152               	BB62
+ 3153               	.LM212:
+ 3154               	.LFBB62:
+ 3155 1090 1F92      		push __zero_reg__
+ 3156 1092 0F92      		push r0
+ 3157 1094 0FB6      		in r0,__SREG__
+ 3158 1096 0F92      		push r0
+ 3159 1098 1124      		clr __zero_reg__
+ 3160 109a 2F93      		push r18
+ 3161 109c 3F93      		push r19
+ 3162 109e 4F93      		push r20
+ 3163 10a0 5F93      		push r21
+ 3164 10a2 6F93      		push r22
+ 3165 10a4 7F93      		push r23
+ 3166 10a6 8F93      		push r24
+ 3167 10a8 9F93      		push r25
+ 3168 10aa AF93      		push r26
+ 3169 10ac BF93      		push r27
+ 3170 10ae EF93      		push r30
+ 3171 10b0 FF93      		push r31
+ 3172 10b2 DF93      		push r29
+ 3173 10b4 CF93      		push r28
+ 3174 10b6 CDB7      		in r28,__SP_L__
+ 3175 10b8 DEB7      		in r29,__SP_H__
+ 3176               	/* prologue: Signal */
+ 3177               	/* frame size = 0 */
+ 376:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER5_COMPA_interrupt);
+ 3178               	19
+ 3179               		push r20
+ 3180 10ba 8091 0000 		push r21
+ 3181 10be 9091 0000 		push r22
+ 3182 10c2 0097      		push r23
+ 3183 10c4 01F0      		push r24
+ 3184 10c6 E091 0000 		push r25
+ 3185 10ca F091 0000 		push r26
+ 3186 10ce 0995      		push r27
+ 3187               		push r30
+ 3188               		push r31
+ 377:timer640.c    **** }
+ 3189               	LM212:
+ 3190               	.LFBB62:
+ 3191 10d0 CF91      		push __zero_reg__
+ 3192 10d2 DF91      		push r0
+ 3193 10d4 FF91      		in r0,__SREG__
+ 3194 10d6 EF91      		push r0
+ 3195 10d8 BF91      		clr __zero_reg__
+ 3196 10da AF91      		push r18
+ 3197 10dc 9F91      		push r19
+ 3198 10de 8F91      		push r20
+ 3199 10e0 7F91      		push r21
+ 3200 10e2 6F91      		push r22
+ 3201 10e4 5F91      		push r23
+ 3202 10e6 4F91      		push r24
+ 3203 10e8 3F91      		push r25
+ 3204 10ea 2F91      		push r26
+ 3205 10ec 0F90      		push r27
+ 3206 10ee 0FBE      		push r30
+ 3207 10f0 0F90      		push r31
+ 3208 10f2 1F90      		push r29
+ 3209 10f4 1895      		push r28
+ 3210               		in r28,__SP_L__
+ 3211               		in r29,__SP_H__
+ 3212               	/* prologue: Signal */
+ 3213               	/* frame size = 0 */
+ 3215               	.LM213:
+ 378:timer640.c    **** ISR(TIMER5_COMPB_vect)
+ 379:timer640.c    **** {
+ 3216               	
+ 3217               		push r24
+ 3218               		push r25
+ 3219 10f6 1F92      		push r26
+ 3220 10f8 0F92      		push r27
+ 3221 10fa 0FB6      		push r30
+ 3222 10fc 0F92      		push r31
+ 3223 10fe 1124      		push r29
+ 3224 1100 2F93      		push r28
+ 3225 1102 3F93      		in r28,__SP_L__
+ 3226 1104 4F93      		in r29,__SP_H__
+ 3227 1106 5F93      	/* prologue: Signal */
+ 3228 1108 6F93      	/* frame size = 0 */
+ 3230 110c 8F93      	.LM213:
+ 3231 110e 9F93      		lds r24,TimerIntFunc+46
+ 3232 1110 AF93      		lds r25,(TimerIntFunc+46)+1
+ 3233 1112 BF93      		sbiw r24,0
+ 3234 1114 EF93      		breq .L163
+ 3235 1116 FF93      		lds r30,TimerIntFunc+46
+ 3236 1118 DF93      		lds r31,(TimerIntFunc+46)+1
+ 3237 111a CF93      		icall
+ 3238 111c CDB7      	.L163:
+ 3239 111e DEB7      	/* epilogue start */
+ 3241               	.LM214:
+ 380:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER5_COMPB_interrupt);
+ 3242               	nc+46
+ 3243               		lds r25,(TimerIntFunc+46)+1
+ 3244 1120 8091 0000 		sbiw r24,0
+ 3245 1124 9091 0000 		breq .L163
+ 3246 1128 0097      		lds r30,TimerIntFunc+46
+ 3247 112a 01F0      		lds r31,(TimerIntFunc+46)+1
+ 3248 112c E091 0000 		icall
+ 3249 1130 F091 0000 	.L163:
+ 3250 1134 0995      	/* epilogue start */
+ 3252               	.LM214:
+ 381:timer640.c    **** }
+ 3253               	nc+46
+ 3254               		lds r25,(TimerIntFunc+46)+1
+ 3255 1136 CF91      		sbiw r24,0
+ 3256 1138 DF91      		breq .L163
+ 3257 113a FF91      		lds r30,TimerIntFunc+46
+ 3258 113c EF91      		lds r31,(TimerIntFunc+46)+1
+ 3259 113e BF91      		icall
+ 3260 1140 AF91      	.L163:
+ 3261 1142 9F91      	/* epilogue start */
+ 3263 1146 7F91      	.LM214:
+ 3264 1148 6F91      		pop r28
+ 3265 114a 5F91      		pop r29
+ 3266 114c 4F91      		pop r31
+ 3267 114e 3F91      		pop r30
+ 3268 1150 2F91      		pop r27
+ 3269 1152 0F90      		pop r26
+ 3270 1154 0FBE      		pop r25
+ 3271 1156 0F90      		pop r24
+ 3272 1158 1F90      		pop r23
+ 3273 115a 1895      		pop r22
+ 3274               		pop r21
+ 3275               		pop r20
+ 3276               		pop r19
+ 3277               		pop r18
+ 3278               		pop r0
+ 3279               		out __SREG__,r0
+ 382:timer640.c    **** ISR(TIMER5_COMPC_vect)
+ 383:timer640.c    **** {
+ 3280               	M214-.LFBB62
+ 3281               	.LM214:
+ 3282               		pop r28
+ 3283 115c 1F92      		pop r29
+ 3284 115e 0F92      		pop r31
+ 3285 1160 0FB6      		pop r30
+ 3286 1162 0F92      		pop r27
+ 3287 1164 1124      		pop r26
+ 3288 1166 2F93      		pop r25
+ 3289 1168 3F93      		pop r24
+ 3290 116a 4F93      		pop r23
+ 3291 116c 5F93      		pop r22
+ 3292 116e 6F93      		pop r21
+ 3293 1170 7F93      		pop r20
+ 3294 1172 8F93      		pop r19
+ 3295 1174 9F93      		pop r18
+ 3296 1176 AF93      		pop r0
+ 3297 1178 BF93      		out __SREG__,r0
+ 3298 117a EF93      		pop r0
+ 3299 117c FF93      		pop __zero_reg__
+ 3300 117e DF93      		reti
+ 3302 1182 CDB7      	.Lscope62:
+ 3304               	.global	__vector_49
+ 384:timer640.c    ****   RUN_USER_DEFINE_INTERRUPT(TIMER5_COMPC_interrupt);
+ 3306               	 __zero_reg__
+ 3307               		reti
+ 3309 118a 9091 0000 	.Lscope62:
+ 3311 1190 01F0      	.global	__vector_49
+ 3313 1196 F091 0000 	__vector_49:
+ 3315               	.LM215:
+ 3316               	.LFBB63:
+ 385:timer640.c    **** }
+ 3318               	.global	__vector_49
+ 3320 119e DF91      	__vector_49:
+ 3322 11a2 EF91      	.LM215:
+ 3323 11a4 BF91      	.LFBB63:
+ 3324 11a6 AF91      		push __zero_reg__
+ 3325 11a8 9F91      		push r0
+ 3326 11aa 8F91      		in r0,__SREG__
+ 3327 11ac 7F91      		push r0
+ 3328 11ae 6F91      		clr __zero_reg__
+ 3329 11b0 5F91      		push r18
+ 3330 11b2 4F91      		push r19
+ 3331 11b4 3F91      		push r20
+ 3332 11b6 2F91      		push r21
+ 3333 11b8 0F90      		push r22
+ 3334 11ba 0FBE      		push r23
+ 3335 11bc 0F90      		push r24
+ 3336 11be 1F90      		push r25
+ 3337 11c0 1895      		push r26
+ 3338               		push r27
+ 3339               		push r30
+ 3340               		push r31
+ 3341               		push r29
+ 3342               		push r28
+ 3343               		in r28,__SP_L__
+ 3344 001c 4241 445F 		in r29,__SP_H__
+ 3344      7665 6374 
+ 3344      2063 616C 
+ 3344      6C65 6421 
+ 3344      00
+ 3345               	/* prologue: Signal */
+ 3346               	/* frame size = 0 */
+ 3348               	.LM216:
+ 3349               		lds r24,TimerIntFunc+48
+ 386:timer640.c    **** 
+ 387:timer640.c    **** ISR(BADISR_vect)
+ 388:timer640.c    **** {
+ 3350               	_SP_L__
+ 3351               		in r29,__SP_H__
+ 3352               	/* prologue: Signal */
+ 3353 11c2 1F92      	/* frame size = 0 */
+ 3355 11c6 0FB6      	.LM216:
+ 3356 11c8 0F92      		lds r24,TimerIntFunc+48
+ 3357 11ca 1124      		lds r25,(TimerIntFunc+48)+1
+ 3358 11cc 2F93      		sbiw r24,0
+ 3359 11ce 3F93      		breq .L166
+ 3360 11d0 4F93      		lds r30,TimerIntFunc+48
+ 3361 11d2 5F93      		lds r31,(TimerIntFunc+48)+1
+ 3362 11d4 6F93      		icall
+ 3363 11d6 7F93      	.L166:
+ 3364 11d8 8F93      	/* epilogue start */
+ 3366 11dc AF93      	.LM217:
+ 3367 11de BF93      		pop r28
+ 3368 11e0 EF93      		pop r29
+ 3369 11e2 FF93      		pop r31
+ 3370 11e4 DF93      		pop r30
+ 3371 11e6 CF93      		pop r27
+ 3372 11e8 CDB7      		pop r26
+ 3373 11ea DEB7      		pop r25
+ 3374               		pop r24
+ 3375               		pop r23
+ 3376               		pop r22
+ 389:timer640.c    ****   rprintf("BAD_vect called!");
+ 3377               	,.LM217-.LFBB63
+ 3378               	.LM217:
+ 3379 11ec 80E0      		pop r28
+ 3380 11ee 90E0      		pop r29
+ 3381               		pop r31
+ 3382 11f0 00D0      		pop r30
+ 3383 11f2 0F92      		pop r27
+ 3384 11f4 EDB7      		pop r26
+ 3385 11f6 FEB7      		pop r25
+ 3386 11f8 3196      		pop r24
+ 3387 11fa 21E0      		pop r23
+ 3388 11fc 2083      		pop r22
+ 3389 11fe 9283      		pop r21
+ 3390 1200 8183      		pop r20
+ 3391 1202 0E94 0000 		pop r19
+ 3392 1206 0F90      		pop r18
+ 3393 1208 0F90      		pop r0
+ 3394 120a 0F90      		out __SREG__,r0
+ 3395               		pop r0
+ 390:timer640.c    **** }
+ 3396               	6
+ 3397               		pop r25
+ 3398 120c CF91      		pop r24
+ 3399 120e DF91      		pop r23
+ 3400 1210 FF91      		pop r22
+ 3401 1212 EF91      		pop r21
+ 3402 1214 BF91      		pop r20
+ 3403 1216 AF91      		pop r19
+ 3404 1218 9F91      		pop r18
+ 3405 121a 8F91      		pop r0
+ 3406 121c 7F91      		out __SREG__,r0
+ 3407 121e 6F91      		pop r0
+ 3408 1220 5F91      		pop __zero_reg__
+ 3409 1222 4F91      		reti
+ 3411 1226 2F91      	.Lscope63:
+ 3412 1228 0F90      		.section	.progmem.data
+ 3415 122e 1F90      	__c.2089:
+ 3416 1230 1895      		.string	"BAD_vect called!"
+ 3417               		.text
+ 3419               	.global	__vector_default
+ 3421               	__vector_default:
+ 3423               	.LM218:
+ 3424               	.LFBB64:
+ 3425               		push __zero_reg__
+ 3426               		push r0
+ 3427               		in r0,__SREG__
+ 3428               		push r0
+ 3429               		clr __zero_reg__
+ 3430               		push r18
+ 3431               		push r19
+ 3432               		push r20
+ 3433               		push r21
+ 3434               		push r22
+ 3435               		push r23
+ 3436               		push r24
+ 3437               		push r25
+ 3438               		push r26
+ 3439               		push r27
+ 3440               		push r30
+ 3441               		push r31
+ 3442               		push r29
+DEFINED SYMBOLS
+                            *ABS*:00000000 timer640.c
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2      *ABS*:0000003f __SREG__
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:3      *ABS*:0000003e __SP_H__
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:4      *ABS*:0000003d __SP_L__
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:5      *ABS*:00000034 __CCP__
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:6      *ABS*:00000000 __tmp_reg__
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:7      *ABS*:00000001 __zero_reg__
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:127    .progmem.data:00000000 TimerPrescaleFactor
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:137    .progmem.data:0000000c Timer2PrescaleFactor
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:152    .text:00000000 prescaler_hex_to_value
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:218    .text:0000004c prescaler_hex_to_value_for_timer2
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:283    .text:00000098 get_timer0_prescaler
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:310    .text:000000b0 get_timer1_prescaler
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:337    .text:000000c8 get_timer2_prescaler
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:364    .text:000000e0 get_timer3_prescaler
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:391    .text:000000f8 get_timer4_prescaler
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:418    .text:00000110 get_timer5_prescaler
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:445    .text:00000128 get_timer0_overflow
+                            *COM*:00000004 timer0_ovrflow_cnt
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:474    .text:0000014a get_timer1_overflow
+                            *COM*:00000004 timer1_ovrflow_cnt
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:503    .text:0000016c get_timer2_overflow
+                            *COM*:00000004 timer2_ovrflow_cnt
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:532    .text:0000018e get_timer3_overflow
+                            *COM*:00000004 timer3_ovrflow_cnt
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:561    .text:000001b0 get_timer4_overflow
+                            *COM*:00000004 timer4_ovrflow_cnt
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:590    .text:000001d2 get_timer5_overflow
+                            *COM*:00000004 timer5_ovrflow_cnt
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:619    .text:000001f4 get_timer0_counter
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:645    .text:00000208 get_timer1_counter
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:672    .text:0000021e get_timer2_counter
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:698    .text:00000232 get_timer3_counter
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:725    .text:00000248 get_timer4_counter
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:752    .text:0000025e get_timer5_counter
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:779    .text:00000274 reset_timer0
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:809    .text:00000298 reset_timer1
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:840    .text:000002be reset_timer2
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:870    .text:000002e2 reset_timer3
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:901    .text:00000308 reset_timer4
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:932    .text:0000032e reset_timer5
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:964    .text:00000354 delay_us
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1058   .text:000003e0 init_timer0
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1098   .text:00000408 init_timer1
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1138   .text:00000430 init_timer2
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1178   .text:00000458 init_timer3
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1218   .text:00000480 init_timer4
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1258   .text:000004a8 init_timer5
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1299   .text:000004d0 timer_attach
+                             .bss:00000000 TimerIntFunc
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1343   .text:00000506 timer_detach
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1380   .text:0000052e _delay_loop_2
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1419   .text:00000552 sleep
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1588   .text:0000065c __vector_23
+                            *COM*:00000004 timer_sleep_cnt
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1678   .text:0000070e __vector_20
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1755   .text:0000079a __vector_15
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1832   .text:00000826 __vector_35
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1909   .text:000008b2 __vector_45
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:1986   .text:0000093e __vector_50
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2063   .text:000009ca __vector_21
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2127   .text:00000a30 __vector_22
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2191   .text:00000a96 __vector_16
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2255   .text:00000afc __vector_17
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2319   .text:00000b62 __vector_18
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2383   .text:00000bc8 __vector_19
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2447   .text:00000c2e __vector_13
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2511   .text:00000c94 __vector_14
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2575   .text:00000cfa __vector_31
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2639   .text:00000d60 __vector_32
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2703   .text:00000dc6 __vector_33
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2767   .text:00000e2c __vector_34
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2831   .text:00000e92 __vector_41
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2895   .text:00000ef8 __vector_42
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:2959   .text:00000f5e __vector_43
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:3023   .text:00000fc4 __vector_44
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:3087   .text:0000102a __vector_46
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:3151   .text:00001090 __vector_47
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:3215   .text:000010f6 __vector_48
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:3279   .text:0000115c __vector_49
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:3343   .progmem.data:0000001c __c.2089
+C:\Users\Owner\AppData\Local\Temp/ccOFmfzH.s:3349   .text:000011c2 __vector_default
+
+UNDEFINED SYMBOLS
+__do_copy_data
+__do_clear_bss
+__divmodsi4
+__floatunsisf
+__mulsf3
+__ltsf2
+__gtsf2
+__fixunssfsi
+rprintf1RamRom

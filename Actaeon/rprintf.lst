@@ -1,0 +1,1853 @@
+   1               		.file	"rprintf.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+   8               		.global __do_copy_data
+   9               		.global __do_clear_bss
+  11               		.text
+  12               	.Ltext0:
+ 111               		.section	.progmem.data,"a",@progbits
+ 114               	HexChars:
+ 115 0000 3031 3233 		.string	"0123456789ABCDEF"
+ 115      3435 3637 
+ 115      3839 4142 
+ 115      4344 4546 
+ 115      00
+ 116               		.text
+ 119               	.global	rprintfInit
+ 121               	rprintfInit:
+   1:rprintf.c     **** /*! \file rprintf.c \brief printf routine and associated routines. */
+   2:rprintf.c     **** //*****************************************************************************
+   3:rprintf.c     **** //
+   4:rprintf.c     **** // File Name	: 'rprintf.c'
+   5:rprintf.c     **** // Title		: printf routine and associated routines
+   6:rprintf.c     **** // Author		: Pascal Stang - Copyright (C) 2000-2002
+   7:rprintf.c     **** // Created		: 2000.12.26
+   8:rprintf.c     **** // Revised		: 2003.5.1
+   9:rprintf.c     **** // Version		: 1.0
+  10:rprintf.c     **** // Target MCU	: Atmel AVR series and other targets
+  11:rprintf.c     **** // Editor Tabs	: 4
+  12:rprintf.c     **** //
+  13:rprintf.c     **** // NOTE: This code is currently below version 1.0, and therefore is considered
+  14:rprintf.c     **** // to be lacking in some functionality or documentation, or may not be fully
+  15:rprintf.c     **** // tested.  Nonetheless, you can expect most functions to work.
+  16:rprintf.c     **** //
+  17:rprintf.c     **** // This code is distributed under the GNU Public License
+  18:rprintf.c     **** //		which can be found at http://www.gnu.org/licenses/gpl.txt
+  19:rprintf.c     **** //
+  20:rprintf.c     **** //*****************************************************************************
+  21:rprintf.c     **** 
+  22:rprintf.c     **** #include <avr/pgmspace.h>
+  23:rprintf.c     **** //#include <string-avr.h>
+  24:rprintf.c     **** //#include <stdlib.h>
+  25:rprintf.c     **** #include <stdarg.h>
+  26:rprintf.c     **** #include "global.h"
+  27:rprintf.c     **** #include "rprintf.h"
+  28:rprintf.c     **** 
+  29:rprintf.c     **** #ifndef TRUE
+  30:rprintf.c     **** 	#define TRUE	-1
+  31:rprintf.c     **** 	#define FALSE	0
+  32:rprintf.c     **** #endif
+  33:rprintf.c     **** 
+  34:rprintf.c     **** #define INF     32766	// maximum field size to print
+  35:rprintf.c     **** #define READMEMBYTE(a,char_ptr)	((a)?(pgm_read_byte(char_ptr)):(*char_ptr))
+  36:rprintf.c     **** 
+  37:rprintf.c     **** #ifdef RPRINTF_COMPLEX
+  38:rprintf.c     **** 	static unsigned char buf[128];
+  39:rprintf.c     **** #endif
+  40:rprintf.c     **** 
+  41:rprintf.c     **** // use this to store hex conversion in RAM
+  42:rprintf.c     **** //static char HexChars[] = "0123456789ABCDEF";
+  43:rprintf.c     **** // use this to store hex conversion in program memory
+  44:rprintf.c     **** //static prog_char HexChars[] = "0123456789ABCDEF";
+  45:rprintf.c     **** static char __attribute__ ((progmem)) HexChars[] = "0123456789ABCDEF";
+  46:rprintf.c     **** 
+  47:rprintf.c     **** #define hexchar(x)	pgm_read_byte( HexChars+((x)&0x0f) )
+  48:rprintf.c     **** //#define hexchar(x)	((((x)&0x0F)>9)?((x)+'A'-10):((x)+'0'))
+  49:rprintf.c     **** 
+  50:rprintf.c     **** // function pointer to single character output routine
+  51:rprintf.c     **** static void (*rputchar)(unsigned char c);
+  52:rprintf.c     **** 
+  53:rprintf.c     **** // *** rprintf initialization ***
+  54:rprintf.c     **** // you must call this function once and supply the character output
+  55:rprintf.c     **** // routine before using other functions in this library
+  56:rprintf.c     **** void rprintfInit(void (*putchar_func)(unsigned char c))
+  57:rprintf.c     **** {
+ 122               	
+ 123               	.LM0:
+ 124               	.LFBB1:
+ 125 0000 DF93      		push r29
+ 126 0002 CF93      		push r28
+ 127 0004 00D0      		rcall .
+ 128 0006 CDB7      		in r28,__SP_L__
+ 129 0008 DEB7      		in r29,__SP_H__
+ 130               	/* prologue: function */
+ 131               	/* frame size = 2 */
+ 132 000a 9A83      		std Y+2,r25
+ 133 000c 8983      		std Y+1,r24
+  58:rprintf.c     **** 	rputchar = putchar_func;
+ 134               	0,58,.LM1-.LFBB1
+ 135               	.LM1:
+ 136 000e 8981      		ldd r24,Y+1
+ 137 0010 9A81      		ldd r25,Y+2
+ 138 0012 9093 0000 		sts (rputchar)+1,r25
+ 139 0016 8093 0000 		sts rputchar,r24
+ 140               	/* epilogue start */
+  59:rprintf.c     **** }
+ 141               		68,0,59,.LM2-.LFBB1
+ 142               	.LM2:
+ 143 001a 0F90      		pop __tmp_reg__
+ 144 001c 0F90      		pop __tmp_reg__
+ 145 001e CF91      		pop r28
+ 146 0020 DF91      		pop r29
+ 147 0022 0895      		ret
+ 149               	.Lscope1:
+ 152               	.global	rprintfChar
+ 154               	rprintfChar:
+  60:rprintf.c     **** 
+  61:rprintf.c     **** // *** rprintfChar ***
+  62:rprintf.c     **** // send a character/byte to the current output device
+  63:rprintf.c     **** void rprintfChar(unsigned char c)
+  64:rprintf.c     **** {
+ 155               	4,.LM3-.LFBB2
+ 156               	.LM3:
+ 157               	.LFBB2:
+ 158 0024 DF93      		push r29
+ 159 0026 CF93      		push r28
+ 160 0028 0F92      		push __tmp_reg__
+ 161 002a CDB7      		in r28,__SP_L__
+ 162 002c DEB7      		in r29,__SP_H__
+ 163               	/* prologue: function */
+ 164               	/* frame size = 1 */
+ 165 002e 8983      		std Y+1,r24
+  65:rprintf.c     **** 	// do LF -> CR/LF translation
+  66:rprintf.c     **** 	if(c == '\n')
+ 166               	0,66,.LM4-.LFBB2
+ 167               	.LM4:
+ 168 0030 8981      		ldd r24,Y+1
+ 169 0032 8A30      		cpi r24,lo8(10)
+ 170 0034 01F4      		brne .L4
+  67:rprintf.c     **** 		rputchar('\r');
+ 171               	bn	68,0,67,.LM5-.LFBB2
+ 172               	.LM5:
+ 173 0036 E091 0000 		lds r30,rputchar
+ 174 003a F091 0000 		lds r31,(rputchar)+1
+ 175 003e 8DE0      		ldi r24,lo8(13)
+ 176 0040 0995      		icall
+ 177               	.L4:
+  68:rprintf.c     **** 	// send character
+  69:rprintf.c     **** 	rputchar(c);
+ 178               		68,0,69,.LM6-.LFBB2
+ 179               	.LM6:
+ 180 0042 E091 0000 		lds r30,rputchar
+ 181 0046 F091 0000 		lds r31,(rputchar)+1
+ 182 004a 8981      		ldd r24,Y+1
+ 183 004c 0995      		icall
+ 184               	/* epilogue start */
+  70:rprintf.c     **** }
+ 185               		68,0,70,.LM7-.LFBB2
+ 186               	.LM7:
+ 187 004e 0F90      		pop __tmp_reg__
+ 188 0050 CF91      		pop r28
+ 189 0052 DF91      		pop r29
+ 190 0054 0895      		ret
+ 192               	.Lscope2:
+ 195               	.global	rprintfStr
+ 197               	rprintfStr:
+  71:rprintf.c     **** 
+  72:rprintf.c     **** // *** rprintfStr ***
+  73:rprintf.c     **** // prints a null-terminated string stored in RAM
+  74:rprintf.c     **** void rprintfStr(char str[])
+  75:rprintf.c     **** {
+ 198               	75,.LM8-.LFBB3
+ 199               	.LM8:
+ 200               	.LFBB3:
+ 201 0056 DF93      		push r29
+ 202 0058 CF93      		push r28
+ 203 005a 00D0      		rcall .
+ 204 005c CDB7      		in r28,__SP_L__
+ 205 005e DEB7      		in r29,__SP_H__
+ 206               	/* prologue: function */
+ 207               	/* frame size = 2 */
+ 208 0060 9A83      		std Y+2,r25
+ 209 0062 8983      		std Y+1,r24
+  76:rprintf.c     **** 	// send a string stored in RAM
+  77:rprintf.c     **** 	// check to make sure we have a good pointer
+  78:rprintf.c     **** 	if (!str) return;
+ 210               	,78,.LM9-.LFBB3
+ 211               	.LM9:
+ 212 0064 8981      		ldd r24,Y+1
+ 213 0066 9A81      		ldd r25,Y+2
+ 214 0068 0097      		sbiw r24,0
+ 215 006a 01F0      		breq .L10
+ 216 006c 00C0      		rjmp .L8
+ 217               	.L9:
+  79:rprintf.c     **** 
+  80:rprintf.c     **** 	// print the string until a null-terminator
+  81:rprintf.c     **** 	while (*str)
+  82:rprintf.c     **** 		rprintfChar(*str++);
+ 218               	68,0,82,.LM10-.LFBB3
+ 219               	.LM10:
+ 220 006e E981      		ldd r30,Y+1
+ 221 0070 FA81      		ldd r31,Y+2
+ 222 0072 2081      		ld r18,Z
+ 223 0074 8981      		ldd r24,Y+1
+ 224 0076 9A81      		ldd r25,Y+2
+ 225 0078 0196      		adiw r24,1
+ 226 007a 9A83      		std Y+2,r25
+ 227 007c 8983      		std Y+1,r24
+ 228 007e 822F      		mov r24,r18
+ 229 0080 0E94 0000 		call rprintfChar
+ 230               	.L8:
+ 232               	.LM11:
+ 233 0084 E981      		ldd r30,Y+1
+ 234 0086 FA81      		ldd r31,Y+2
+ 235 0088 8081      		ld r24,Z
+ 236 008a 8823      		tst r24
+ 237 008c 01F4      		brne .L9
+ 238               	.L10:
+ 239               	/* epilogue start */
+  83:rprintf.c     **** }
+ 240               	.LFBB3
+ 241               	.LM12:
+ 242 008e 0F90      		pop __tmp_reg__
+ 243 0090 0F90      		pop __tmp_reg__
+ 244 0092 CF91      		pop r28
+ 245 0094 DF91      		pop r29
+ 246 0096 0895      		ret
+ 248               	.Lscope3:
+ 253               	.global	rprintfStrLen
+ 255               	rprintfStrLen:
+  84:rprintf.c     **** 
+  85:rprintf.c     **** // *** rprintfStrLen ***
+  86:rprintf.c     **** // prints a section of a string stored in RAM
+  87:rprintf.c     **** // begins printing at position indicated by <start>
+  88:rprintf.c     **** // prints number of characters indicated by <len>
+  89:rprintf.c     **** void rprintfStrLen(char str[], unsigned int start, unsigned int len)
+  90:rprintf.c     **** {
+ 256               	.LM13-.LFBB4
+ 257               	.LM13:
+ 258               	.LFBB4:
+ 259 0098 DF93      		push r29
+ 260 009a CF93      		push r28
+ 261 009c CDB7      		in r28,__SP_L__
+ 262 009e DEB7      		in r29,__SP_H__
+ 263 00a0 2A97      		sbiw r28,10
+ 264 00a2 0FB6      		in __tmp_reg__,__SREG__
+ 265 00a4 F894      		cli
+ 266 00a6 DEBF      		out __SP_H__,r29
+ 267 00a8 0FBE      		out __SREG__,__tmp_reg__
+ 268 00aa CDBF      		out __SP_L__,r28
+ 269               	/* prologue: function */
+ 270               	/* frame size = 10 */
+ 271 00ac 9A83      		std Y+2,r25
+ 272 00ae 8983      		std Y+1,r24
+ 273 00b0 7C83      		std Y+4,r23
+ 274 00b2 6B83      		std Y+3,r22
+ 275 00b4 5E83      		std Y+6,r21
+ 276 00b6 4D83      		std Y+5,r20
+  91:rprintf.c     **** 	register int i=0;
+ 277               	-.LFBB4
+ 278               	.LM14:
+ 279 00b8 1886      		std Y+8,__zero_reg__
+ 280 00ba 1F82      		std Y+7,__zero_reg__
+  92:rprintf.c     **** 
+  93:rprintf.c     **** 	// check to make sure we have a good pointer
+  94:rprintf.c     **** 	if (!str) return;
+ 281               	abn	68,0,94,.LM15-.LFBB4
+ 282               	.LM15:
+ 283 00bc 8981      		ldd r24,Y+1
+ 284 00be 9A81      		ldd r25,Y+2
+ 285 00c0 0097      		sbiw r24,0
+ 286 00c2 01F4      		brne .+2
+ 287 00c4 00C0      		rjmp .L21
+ 288               	.L16:
+  95:rprintf.c     **** 	// spin through characters up to requested start
+  96:rprintf.c     **** 	// keep going as long as there's no null
+  97:rprintf.c     **** 	while((i++<start) && (*str++));
+ 289               	68,0,97,.LM16-.LFBB4
+ 290               	.LM16:
+ 291 00c6 2F81      		ldd r18,Y+7
+ 292 00c8 3885      		ldd r19,Y+8
+ 293 00ca 1986      		std Y+9,__zero_reg__
+ 294 00cc 8B81      		ldd r24,Y+3
+ 295 00ce 9C81      		ldd r25,Y+4
+ 296 00d0 2817      		cp r18,r24
+ 297 00d2 3907      		cpc r19,r25
+ 298 00d4 00F4      		brsh .L13
+ 299 00d6 81E0      		ldi r24,lo8(1)
+ 300 00d8 8987      		std Y+9,r24
+ 301               	.L13:
+ 302 00da 8F81      		ldd r24,Y+7
+ 303 00dc 9885      		ldd r25,Y+8
+ 304 00de 0196      		adiw r24,1
+ 305 00e0 9887      		std Y+8,r25
+ 306 00e2 8F83      		std Y+7,r24
+ 307 00e4 81E0      		ldi r24,lo8(1)
+ 308 00e6 9985      		ldd r25,Y+9
+ 309 00e8 8927      		eor r24,r25
+ 310 00ea 8823      		tst r24
+ 311 00ec 01F4      		brne .L14
+ 312 00ee E981      		ldd r30,Y+1
+ 313 00f0 FA81      		ldd r31,Y+2
+ 314 00f2 8081      		ld r24,Z
+ 315 00f4 8A87      		std Y+10,r24
+ 316 00f6 8A85      		ldd r24,Y+10
+ 317 00f8 8823      		tst r24
+ 318 00fa 01F0      		breq .L15
+ 319 00fc 91E0      		ldi r25,lo8(1)
+ 320 00fe 9A87      		std Y+10,r25
+ 321               	.L15:
+ 322 0100 8A85      		ldd r24,Y+10
+ 323 0102 2981      		ldd r18,Y+1
+ 324 0104 3A81      		ldd r19,Y+2
+ 325 0106 2F5F      		subi r18,lo8(-(1))
+ 326 0108 3F4F      		sbci r19,hi8(-(1))
+ 327 010a 3A83      		std Y+2,r19
+ 328 010c 2983      		std Y+1,r18
+ 329 010e 8823      		tst r24
+ 330 0110 01F4      		brne .L16
+ 331               	.L14:
+  98:rprintf.c     **** //	for(i=0; i<start; i++)
+  99:rprintf.c     **** //	{
+ 100:rprintf.c     **** //		// keep steping through string as long as there's no null
+ 101:rprintf.c     **** //		if(*str) str++;
+ 102:rprintf.c     **** //	}
+ 103:rprintf.c     **** 
+ 104:rprintf.c     **** 	// then print exactly len characters
+ 105:rprintf.c     **** 	for(i=0; i<len; i++)
+ 332               	+8,__zero_reg__
+ 333               		std Y+7,__zero_reg__
+ 334 0112 1886      		rjmp .L17
+ 335 0114 1F82      	.L20:
+ 337               	.LM18:
+ 106:rprintf.c     **** 	{
+ 107:rprintf.c     **** 		// print data out of the string as long as we haven't reached a null yet
+ 108:rprintf.c     **** 		// at the null, start printing spaces
+ 109:rprintf.c     **** 		if(*str)
+ 338               	30,Y+1
+ 339               		ldd r31,Y+2
+ 340 0118 E981      		ld r24,Z
+ 341 011a FA81      		tst r24
+ 342 011c 8081      		breq .L18
+ 344 0120 01F0      	.LM19:
+ 110:rprintf.c     **** 			rprintfChar(*str++);
+ 345               	0,Y+1
+ 346               		ldd r31,Y+2
+ 347 0122 E981      		ld r18,Z
+ 348 0124 FA81      		ldd r24,Y+1
+ 349 0126 2081      		ldd r25,Y+2
+ 350 0128 8981      		adiw r24,1
+ 351 012a 9A81      		std Y+2,r25
+ 352 012c 0196      		std Y+1,r24
+ 353 012e 9A83      		mov r24,r18
+ 354 0130 8983      		call rprintfChar
+ 355 0132 822F      		rjmp .L19
+ 356 0134 0E94 0000 	.L18:
+ 358               	.LM20:
+ 111:rprintf.c     **** 		else
+ 112:rprintf.c     **** 			rprintfChar(' ');
+ 359               	2)
+ 360               		call rprintfChar
+ 361 013a 80E2      	.L19:
+ 363               	.LM21:
+ 364               		ldd r24,Y+7
+ 365               		ldd r25,Y+8
+ 366 0140 8F81      		adiw r24,1
+ 367 0142 9885      		std Y+8,r25
+ 368 0144 0196      		std Y+7,r24
+ 369 0146 9887      	.L17:
+ 370 0148 8F83      		ldd r18,Y+7
+ 371               		ldd r19,Y+8
+ 372 014a 2F81      		ldd r24,Y+5
+ 373 014c 3885      		ldd r25,Y+6
+ 374 014e 8D81      		cp r18,r24
+ 375 0150 9E81      		cpc r19,r25
+ 376 0152 2817      		brlo .L20
+ 377 0154 3907      	.L21:
+ 378 0156 00F0      	/* epilogue start */
+ 380               	.LM22:
+ 113:rprintf.c     **** 	}
+ 114:rprintf.c     **** 
+ 115:rprintf.c     **** }
+ 381               	_reg__,__SREG__
+ 382               		cli
+ 383 0158 2A96      		out __SP_H__,r29
+ 384 015a 0FB6      		out __SREG__,__tmp_reg__
+ 385 015c F894      		out __SP_L__,r28
+ 386 015e DEBF      		pop r28
+ 387 0160 0FBE      		pop r29
+ 388 0162 CDBF      		ret
+ 393               	.Lscope4:
+ 396               	.global	rprintfProgStr
+ 398               	rprintfProgStr:
+ 400               	.LM23:
+ 401               	.LFBB5:
+ 116:rprintf.c     **** 
+ 117:rprintf.c     **** // *** rprintfProgStr ***
+ 118:rprintf.c     **** // prints a null-terminated string stored in program ROM
+ 119:rprintf.c     **** void rprintfProgStr(const prog_char str[])
+ 120:rprintf.c     **** {
+ 402               	rcall .
+ 403               		rcall .
+ 404               		rcall .
+ 405 016a DF93      		in r28,__SP_L__
+ 406 016c CF93      		in r29,__SP_H__
+ 407 016e 00D0      	/* prologue: function */
+ 408 0170 00D0      	/* frame size = 6 */
+ 409 0172 00D0      		std Y+5,r25
+ 410 0174 CDB7      		std Y+4,r24
+ 412               	.LM24:
+ 413               		ldd r24,Y+4
+ 414 0178 9D83      		ldd r25,Y+5
+ 415 017a 8C83      		sbiw r24,0
+ 121:rprintf.c     **** 	// print a string stored in program memory
+ 122:rprintf.c     **** 	register char c;
+ 123:rprintf.c     **** 
+ 124:rprintf.c     **** 	// check to make sure we have a good pointer
+ 125:rprintf.c     **** 	if (!str) return;
+ 416               	mp .L24
+ 417               	.L25:
+ 419 017e 9D81      	.LM25:
+ 420 0180 0097      		ldd r24,Y+6
+ 421 0182 01F0      		call rprintfChar
+ 422 0184 00C0      	.L24:
+ 423               	.LBB2:
+ 126:rprintf.c     **** 	
+ 127:rprintf.c     **** 	// print the string until the null-terminator
+ 128:rprintf.c     **** 	while((c = pgm_read_byte(str++)))
+ 129:rprintf.c     **** 		rprintfChar(c);
+ 424               	68,0,128,.LM26-.LFBB5
+ 425               	.LM26:
+ 426 0186 8E81      		ldd r24,Y+4
+ 427 0188 0E94 0000 		ldd r25,Y+5
+ 428               		std Y+3,r25
+ 429               		std Y+2,r24
+ 430               		ldd r24,Y+4
+ 431               		ldd r25,Y+5
+ 432 018c 8C81      		adiw r24,1
+ 433 018e 9D81      		std Y+5,r25
+ 434 0190 9B83      		std Y+4,r24
+ 435 0192 8A83      		ldd r30,Y+2
+ 436 0194 8C81      		ldd r31,Y+3
+ 437 0196 9D81      	/* #APP */
+ 438 0198 0196      	 ;  128 "rprintf.c" 1
+ 439 019a 9D83      		lpm r24, Z
+ 440 019c 8C83      		
+ 441 019e EA81      	 ;  0 "" 2
+ 442 01a0 FB81      	/* #NOAPP */
+ 443               		std Y+1,r24
+ 444               		ldd r24,Y+1
+ 445 01a2 8491      	.LBE2:
+ 446               		std Y+6,r24
+ 447               		ldd r24,Y+6
+ 448               		tst r24
+ 449 01a4 8983      		brne .L25
+ 450 01a6 8981      	.L26:
+ 451               	/* epilogue start */
+ 453 01aa 8E81      	.LM27:
+ 454 01ac 8823      		adiw r28,6
+ 455 01ae 01F4      		in __tmp_reg__,__SREG__
+ 456               		cli
+ 457               		out __SP_H__,r29
+ 130:rprintf.c     **** }
+ 458               	P_L__,r28
+ 459               		pop r28
+ 460 01b0 2696      		pop r29
+ 461 01b2 0FB6      		ret
+ 470               	.Lscope5:
+ 472               	.global	rprintfCRLF
+ 474               	rprintfCRLF:
+ 476               	.LM28:
+ 477               	.LFBB6:
+ 478               		push r29
+ 479               		push r28
+ 480               		in r28,__SP_L__
+ 481               		in r29,__SP_H__
+ 131:rprintf.c     **** 
+ 132:rprintf.c     **** // *** rprintfCRLF ***
+ 133:rprintf.c     **** // prints carriage return and line feed
+ 134:rprintf.c     **** void rprintfCRLF(void)
+ 135:rprintf.c     **** {
+ 482               	
+ 483               	/* frame size = 0 */
+ 485 01c2 DF93      	.LM29:
+ 486 01c4 CF93      		ldi r24,lo8(10)
+ 487 01c6 CDB7      		call rprintfChar
+ 488 01c8 DEB7      	/* epilogue start */
+ 490               	.LM30:
+ 136:rprintf.c     **** 	// print CR/LF
+ 137:rprintf.c     **** 	//rprintfChar('\r');
+ 138:rprintf.c     **** 	// LF -> CR/LF translation built-in to rprintfChar()
+ 139:rprintf.c     **** 	rprintfChar('\n');
+ 491               	
+ 492               		pop r29
+ 493 01ca 8AE0      		ret
+ 495               	.Lscope6:
+ 140:rprintf.c     **** }
+ 496               	abs	"rprintfu04:F(0,15)",36,0,0,rprintfu04
+ 498 01d0 CF91      	.global	rprintfu04
+ 500 01d4 0895      	rprintfu04:
+ 502               	.LM31:
+ 503               	.LFBB7:
+ 504               		push r29
+ 505               		push r28
+ 506               		rcall .
+ 507               		rcall .
+ 141:rprintf.c     **** 
+ 142:rprintf.c     **** // *** rprintfu04 ***
+ 143:rprintf.c     **** // prints an unsigned 4-bit number in hex (1 digit)
+ 144:rprintf.c     **** void rprintfu04(unsigned char data)
+ 145:rprintf.c     **** {
+ 508               	_L__
+ 509               		in r29,__SP_H__
+ 510               	/* prologue: function */
+ 511 01d6 DF93      	/* frame size = 4 */
+ 512 01d8 CF93      		std Y+4,r24
+ 513 01da 00D0      	.LBB3:
+ 515 01de CDB7      	.LM32:
+ 516 01e0 DEB7      		ldd r24,Y+4
+ 517               		mov r24,r24
+ 518               		ldi r25,lo8(0)
+ 519 01e2 8C83      		andi r24,lo8(15)
+ 520               		andi r25,hi8(15)
+ 146:rprintf.c     **** 	// print 4-bit hex value
+ 147:rprintf.c     **** //	char Character = data&0x0f;
+ 148:rprintf.c     **** //	if (Character>9)
+ 149:rprintf.c     **** //		Character+='A'-10;
+ 150:rprintf.c     **** //	else
+ 151:rprintf.c     **** //		Character+='0';
+ 152:rprintf.c     **** 	rprintfChar(hexchar(data));
+ 521               	(-(HexChars))
+ 522               		sbci r25,hi8(-(HexChars))
+ 523 01e4 8C81      		std Y+3,r25
+ 524 01e6 882F      		std Y+2,r24
+ 525 01e8 90E0      		ldd r30,Y+2
+ 526 01ea 8F70      		ldd r31,Y+3
+ 527 01ec 9070      	/* #APP */
+ 528 01ee 8050      	 ;  152 "rprintf.c" 1
+ 529 01f0 9040      		lpm r24, Z
+ 530 01f2 9B83      		
+ 531 01f4 8A83      	 ;  0 "" 2
+ 532 01f6 EA81      	/* #NOAPP */
+ 533 01f8 FB81      		std Y+1,r24
+ 534               		ldd r24,Y+1
+ 535               	.LBE3:
+ 536 01fa 8491      		call rprintfChar
+ 537               	/* epilogue start */
+ 539               	.LM33:
+ 540 01fc 8983      		pop __tmp_reg__
+ 541 01fe 8981      		pop __tmp_reg__
+ 542               		pop __tmp_reg__
+ 543 0200 0E94 0000 		pop __tmp_reg__
+ 544               		pop r28
+ 153:rprintf.c     **** }
+ 545               	intfu04, .-rprintfu04
+ 550 020a 0F90      	.Lscope7:
+ 553 0210 0895      	.global	rprintfu08
+ 555               	rprintfu08:
+ 557               	.LM34:
+ 558               	.LFBB8:
+ 559               		push r29
+ 560               		push r28
+ 561               		push __tmp_reg__
+ 562               		in r28,__SP_L__
+ 563               		in r29,__SP_H__
+ 564               	/* prologue: function */
+ 154:rprintf.c     **** 
+ 155:rprintf.c     **** // *** rprintfu08 ***
+ 156:rprintf.c     **** // prints an unsigned 8-bit number in hex (2 digits)
+ 157:rprintf.c     **** void rprintfu08(unsigned char data)
+ 158:rprintf.c     **** {
+ 565               	
+ 566               		std Y+1,r24
+ 568 0212 DF93      	.LM35:
+ 569 0214 CF93      		ldd r24,Y+1
+ 570 0216 0F92      		swap r24
+ 571 0218 CDB7      		andi r24,lo8(15)
+ 572 021a DEB7      		call rprintfu04
+ 574               	.LM36:
+ 575 021c 8983      		ldd r24,Y+1
+ 159:rprintf.c     **** 	// print 8-bit hex value
+ 160:rprintf.c     **** 	rprintfu04(data>>4);
+ 576               	ntfu04
+ 577               	/* epilogue start */
+ 579 0220 8295      	.LM37:
+ 580 0222 8F70      		pop __tmp_reg__
+ 581 0224 0E94 0000 		pop r28
+ 161:rprintf.c     **** 	rprintfu04(data);
+ 582               	29
+ 583               		ret
+ 585 022a 0E94 0000 	.Lscope8:
+ 162:rprintf.c     **** }
+ 587               	bs	"data:p(0,9)",160,0,0,1
+ 588               	.global	rprintfu16
+ 590 0230 CF91      	rprintfu16:
+ 592 0234 0895      	.LM38:
+ 593               	.LFBB9:
+ 594               		push r29
+ 595               		push r28
+ 596               		rcall .
+ 597               		in r28,__SP_L__
+ 598               		in r29,__SP_H__
+ 599               	/* prologue: function */
+ 163:rprintf.c     **** 
+ 164:rprintf.c     **** // *** rprintfu16 ***
+ 165:rprintf.c     **** // prints an unsigned 16-bit number in hex (4 digits)
+ 166:rprintf.c     **** void rprintfu16(unsigned short data)
+ 167:rprintf.c     **** {
+ 600               	 = 2 */
+ 601               		std Y+2,r25
+ 602               		std Y+1,r24
+ 604 0238 CF93      	.LM39:
+ 605 023a 00D0      		ldd r24,Y+1
+ 606 023c CDB7      		ldd r25,Y+2
+ 607 023e DEB7      		mov r24,r25
+ 608               		clr r25
+ 609               		call rprintfu08
+ 611 0242 8983      	.LM40:
+ 168:rprintf.c     **** 	// print 16-bit hex value
+ 169:rprintf.c     **** 	rprintfu08(data>>8);
+ 612               	
+ 613               		call rprintfu08
+ 614 0244 8981      	/* epilogue start */
+ 616 0248 892F      	.LM41:
+ 617 024a 9927      		pop __tmp_reg__
+ 618 024c 0E94 0000 		pop __tmp_reg__
+ 170:rprintf.c     **** 	rprintfu08(data);
+ 619               	28
+ 620               		pop r29
+ 621 0250 8981      		ret
+ 623               	.Lscope9:
+ 171:rprintf.c     **** }
+ 624               	bs	"rprintfu32:F(0,15)",36,0,0,rprintfu32
+ 626 0256 0F90      	.global	rprintfu32
+ 628 025a CF91      	rprintfu32:
+ 630 025e 0895      	.LM42:
+ 631               	.LFBB10:
+ 632               		push r29
+ 633               		push r28
+ 634               		rcall .
+ 635               		rcall .
+ 636               		in r28,__SP_L__
+ 637               		in r29,__SP_H__
+ 172:rprintf.c     **** 
+ 173:rprintf.c     **** // *** rprintfu32 ***
+ 174:rprintf.c     **** // prints an unsigned 32-bit number in hex (8 digits)
+ 175:rprintf.c     **** void rprintfu32(unsigned long data)
+ 176:rprintf.c     **** {
+ 638               	unction */
+ 639               	/* frame size = 4 */
+ 640               		std Y+1,r22
+ 641 0260 DF93      		std Y+2,r23
+ 642 0262 CF93      		std Y+3,r24
+ 643 0264 00D0      		std Y+4,r25
+ 645 0268 CDB7      	.LM43:
+ 646 026a DEB7      		ldd r24,Y+1
+ 647               		ldd r25,Y+2
+ 648               		ldd r26,Y+3
+ 649 026c 6983      		ldd r27,Y+4
+ 650 026e 7A83      		movw r24,r26
+ 651 0270 8B83      		clr r26
+ 652 0272 9C83      		clr r27
+ 177:rprintf.c     **** 	// print 32-bit hex value
+ 178:rprintf.c     **** 	rprintfu16(data>>16);
+ 653               	6
+ 655 0274 8981      	.LM44:
+ 656 0276 9A81      		ldd r24,Y+1
+ 657 0278 AB81      		ldd r25,Y+2
+ 658 027a BC81      		call rprintfu16
+ 659 027c CD01      	/* epilogue start */
+ 661 0280 BB27      	.LM45:
+ 662 0282 0E94 0000 		pop __tmp_reg__
+ 179:rprintf.c     **** 	rprintfu16(data);
+ 663               	_reg__
+ 664               		pop __tmp_reg__
+ 665 0286 8981      		pop __tmp_reg__
+ 666 0288 9A81      		pop r28
+ 667 028a 0E94 0000 		pop r29
+ 668               		ret
+ 180:rprintf.c     **** }
+ 669               		rprintfu32, .-rprintfu32
+ 670               	.Lscope10:
+ 677 029a 0895      	.global	rprintfNum
+ 679               	rprintfNum:
+ 681               	.LM46:
+ 682               	.LFBB11:
+ 683               		push r14
+ 684               		push r15
+ 685               		push r16
+ 686               		push r17
+ 687               		push r29
+ 688               		push r28
+ 181:rprintf.c     **** 
+ 182:rprintf.c     **** // *** rprintfNum ***
+ 183:rprintf.c     **** // special printf for numbers only
+ 184:rprintf.c     **** // see formatting information below
+ 185:rprintf.c     **** //	Print the number "n" in the given "base"
+ 186:rprintf.c     **** //	using exactly "numDigits"
+ 187:rprintf.c     **** //	print +/- if signed flag "isSigned" is TRUE
+ 188:rprintf.c     **** //	use the character specified in "padchar" to pad extra characters
+ 189:rprintf.c     **** //
+ 190:rprintf.c     **** //	Examples:
+ 191:rprintf.c     **** //	uartPrintfNum(10, 6,  TRUE, ' ',   1234);  -->  " +1234"
+ 192:rprintf.c     **** //	uartPrintfNum(10, 6, FALSE, '0',   1234);  -->  "001234"
+ 193:rprintf.c     **** //	uartPrintfNum(16, 6, FALSE, '.', 0x5AA5);  -->  "..5AA5"
+ 194:rprintf.c     **** void rprintfNum(char base, char numDigits, char isSigned, char padchar, long n)
+ 195:rprintf.c     **** {
+ 689               	 r29,__SP_H__
+ 690               		sbiw r28,56
+ 691               		in __tmp_reg__,__SREG__
+ 692 029c EF92      		cli
+ 693 029e FF92      		out __SP_H__,r29
+ 694 02a0 0F93      		out __SREG__,__tmp_reg__
+ 695 02a2 1F93      		out __SP_L__,r28
+ 696 02a4 DF93      	/* prologue: function */
+ 697 02a6 CF93      	/* frame size = 56 */
+ 698 02a8 CDB7      		std Y+46,r24
+ 699 02aa DEB7      		std Y+47,r22
+ 700 02ac E897      		std Y+48,r20
+ 701 02ae 0FB6      		std Y+49,r18
+ 702 02b0 F894      		std Y+50,r14
+ 703 02b2 DEBF      		std Y+51,r15
+ 704 02b4 0FBE      		std Y+52,r16
+ 705 02b6 CDBF      		std Y+53,r17
+ 707               	.LM47:
+ 708 02b8 8EA7      		ldd r24,Y+48
+ 709 02ba 6FA7      		tst r24
+ 710 02bc 48AB      		breq .L38
+ 711 02be 29AB      		ldd r24,Y+50
+ 712 02c0 EAAA      		ldd r25,Y+51
+ 713 02c2 FBAA      		ldd r26,Y+52
+ 714 02c4 0CAB      		ldd r27,Y+53
+ 715 02c6 1DAB      		tst r27
+ 196:rprintf.c     **** 	// define a global HexChars or use line below
+ 197:rprintf.c     **** 	//static char HexChars[16] = "0123456789ABCDEF";
+ 198:rprintf.c     **** 	char *p, buf[32];
+ 199:rprintf.c     **** 	unsigned long x;
+ 200:rprintf.c     **** 	unsigned char count;
+ 201:rprintf.c     **** 
+ 202:rprintf.c     **** 	// prepare negative number
+ 203:rprintf.c     **** 	if( isSigned && (n < 0) )
+ 716               	,.LM48-.LFBB11
+ 717               	.LM48:
+ 718 02c8 88A9      		ldd r24,Y+50
+ 719 02ca 8823      		ldd r25,Y+51
+ 720 02cc 01F0      		ldd r26,Y+52
+ 721 02ce 8AA9      		ldd r27,Y+53
+ 722 02d0 9BA9      		com r27
+ 723 02d2 ACA9      		com r26
+ 724 02d4 BDA9      		com r25
+ 725 02d6 BB23      		neg r24
+ 726 02d8 04F4      		sbci r25,lo8(-1)
+ 204:rprintf.c     **** 	{
+ 205:rprintf.c     **** 		x = -n;
+ 727               	o8(-1)
+ 728               		sbci r27,lo8(-1)
+ 729 02da 8AA9      		std Y+8,r24
+ 730 02dc 9BA9      		std Y+9,r25
+ 731 02de ACA9      		std Y+10,r26
+ 732 02e0 BDA9      		std Y+11,r27
+ 733 02e2 B095      		rjmp .L39
+ 734 02e4 A095      	.L38:
+ 736 02e8 8195      	.LM49:
+ 737 02ea 9F4F      		ldd r24,Y+50
+ 738 02ec AF4F      		ldd r25,Y+51
+ 739 02ee BF4F      		ldd r26,Y+52
+ 740 02f0 8887      		ldd r27,Y+53
+ 741 02f2 9987      		std Y+8,r24
+ 742 02f4 AA87      		std Y+9,r25
+ 743 02f6 BB87      		std Y+10,r26
+ 744 02f8 00C0      		std Y+11,r27
+ 745               	.L39:
+ 206:rprintf.c     **** 	}
+ 207:rprintf.c     **** 	else
+ 208:rprintf.c     **** 	{
+ 209:rprintf.c     **** 	 	x = n;
+ 746               	M50-.LFBB11
+ 747               	.LM50:
+ 748 02fa 8AA9      		ldd r24,Y+48
+ 749 02fc 9BA9      		std Y+54,r24
+ 750 02fe ACA9      		ldd r24,Y+54
+ 751 0300 BDA9      		tst r24
+ 752 0302 8887      		breq .L40
+ 753 0304 9987      		ldi r24,lo8(1)
+ 754 0306 AA87      		std Y+54,r24
+ 755 0308 BB87      	.L40:
+ 756               		ldd r25,Y+54
+ 210:rprintf.c     **** 	}
+ 211:rprintf.c     **** 
+ 212:rprintf.c     **** 	// setup little string buffer
+ 213:rprintf.c     **** 	count = (numDigits-1)-(isSigned?1:0);
+ 757               	47
+ 758               		sub r24,r25
+ 759 030a 88A9      		subi r24,lo8(-(-1))
+ 760 030c 8EAB      		std Y+7,r24
+ 762 0310 8823      	.LM51:
+ 763 0312 01F0      		movw r24,r28
+ 764 0314 81E0      		adiw r24,14
+ 765 0316 8EAB      		adiw r24,32
+ 766               		std Y+13,r25
+ 767 0318 9EA9      		std Y+12,r24
+ 769 031c 891B      	.LM52:
+ 770 031e 8150      		ldd r24,Y+12
+ 771 0320 8F83      		ldd r25,Y+13
+ 214:rprintf.c     ****   	p = buf + sizeof (buf);
+ 772               	d Y+13,r25
+ 773               		std Y+12,r24
+ 774 0322 CE01      		ldd r30,Y+12
+ 775 0324 0E96      		ldd r31,Y+13
+ 776 0326 8096      		st Z,__zero_reg__
+ 778 032a 8C87      	.LM53:
+ 215:rprintf.c     ****   	*--p = '\0';
+ 779               	4,Y+12
+ 780               		ldd r25,Y+13
+ 781 032c 8C85      		sbiw r24,1
+ 782 032e 9D85      		std Y+13,r25
+ 783 0330 0197      		std Y+12,r24
+ 784 0332 9D87      	.LBB4:
+ 785 0334 8C87      		ldd r24,Y+46
+ 786 0336 EC85      		mov r18,r24
+ 787 0338 FD85      		ldi r19,lo8(0)
+ 788 033a 1082      		ldi r20,lo8(0)
+ 216:rprintf.c     **** 	
+ 217:rprintf.c     **** 	// force calculation of first digit
+ 218:rprintf.c     **** 	// (to prevent zero from not printing at all!!!)
+ 219:rprintf.c     **** 	*--p = hexchar(x%base); x /= base;
+ 789               	i8(0)
+ 790               		ldd r24,Y+8
+ 791 033c 8C85      		ldd r25,Y+9
+ 792 033e 9D85      		ldd r26,Y+10
+ 793 0340 0197      		ldd r27,Y+11
+ 794 0342 9D87      		movw r22,r24
+ 795 0344 8C87      		movw r24,r26
+ 796               		call __udivmodsi4
+ 797 0346 8EA5      		movw r26,r24
+ 798 0348 282F      		movw r24,r22
+ 799 034a 30E0      		andi r24,lo8(15)
+ 800 034c 40E0      		andi r25,hi8(15)
+ 801 034e 50E0      		subi r24,lo8(-(HexChars))
+ 802 0350 8885      		sbci r25,hi8(-(HexChars))
+ 803 0352 9985      		std Y+6,r25
+ 804 0354 AA85      		std Y+5,r24
+ 805 0356 BB85      		ldd r30,Y+5
+ 806 0358 BC01      		ldd r31,Y+6
+ 807 035a CD01      	/* #APP */
+ 808 035c 0E94 0000 	 ;  219 "rprintf.c" 1
+ 809 0360 DC01      		lpm r24, Z
+ 810 0362 CB01      		
+ 811 0364 8F70      	 ;  0 "" 2
+ 812 0366 9070      	/* #NOAPP */
+ 813 0368 8050      		std Y+4,r24
+ 814 036a 9040      		ldd r24,Y+4
+ 815 036c 9E83      	.LBE4:
+ 816 036e 8D83      		ldd r30,Y+12
+ 817 0370 ED81      		ldd r31,Y+13
+ 818 0372 FE81      		st Z,r24
+ 819               		ldd r24,Y+46
+ 820               		mov r18,r24
+ 821 0374 8491      		ldi r19,lo8(0)
+ 822               		ldi r20,lo8(0)
+ 823               		ldi r21,hi8(0)
+ 824               		ldd r24,Y+8
+ 825 0376 8C83      		ldd r25,Y+9
+ 826 0378 8C81      		ldd r26,Y+10
+ 827               		ldd r27,Y+11
+ 828 037a EC85      		movw r22,r24
+ 829 037c FD85      		movw r24,r26
+ 830 037e 8083      		call __udivmodsi4
+ 831 0380 8EA5      		movw r26,r20
+ 832 0382 282F      		movw r24,r18
+ 833 0384 30E0      		std Y+8,r24
+ 834 0386 40E0      		std Y+9,r25
+ 835 0388 50E0      		std Y+10,r26
+ 836 038a 8885      		std Y+11,r27
+ 837 038c 9985      		rjmp .L41
+ 838 038e AA85      	.L44:
+ 840 0392 BC01      	.LM54:
+ 841 0394 CD01      		ldd r24,Y+8
+ 842 0396 0E94 0000 		ldd r25,Y+9
+ 843 039a DA01      		ldd r26,Y+10
+ 844 039c C901      		ldd r27,Y+11
+ 845 039e 8887      		sbiw r24,0
+ 846 03a0 9987      		cpc r26,__zero_reg__
+ 847 03a2 AA87      		cpc r27,__zero_reg__
+ 848 03a4 BB87      		breq .L42
+ 850               	.LM55:
+ 220:rprintf.c     **** 	// calculate remaining digits
+ 221:rprintf.c     **** 	while(count--)
+ 222:rprintf.c     **** 	{
+ 223:rprintf.c     **** 		if(x != 0)
+ 851               	2,r24
+ 852               	.LBB5:
+ 853 03a8 8885      		ldd r24,Y+46
+ 854 03aa 9985      		mov r18,r24
+ 855 03ac AA85      		ldi r19,lo8(0)
+ 856 03ae BB85      		ldi r20,lo8(0)
+ 857 03b0 0097      		ldi r21,hi8(0)
+ 858 03b2 A105      		ldd r24,Y+8
+ 859 03b4 B105      		ldd r25,Y+9
+ 860 03b6 01F0      		ldd r26,Y+10
+ 224:rprintf.c     **** 		{
+ 225:rprintf.c     **** 			// calculate next digit
+ 226:rprintf.c     **** 			*--p = hexchar(x%base); x /= base;
+ 861               	+11
+ 862               		movw r22,r24
+ 863 03b8 8C85      		movw r24,r26
+ 864 03ba 9D85      		call __udivmodsi4
+ 865 03bc 0197      		movw r26,r24
+ 866 03be 9D87      		movw r24,r22
+ 867 03c0 8C87      		andi r24,lo8(15)
+ 868               		andi r25,hi8(15)
+ 869 03c2 8EA5      		subi r24,lo8(-(HexChars))
+ 870 03c4 282F      		sbci r25,hi8(-(HexChars))
+ 871 03c6 30E0      		std Y+3,r25
+ 872 03c8 40E0      		std Y+2,r24
+ 873 03ca 50E0      		ldd r30,Y+2
+ 874 03cc 8885      		ldd r31,Y+3
+ 875 03ce 9985      	/* #APP */
+ 876 03d0 AA85      	 ;  226 "rprintf.c" 1
+ 877 03d2 BB85      		lpm r24, Z
+ 878 03d4 BC01      		
+ 879 03d6 CD01      	 ;  0 "" 2
+ 880 03d8 0E94 0000 	/* #NOAPP */
+ 881 03dc DC01      		std Y+1,r24
+ 882 03de CB01      		ldd r24,Y+1
+ 883 03e0 8F70      	.LBE5:
+ 884 03e2 9070      		ldd r30,Y+12
+ 885 03e4 8050      		ldd r31,Y+13
+ 886 03e6 9040      		st Z,r24
+ 887 03e8 9B83      		ldd r24,Y+46
+ 888 03ea 8A83      		mov r18,r24
+ 889 03ec EA81      		ldi r19,lo8(0)
+ 890 03ee FB81      		ldi r20,lo8(0)
+ 891               		ldi r21,hi8(0)
+ 892               		ldd r24,Y+8
+ 893 03f0 8491      		ldd r25,Y+9
+ 894               		ldd r26,Y+10
+ 895               		ldd r27,Y+11
+ 896               		movw r22,r24
+ 897 03f2 8983      		movw r24,r26
+ 898 03f4 8981      		call __udivmodsi4
+ 899               		movw r26,r20
+ 900 03f6 EC85      		movw r24,r18
+ 901 03f8 FD85      		std Y+8,r24
+ 902 03fa 8083      		std Y+9,r25
+ 903 03fc 8EA5      		std Y+10,r26
+ 904 03fe 282F      		std Y+11,r27
+ 905 0400 30E0      		rjmp .L41
+ 906 0402 40E0      	.L42:
+ 908 0406 8885      	.LM56:
+ 909 0408 9985      		ldd r24,Y+12
+ 910 040a AA85      		ldd r25,Y+13
+ 911 040c BB85      		sbiw r24,1
+ 912 040e BC01      		std Y+13,r25
+ 913 0410 CD01      		std Y+12,r24
+ 914 0412 0E94 0000 		ldd r30,Y+12
+ 915 0416 DA01      		ldd r31,Y+13
+ 916 0418 C901      		ldd r24,Y+49
+ 917 041a 8887      		st Z,r24
+ 918 041c 9987      	.L41:
+ 920 0420 BB87      	.LM57:
+ 921 0422 00C0      		ldd r24,Y+7
+ 922               		std Y+55,r24
+ 227:rprintf.c     **** 		}
+ 228:rprintf.c     **** 		else
+ 229:rprintf.c     **** 		{
+ 230:rprintf.c     **** 			// no more digits left, pad out to desired length
+ 231:rprintf.c     **** 			*--p = padchar;
+ 923               	4
+ 924               	.L43:
+ 925 0424 8C85      		ldd r24,Y+55
+ 926 0426 9D85      		ldd r25,Y+7
+ 927 0428 0197      		subi r25,lo8(-(-1))
+ 928 042a 9D87      		std Y+7,r25
+ 929 042c 8C87      		tst r24
+ 930 042e EC85      		breq .+2
+ 931 0430 FD85      		rjmp .L44
+ 933 0434 8083      	.LM58:
+ 934               		ldd r24,Y+48
+ 935               		tst r24
+ 936               		breq .L45
+ 938 0438 8FAB      	.LM59:
+ 939 043a 8FA9      		ldd r24,Y+50
+ 940 043c 8823      		ldd r25,Y+51
+ 941 043e 01F0      		ldd r26,Y+52
+ 942 0440 81E0      		ldd r27,Y+53
+ 943 0442 8FAB      		tst r27
+ 944               		brge .L46
+ 946 0446 9F81      	.LM60:
+ 947 0448 9150      		ldd r24,Y+12
+ 948 044a 9F83      		ldd r25,Y+13
+ 949 044c 8823      		sbiw r24,1
+ 950 044e 01F0      		std Y+13,r25
+ 951 0450 00C0      		std Y+12,r24
+ 232:rprintf.c     **** 		}
+ 233:rprintf.c     **** 	}
+ 234:rprintf.c     **** 
+ 235:rprintf.c     **** 	// apply signed notation if requested
+ 236:rprintf.c     **** 	if( isSigned )
+ 952               	ldi r24,lo8(45)
+ 953               		st Z,r24
+ 954 0452 88A9      		rjmp .L45
+ 955 0454 8823      	.L46:
+ 237:rprintf.c     **** 	{
+ 238:rprintf.c     **** 		if(n < 0)
+ 957               	:
+ 958               		ldd r24,Y+50
+ 959 0458 8AA9      		ldd r25,Y+51
+ 960 045a 9BA9      		ldd r26,Y+52
+ 961 045c ACA9      		ldd r27,Y+53
+ 962 045e BDA9      		cp __zero_reg__,r24
+ 963 0460 BB23      		cpc __zero_reg__,r25
+ 964 0462 04F4      		cpc __zero_reg__,r26
+ 239:rprintf.c     **** 		{
+ 240:rprintf.c     ****    			*--p = '-';
+ 965               	ero_reg__,r27
+ 966               		brge .L47
+ 968 0466 9D85      	.LM62:
+ 969 0468 0197      		ldd r24,Y+12
+ 970 046a 9D87      		ldd r25,Y+13
+ 971 046c 8C87      		sbiw r24,1
+ 972 046e EC85      		std Y+13,r25
+ 973 0470 FD85      		std Y+12,r24
+ 974 0472 8DE2      		ldd r30,Y+12
+ 975 0474 8083      		ldd r31,Y+13
+ 976 0476 00C0      		ldi r24,lo8(43)
+ 977               		st Z,r24
+ 241:rprintf.c     **** 		}
+ 242:rprintf.c     **** 		else if(n > 0)
+ 978               	47:
+ 980 0478 8AA9      	.LM63:
+ 981 047a 9BA9      		ldd r24,Y+12
+ 982 047c ACA9      		ldd r25,Y+13
+ 983 047e BDA9      		sbiw r24,1
+ 984 0480 1816      		std Y+13,r25
+ 985 0482 1906      		std Y+12,r24
+ 986 0484 1A06      		ldd r30,Y+12
+ 987 0486 1B06      		ldd r31,Y+13
+ 988 0488 04F4      		ldi r24,lo8(32)
+ 243:rprintf.c     **** 		{
+ 244:rprintf.c     **** 	   		*--p = '+';
+ 989               	L45:
+ 991 048a 8C85      	.LM64:
+ 992 048c 9D85      		ldd r24,Y+47
+ 993 048e 0197      		std Y+7,r24
+ 994 0490 9D87      		rjmp .L48
+ 995 0492 8C87      	.L50:
+ 997 0496 FD85      	.LM65:
+ 998 0498 8BE2      		ldd r30,Y+12
+ 999 049a 8083      		ldd r31,Y+13
+ 1000 049c 00C0      		ld r18,Z
+ 1001               		ldd r24,Y+12
+ 245:rprintf.c     **** 		}
+ 246:rprintf.c     **** 		else
+ 247:rprintf.c     **** 		{
+ 248:rprintf.c     **** 	   		*--p = ' ';
+ 1002               	
+ 1003               		adiw r24,1
+ 1004 049e 8C85      		std Y+13,r25
+ 1005 04a0 9D85      		std Y+12,r24
+ 1006 04a2 0197      		mov r24,r18
+ 1007 04a4 9D87      		call rprintfChar
+ 1008 04a6 8C87      	.L48:
+ 1010 04aa FD85      	.LM66:
+ 1011 04ac 80E2      		ldd r24,Y+7
+ 1012 04ae 8083      		std Y+56,r24
+ 1013               		ldd r24,Y+56
+ 249:rprintf.c     **** 		}
+ 250:rprintf.c     **** 	}
+ 251:rprintf.c     **** 
+ 252:rprintf.c     **** 	// print the string right-justified
+ 253:rprintf.c     **** 	count = numDigits;
+ 1014               	req .L49
+ 1015               		ldi r24,lo8(1)
+ 1016 04b0 8FA5      		std Y+56,r24
+ 1017 04b2 8F83      	.L49:
+ 1018 04b4 00C0      		ldd r24,Y+56
+ 1019               		ldd r25,Y+7
+ 254:rprintf.c     **** 	while(count--)
+ 255:rprintf.c     **** 	{
+ 256:rprintf.c     **** 		rprintfChar(*p++);
+ 1020               	r25,lo8(-(-1))
+ 1021               		std Y+7,r25
+ 1022 04b6 EC85      		tst r24
+ 1023 04b8 FD85      		brne .L50
+ 1024 04ba 2081      	/* epilogue start */
+ 1026 04be 9D85      	.LM67:
+ 1027 04c0 0196      		adiw r28,56
+ 1028 04c2 9D87      		in __tmp_reg__,__SREG__
+ 1029 04c4 8C87      		cli
+ 1030 04c6 822F      		out __SP_H__,r29
+ 1031 04c8 0E94 0000 		out __SREG__,__tmp_reg__
+ 1032               		out __SP_L__,r28
+ 1033               		pop r28
+ 1034               		pop r29
+ 1035 04cc 8F81      		pop r17
+ 1036 04ce 88AF      		pop r16
+ 1037 04d0 88AD      		pop r15
+ 1038 04d2 8823      		pop r14
+ 1039 04d4 01F0      		ret
+ 257:rprintf.c     **** 	}
+ 258:rprintf.c     **** }
+ 1050               	,0,2
+ 1055 04ec DEBF      	.Lscope11:
+ 1059 04f4 DF91      	.global	rprintfFloat
+ 1061 04f8 0F91      	rprintfFloat:
+ 1063 04fc EF90      	.LM68:
+ 1064 04fe 0895      	.LFBB12:
+ 1065               		push r29
+ 1066               		push r28
+ 1067               		in r28,__SP_L__
+ 1068               		in r29,__SP_H__
+ 1069               		sbiw r28,21
+ 1070               		in __tmp_reg__,__SREG__
+ 1071               		cli
+ 1072               		out __SP_H__,r29
+ 1073               		out __SREG__,__tmp_reg__
+ 1074               		out __SP_L__,r28
+ 1075               	/* prologue: function */
+ 1076               	/* frame size = 21 */
+ 1077               		std Y+9,r24
+ 1078               		std Y+10,r20
+ 1079               		std Y+11,r21
+ 1080               		std Y+12,r22
+ 1081               		std Y+13,r23
+ 1083               	.LM69:
+ 1084               		std Y+8,__zero_reg__
+ 1086               	.LM70:
+ 259:rprintf.c     **** 
+ 260:rprintf.c     **** #ifdef RPRINTF_FLOAT
+ 261:rprintf.c     **** // *** rprintfFloat ***
+ 262:rprintf.c     **** // floating-point print
+ 263:rprintf.c     **** void rprintfFloat(char numDigits, double x)
+ 264:rprintf.c     **** {
+ 1087               	(0x3f800000)
+ 1088               		ldi r26,hlo8(0x3f800000)
+ 1089               		ldi r27,hhi8(0x3f800000)
+ 1090 0500 DF93      		std Y+1,r24
+ 1091 0502 CF93      		std Y+2,r25
+ 1092 0504 CDB7      		std Y+3,r26
+ 1093 0506 DEB7      		std Y+4,r27
+ 1095 050a 0FB6      	.LM71:
+ 1096 050c F894      		std Y+7,__zero_reg__
+ 1097 050e DEBF      		ldd r22,Y+10
+ 1098 0510 0FBE      		ldd r23,Y+11
+ 1099 0512 CDBF      		ldd r24,Y+12
+ 1100               		ldd r25,Y+13
+ 1101               		ldi r18,lo8(0x0)
+ 1102 0514 8987      		ldi r19,hi8(0x0)
+ 1103 0516 4A87      		ldi r20,hlo8(0x0)
+ 1104 0518 5B87      		ldi r21,hhi8(0x0)
+ 1105 051a 6C87      		call __ltsf2
+ 1106 051c 7D87      		tst r24
+ 265:rprintf.c     **** 	unsigned char firstplace = FALSE;
+ 1107               	i r24,lo8(1)
+ 1108               		std Y+7,r24
+ 1109 051e 1886      	.L53:
+ 266:rprintf.c     **** 	unsigned char negative;
+ 267:rprintf.c     **** 	unsigned char i, digit;
+ 268:rprintf.c     **** 	double place = 1.0;
+ 1110               	tabn	68,0,273,.LM72-.LFBB12
+ 1111               	.LM72:
+ 1112 0520 80E0      		ldd r22,Y+10
+ 1113 0522 90E0      		ldd r23,Y+11
+ 1114 0524 A0E8      		ldd r24,Y+12
+ 1115 0526 BFE3      		ldd r25,Y+13
+ 1116 0528 8983      		ldi r18,lo8(0x0)
+ 1117 052a 9A83      		ldi r19,hi8(0x0)
+ 1118 052c AB83      		ldi r20,hlo8(0x0)
+ 1119 052e BC83      		ldi r21,hhi8(0x0)
+ 269:rprintf.c     **** 	
+ 270:rprintf.c     **** 	// save sign
+ 271:rprintf.c     **** 	negative = (x<0);
+ 1120               	sf2
+ 1121               		cp __zero_reg__,r24
+ 1122 0530 1F82      		brge .L74
+ 1123 0532 6A85      	.L72:
+ 1124 0534 7B85      		ldd r18,Y+10
+ 1125 0536 8C85      		ldd r19,Y+11
+ 1126 0538 9D85      		ldd r20,Y+12
+ 1127 053a 20E0      		ldd r21,Y+13
+ 1128 053c 30E0      		std Y+18,r18
+ 1129 053e 40E0      		std Y+19,r19
+ 1130 0540 50E0      		std Y+20,r20
+ 1131 0542 0E94 0000 		std Y+21,r21
+ 1132 0546 8823      		rjmp .L57
+ 1133 0548 04F4      	.L74:
+ 1134               		ldd r24,Y+10
+ 1135 054a 81E0      		ldd r25,Y+11
+ 1136 054c 8F83      		ldd r26,Y+12
+ 1137               		ldd r27,Y+13
+ 272:rprintf.c     **** 	// convert to absolute value
+ 273:rprintf.c     **** 	x = (x>0)?(x):(-x);
+ 1138               	w r20,r26
+ 1139               		subi r21,0x80
+ 1140 054e 6A85      		std Y+18,r18
+ 1141 0550 7B85      		std Y+19,r19
+ 1142 0552 8C85      		std Y+20,r20
+ 1143 0554 9D85      		std Y+21,r21
+ 1144 0556 20E0      	.L57:
+ 1145 0558 30E0      		ldd r24,Y+18
+ 1146 055a 40E0      		ldd r25,Y+19
+ 1147 055c 50E0      		ldd r26,Y+20
+ 1148 055e 0E94 0000 		ldd r27,Y+21
+ 1149 0562 1816      		std Y+10,r24
+ 1150 0564 04F4      		std Y+11,r25
+ 1151               		std Y+12,r26
+ 1152 0566 2A85      		std Y+13,r27
+ 1154 056a 4C85      	.LM73:
+ 1155 056c 5D85      		std Y+6,__zero_reg__
+ 1156 056e 2A8B      		rjmp .L58
+ 1157 0570 3B8B      	.L60:
+ 1159 0574 5D8B      	.LM74:
+ 1160 0576 00C0      		ldd r22,Y+10
+ 1161               		ldd r23,Y+11
+ 1162 0578 8A85      		ldd r24,Y+12
+ 1163 057a 9B85      		ldd r25,Y+13
+ 1164 057c AC85      		ldd r18,Y+1
+ 1165 057e BD85      		ldd r19,Y+2
+ 1166 0580 9C01      		ldd r20,Y+3
+ 1167 0582 AD01      		ldd r21,Y+4
+ 1168 0584 5058      		call __divsf3
+ 1169 0586 2A8B      		movw r26,r24
+ 1170 0588 3B8B      		movw r24,r22
+ 1171 058a 4C8B      		movw r22,r24
+ 1172 058c 5D8B      		movw r24,r26
+ 1173               		ldi r18,lo8(0x41200000)
+ 1174 058e 8A89      		ldi r19,hi8(0x41200000)
+ 1175 0590 9B89      		ldi r20,hlo8(0x41200000)
+ 1176 0592 AC89      		ldi r21,hhi8(0x41200000)
+ 1177 0594 BD89      		call __ltsf2
+ 1178 0596 8A87      		tst r24
+ 1179 0598 9B87      		brlt .L59
+ 1181 059c BD87      	.LM75:
+ 274:rprintf.c     **** 	
+ 275:rprintf.c     **** 	// find starting digit place
+ 276:rprintf.c     **** 	for(i=0; i<15; i++)
+ 1182               	r25,Y+4
+ 1183               		ldi r18,lo8(0x41200000)
+ 1184 059e 1E82      		ldi r19,hi8(0x41200000)
+ 1185 05a0 00C0      		ldi r20,hlo8(0x41200000)
+ 1186               		ldi r21,hhi8(0x41200000)
+ 277:rprintf.c     **** 	{
+ 278:rprintf.c     **** 		if((x/place) < 10.0)
+ 1187               	 __mulsf3
+ 1188               		movw r26,r24
+ 1189 05a2 6A85      		movw r24,r22
+ 1190 05a4 7B85      		std Y+1,r24
+ 1191 05a6 8C85      		std Y+2,r25
+ 1192 05a8 9D85      		std Y+3,r26
+ 1193 05aa 2981      		std Y+4,r27
+ 1195 05ae 4B81      	.LM76:
+ 1196 05b0 5C81      		ldd r24,Y+6
+ 1197 05b2 0E94 0000 		subi r24,lo8(-(1))
+ 1198 05b6 DC01      		std Y+6,r24
+ 1199 05b8 CB01      	.L58:
+ 1200 05ba BC01      		ldd r24,Y+6
+ 1201 05bc CD01      		cpi r24,lo8(15)
+ 1202 05be 20E0      		brlo .L60
+ 1203 05c0 30E0      	.L59:
+ 1205 05c4 51E4      	.LM77:
+ 1206 05c6 0E94 0000 		ldd r24,Y+7
+ 1207 05ca 8823      		tst r24
+ 1208 05cc 04F0      		breq .L61
+ 279:rprintf.c     **** 			break;
+ 280:rprintf.c     **** 		else
+ 281:rprintf.c     **** 			place *= 10.0;
+ 1209               	-.LFBB12
+ 1210               	.LM78:
+ 1211 05ce 6981      		ldi r24,lo8(45)
+ 1212 05d0 7A81      		call rprintfChar
+ 1213 05d2 8B81      		rjmp .L62
+ 1214 05d4 9C81      	.L61:
+ 1216 05d8 30E0      	.LM79:
+ 1217 05da 40E2      		ldi r24,lo8(43)
+ 1218 05dc 51E4      		call rprintfChar
+ 1219 05de 0E94 0000 	.L62:
+ 1221 05e4 CB01      	.LM80:
+ 1222 05e6 8983      		std Y+6,__zero_reg__
+ 1223 05e8 9A83      		rjmp .L63
+ 1224 05ea AB83      	.L70:
+ 1226               	.LM81:
+ 1227               		ldd r22,Y+10
+ 1228 05ee 8E81      		ldd r23,Y+11
+ 1229 05f0 8F5F      		ldd r24,Y+12
+ 1230 05f2 8E83      		ldd r25,Y+13
+ 1231               		ldd r18,Y+1
+ 1232 05f4 8E81      		ldd r19,Y+2
+ 1233 05f6 8F30      		ldd r20,Y+3
+ 1234 05f8 00F0      		ldd r21,Y+4
+ 1235               		call __divsf3
+ 282:rprintf.c     **** 	}
+ 283:rprintf.c     **** 	// print polarity character
+ 284:rprintf.c     **** 	if(negative)
+ 1236               	
+ 1237               		movw r22,r24
+ 1238 05fa 8F81      		movw r24,r26
+ 1239 05fc 8823      		call __fixunssfsi
+ 1240 05fe 01F0      		movw r26,r24
+ 285:rprintf.c     **** 		rprintfChar('-');
+ 1241               	w r24,r22
+ 1242               		std Y+5,r24
+ 1244 0602 0E94 0000 	.LM82:
+ 1245 0606 00C0      		ldd r25,Y+5
+ 1246               		ldd r24,Y+8
+ 286:rprintf.c     **** 	else
+ 287:rprintf.c     **** 		rprintfChar('+');
+ 1247               	4,r25
+ 1248               		mov r26,r24
+ 1249 0608 8BE2      		ldi r27,lo8(0)
+ 1250 060a 0E94 0000 		std Y+17,r27
+ 1251               		std Y+16,r26
+ 288:rprintf.c     **** 
+ 289:rprintf.c     **** 	// print digits
+ 290:rprintf.c     **** 	for(i=0; i<numDigits; i++)
+ 1252               	Y+15,__zero_reg__
+ 1253               		std Y+14,__zero_reg__
+ 1254 060e 1E82      		ldd r22,Y+1
+ 1255 0610 00C0      		ldd r23,Y+2
+ 1256               		ldd r24,Y+3
+ 291:rprintf.c     **** 	{
+ 292:rprintf.c     **** 		digit = (x/place);
+ 1257               	r25,Y+4
+ 1258               		ldi r18,lo8(0x3f800000)
+ 1259 0612 6A85      		ldi r19,hi8(0x3f800000)
+ 1260 0614 7B85      		ldi r20,hlo8(0x3f800000)
+ 1261 0616 8C85      		ldi r21,hhi8(0x3f800000)
+ 1262 0618 9D85      		call __eqsf2
+ 1263 061a 2981      		tst r24
+ 1264 061c 3A81      		brne .L64
+ 1265 061e 4B81      	.L65:
+ 1266 0620 5C81      		ldi r18,lo8(1)
+ 1267 0622 0E94 0000 		ldi r19,hi8(1)
+ 1268 0626 DC01      		std Y+15,r19
+ 1269 0628 CB01      		std Y+14,r18
+ 1270 062a BC01      	.L64:
+ 1271 062c CD01      		ldd r24,Y+16
+ 1272 062e 0E94 0000 		ldd r25,Y+17
+ 1273 0632 DC01      		ldd r20,Y+14
+ 1274 0634 CB01      		ldd r21,Y+15
+ 1275 0636 8D83      		or r24,r20
+ 293:rprintf.c     **** 
+ 294:rprintf.c     **** 		if(digit | firstplace | (place == 1.0))
+ 1276               	24,0
+ 1277               		breq .L66
+ 1279 063a 8885      	.LM83:
+ 1280 063c 892B      		ldi r24,lo8(-1)
+ 1281 063e A82F      		std Y+8,r24
+ 1283 0642 B98B      	.LM84:
+ 1284 0644 A88B      		ldd r24,Y+5
+ 1285 0646 1F86      		subi r24,lo8(-(48))
+ 1286 0648 1E86      		call rprintfChar
+ 1287 064a 6981      		rjmp .L67
+ 1288 064c 7A81      	.L66:
+ 1290 0650 9C81      	.LM85:
+ 1291 0652 20E0      		ldi r24,lo8(32)
+ 1292 0654 30E0      		call rprintfChar
+ 1293 0656 40E8      	.L67:
+ 1295 065a 0E94 0000 	.LM86:
+ 1296 065e 8823      		ldd r22,Y+1
+ 1297 0660 01F4      		ldd r23,Y+2
+ 1298               		ldd r24,Y+3
+ 1299 0662 21E0      		ldd r25,Y+4
+ 1300 0664 30E0      		ldi r18,lo8(0x3f800000)
+ 1301 0666 3F87      		ldi r19,hi8(0x3f800000)
+ 1302 0668 2E87      		ldi r20,hlo8(0x3f800000)
+ 1303               		ldi r21,hhi8(0x3f800000)
+ 1304 066a 8889      		call __eqsf2
+ 1305 066c 9989      		tst r24
+ 1306 066e 4E85      		brne .L68
+ 1307 0670 5F85      	.L73:
+ 1309 0674 952B      	.LM87:
+ 1310 0676 0097      		ldi r24,lo8(46)
+ 1311 0678 01F0      		call rprintfChar
+ 295:rprintf.c     **** 		{
+ 296:rprintf.c     **** 			firstplace = TRUE;
+ 1312               	
+ 1313               	.LM88:
+ 1314 067a 8FEF      		ldd r24,Y+5
+ 1315 067c 8887      		mov r24,r24
+ 297:rprintf.c     **** 			rprintfChar(digit+0x30);
+ 1316               	i r25,lo8(0)
+ 1317               		clr r26
+ 1318 067e 8D81      		sbrc r25,7
+ 1319 0680 805D      		com r26
+ 1320 0682 0E94 0000 		mov r27,r26
+ 1321 0686 00C0      		movw r22,r24
+ 1322               		movw r24,r26
+ 298:rprintf.c     **** 		}
+ 299:rprintf.c     **** 		else
+ 300:rprintf.c     **** 			rprintfChar(' ');
+ 1323               	_floatsisf
+ 1324               		movw r26,r24
+ 1325 0688 80E2      		movw r24,r22
+ 1326 068a 0E94 0000 		movw r22,r24
+ 1327               		movw r24,r26
+ 301:rprintf.c     **** 		
+ 302:rprintf.c     **** 		if(place == 1.0)
+ 1328               	r18,Y+1
+ 1329               		ldd r19,Y+2
+ 1330 068e 6981      		ldd r20,Y+3
+ 1331 0690 7A81      		ldd r21,Y+4
+ 1332 0692 8B81      		call __mulsf3
+ 1333 0694 9C81      		movw r26,r24
+ 1334 0696 20E0      		movw r24,r22
+ 1335 0698 30E0      		movw r18,r24
+ 1336 069a 40E8      		movw r20,r26
+ 1337 069c 5FE3      		ldd r22,Y+10
+ 1338 069e 0E94 0000 		ldd r23,Y+11
+ 1339 06a2 8823      		ldd r24,Y+12
+ 1340 06a4 01F4      		ldd r25,Y+13
+ 1341               		call __subsf3
+ 303:rprintf.c     **** 		{
+ 304:rprintf.c     **** 			rprintfChar('.');
+ 1342               		movw r24,r22
+ 1343               		std Y+10,r24
+ 1344 06a6 8EE2      		std Y+11,r25
+ 1345 06a8 0E94 0000 		std Y+12,r26
+ 1346               		std Y+13,r27
+ 305:rprintf.c     **** 		}
+ 306:rprintf.c     **** 		
+ 307:rprintf.c     **** 		x -= (digit*place);
+ 1347               	bn	68,0,308,.LM89-.LFBB12
+ 1348               	.LM89:
+ 1349 06ac 8D81      		ldd r22,Y+1
+ 1350 06ae 882F      		ldd r23,Y+2
+ 1351 06b0 90E0      		ldd r24,Y+3
+ 1352 06b2 AA27      		ldd r25,Y+4
+ 1353 06b4 97FD      		ldi r18,lo8(0x41200000)
+ 1354 06b6 A095      		ldi r19,hi8(0x41200000)
+ 1355 06b8 BA2F      		ldi r20,hlo8(0x41200000)
+ 1356 06ba BC01      		ldi r21,hhi8(0x41200000)
+ 1357 06bc CD01      		call __divsf3
+ 1358 06be 0E94 0000 		movw r26,r24
+ 1359 06c2 DC01      		movw r24,r22
+ 1360 06c4 CB01      		std Y+1,r24
+ 1361 06c6 BC01      		std Y+2,r25
+ 1362 06c8 CD01      		std Y+3,r26
+ 1363 06ca 2981      		std Y+4,r27
+ 1365 06ce 4B81      	.LM90:
+ 1366 06d0 5C81      		ldd r24,Y+6
+ 1367 06d2 0E94 0000 		subi r24,lo8(-(1))
+ 1368 06d6 DC01      		std Y+6,r24
+ 1369 06d8 CB01      	.L63:
+ 1370 06da 9C01      		ldd r25,Y+6
+ 1371 06dc AD01      		ldd r24,Y+9
+ 1372 06de 6A85      		cp r25,r24
+ 1373 06e0 7B85      		brsh .+2
+ 1374 06e2 8C85      		rjmp .L70
+ 1375 06e4 9D85      	/* epilogue start */
+ 1377 06ea DC01      	.LM91:
+ 1378 06ec CB01      		adiw r28,21
+ 1379 06ee 8A87      		in __tmp_reg__,__SREG__
+ 1380 06f0 9B87      		cli
+ 1381 06f2 AC87      		out __SP_H__,r29
+ 1382 06f4 BD87      		out __SREG__,__tmp_reg__
+ 308:rprintf.c     **** 		place /= 10.0;
+ 1383               		ret
+ 1392 0704 51E4      	.Lscope12:
+ 1396 070e 8983      	.global	rprintf1RamRom
+ 1398 0712 AB83      	rprintf1RamRom:
+ 1400               	.LM92:
+ 1401               	.LFBB13:
+ 1402 0716 8E81      		push r29
+ 1403 0718 8F5F      		push r28
+ 1404 071a 8E83      		in r28,__SP_L__
+ 1405               		in r29,__SP_H__
+ 1406 071c 9E81      		sbiw r28,19
+ 1407 071e 8985      		in __tmp_reg__,__SREG__
+ 1408 0720 9817      		cli
+ 1409 0722 00F4      		out __SP_H__,r29
+ 1410 0724 00C0      		out __SREG__,__tmp_reg__
+ 1411               		out __SP_L__,r28
+ 309:rprintf.c     **** 	}
+ 310:rprintf.c     **** }
+ 1412               	rame size = 19 */
+ 1414 0726 6596      	.LM93:
+ 1415 0728 0FB6      		movw r24,r28
+ 1416 072a F894      		adiw r24,27
+ 1417 072c DEBF      		std Y+15,r25
+ 1418 072e 0FBE      		std Y+14,r24
+ 1419 0730 CDBF      		rjmp .L76
+ 1420 0732 CF91      	.L80:
+ 1422 0736 0895      	.LM94:
+ 1423               		ldd r24,Y+13
+ 1424               		tst r24
+ 1425               		brne .L77
+ 1427               	.LM95:
+ 1428               		ldi r24,lo8(0)
+ 1429               		ldi r25,hi8(0)
+ 1430               	/* epilogue start */
+ 1432               	.LM96:
+ 1433               		adiw r28,19
+ 1434               		in __tmp_reg__,__SREG__
+ 1435               		cli
+ 1436               		out __SP_H__,r29
+ 1437               		out __SREG__,__tmp_reg__
+ 311:rprintf.c     **** #endif
+ 312:rprintf.c     **** 
+ 313:rprintf.c     **** #ifdef RPRINTF_SIMPLE
+ 314:rprintf.c     **** // *** rprintf1RamRom ***
+ 315:rprintf.c     **** // called by rprintf() - does a simple printf (supports %d, %x, %c)
+ 316:rprintf.c     **** // Supports:
+ 317:rprintf.c     **** // %d - decimal
+ 318:rprintf.c     **** // %x - hex
+ 319:rprintf.c     **** // %c - character
+ 320:rprintf.c     **** int rprintf1RamRom(unsigned char stringInRom, const char *format, ...)
+ 321:rprintf.c     **** {
+ 1438               	
+ 1439               		pop r29
+ 1440               		ret
+ 1441 0738 DF93      	.L77:
+ 1443 073c CDB7      	.LM97:
+ 1444 073e DEB7      		ldd r24,Y+13
+ 1445 0740 6397      		call rprintfChar
+ 1446 0742 0FB6      	.L76:
+ 1448 0746 DEBF      	.LM98:
+ 1449 0748 0FBE      		ldd r24,Y+24
+ 1450 074a CDBF      		tst r24
+ 1451               		breq .L78
+ 1452               	.LBB6:
+ 322:rprintf.c     **** 	// simple printf routine
+ 323:rprintf.c     **** 	// define a global HexChars or use line below
+ 324:rprintf.c     **** 	//static char HexChars[16] = "0123456789ABCDEF";
+ 325:rprintf.c     **** 	char format_flag;
+ 326:rprintf.c     **** 	unsigned int u_val, div_val, base;
+ 327:rprintf.c     **** 	va_list ap;
+ 328:rprintf.c     **** 
+ 329:rprintf.c     **** 	va_start(ap, format);
+ 1453               		ldd r25,Y+26
+ 1454               		std Y+6,r25
+ 1455 074c CE01      		std Y+5,r24
+ 1456 074e 4B96      		ldd r24,Y+25
+ 1457 0750 9F87      		ldd r25,Y+26
+ 1458 0752 8E87      		adiw r24,1
+ 1459 0754 00C0      		std Y+26,r25
+ 1460               		std Y+25,r24
+ 330:rprintf.c     **** 	for (;;)
+ 331:rprintf.c     **** 	{
+ 332:rprintf.c     **** 		while ((format_flag = READMEMBYTE(stringInRom,format++) ) != '%')
+ 333:rprintf.c     **** 		{	// Until '%' or '\0'
+ 334:rprintf.c     **** 			if (!format_flag)
+ 1461               	,Y+5
+ 1462               		ldd r31,Y+6
+ 1463 0756 8D85      	/* #APP */
+ 1464 0758 8823      	 ;  332 "rprintf.c" 1
+ 1465 075a 01F4      		lpm r24, Z
+ 335:rprintf.c     **** 			{
+ 336:rprintf.c     **** 				va_end(ap);
+ 337:rprintf.c     **** 				return(0);
+ 1466               	98-.LFBB13
+ 1467               	.LM98:
+ 1468 075c 80E0      		ldd r24,Y+24
+ 1469 075e 90E0      		tst r24
+ 1470               		breq .L78
+ 338:rprintf.c     **** 			}
+ 339:rprintf.c     **** 			rprintfChar(format_flag);
+ 340:rprintf.c     **** 		}
+ 341:rprintf.c     **** 
+ 342:rprintf.c     **** 		switch (format_flag = READMEMBYTE(stringInRom,format++) )
+ 343:rprintf.c     **** 		{
+ 344:rprintf.c     **** 			case 'c': format_flag = va_arg(ap,int);
+ 345:rprintf.c     **** 			default:  rprintfChar(format_flag); continue;
+ 346:rprintf.c     **** 			case 'd': base = 10; div_val = 10000; goto CONVERSION_LOOP;
+ 347:rprintf.c     **** //			case 'x': base = 16; div_val = 0x10;
+ 348:rprintf.c     **** 			case 'x': base = 16; div_val = 0x1000;
+ 349:rprintf.c     **** 
+ 350:rprintf.c     **** 			CONVERSION_LOOP:
+ 351:rprintf.c     **** 			u_val = va_arg(ap,int);
+ 352:rprintf.c     **** 			if (format_flag == 'd')
+ 353:rprintf.c     **** 			{
+ 354:rprintf.c     **** 				if (((int)u_val) < 0)
+ 355:rprintf.c     **** 				{
+ 356:rprintf.c     **** 					u_val = - u_val;
+ 357:rprintf.c     **** 					rprintfChar('-');
+ 358:rprintf.c     **** 				}
+ 359:rprintf.c     **** 				while (div_val > 1 && div_val > u_val) div_val /= 10;
+ 360:rprintf.c     **** 			}
+ 361:rprintf.c     **** 			do
+ 362:rprintf.c     **** 			{
+ 363:rprintf.c     **** 				//rprintfChar(pgm_read_byte(HexChars+(u_val/div_val)));
+ 364:rprintf.c     **** 				rprintfu04(u_val/div_val);
+ 365:rprintf.c     **** 				u_val %= div_val;
+ 366:rprintf.c     **** 				div_val /= base;
+ 367:rprintf.c     **** 			} while (div_val);
+ 368:rprintf.c     **** 		}
+ 369:rprintf.c     **** 	}
+ 370:rprintf.c     **** 	va_end(ap);
+ 371:rprintf.c     **** }
+ 1471               	:
+ 1472               		ldd r24,Y+25
+ 1473 0760 6396      		ldd r25,Y+26
+ 1474 0762 0FB6      		std Y+6,r25
+ 1475 0764 F894      		std Y+5,r24
+ 1476 0766 DEBF      		ldd r24,Y+25
+ 1477 0768 0FBE      		ldd r25,Y+26
+ 1478 076a CDBF      		adiw r24,1
+ 1479 076c CF91      		std Y+26,r25
+ 1480 076e DF91      		std Y+25,r24
+ 1481 0770 0895      		ldd r30,Y+5
+ 1482               		ldd r31,Y+6
+ 1483               	/* #APP */
+ 1484               	 ;  332 "rprintf.c" 1
+ 1485 0772 8D85      		lpm r24, Z
+ 1486 0774 0E94 0000 		
+ 1487               	 ;  0 "" 2
+ 1488               	/* #NOAPP */
+ 1489               		std Y+4,r24
+ 1490 0778 888D      		ldd r24,Y+4
+ 1491 077a 8823      	.LBE6:
+ 1492 077c 01F0      		std Y+19,r24
+ 1493               		rjmp .L79
+ 1494 077e 898D      	.L78:
+ 1495 0780 9A8D      		ldd r30,Y+25
+ 1496 0782 9E83      		ldd r31,Y+26
+ 1497 0784 8D83      		ld r18,Z
+ 1498 0786 898D      		std Y+19,r18
+ 1499 0788 9A8D      		ldd r24,Y+25
+ 1500 078a 0196      		ldd r25,Y+26
+ 1501 078c 9A8F      		adiw r24,1
+ 1502 078e 898F      		std Y+26,r25
+ 1503 0790 ED81      		std Y+25,r24
+ 1504 0792 FE81      	.L79:
+ 1505               		ldd r19,Y+19
+ 1506               		std Y+13,r19
+ 1507 0794 8491      		ldd r24,Y+13
+ 1508               		cpi r24,lo8(37)
+ 1509               		brne .L80
+ 1511 0796 8C83      	.LM99:
+ 1512 0798 8C81      		ldd r24,Y+24
+ 1513               		tst r24
+ 1514 079a 8B8B      		breq .L81
+ 1515 079c 00C0      	.LBB7:
+ 1516               		ldd r24,Y+25
+ 1517 079e E98D      		ldd r25,Y+26
+ 1518 07a0 FA8D      		std Y+3,r25
+ 1519 07a2 2081      		std Y+2,r24
+ 1520 07a4 2B8B      		ldd r24,Y+25
+ 1521 07a6 898D      		ldd r25,Y+26
+ 1522 07a8 9A8D      		adiw r24,1
+ 1523 07aa 0196      		std Y+26,r25
+ 1524 07ac 9A8F      		std Y+25,r24
+ 1525 07ae 898F      		ldd r30,Y+2
+ 1526               		ldd r31,Y+3
+ 1527 07b0 3B89      	/* #APP */
+ 1528 07b2 3D87      	 ;  342 "rprintf.c" 1
+ 1529 07b4 8D85      		lpm r24, Z
+ 1530 07b6 8532      		
+ 1531 07b8 01F4      	 ;  0 "" 2
+ 1532               	/* #NOAPP */
+ 1533               		std Y+1,r24
+ 1534 07ba 888D      		ldd r24,Y+1
+ 1535 07bc 8823      	.LBE7:
+ 1536 07be 01F0      		std Y+18,r24
+ 1537               		rjmp .L82
+ 1538 07c0 898D      	.L81:
+ 1539 07c2 9A8D      		ldd r30,Y+25
+ 1540 07c4 9B83      		ldd r31,Y+26
+ 1541 07c6 8A83      		ld r24,Z
+ 1542 07c8 898D      		std Y+18,r24
+ 1543 07ca 9A8D      		ldd r24,Y+25
+ 1544 07cc 0196      		ldd r25,Y+26
+ 1545 07ce 9A8F      		adiw r24,1
+ 1546 07d0 898F      		std Y+26,r25
+ 1547 07d2 EA81      		std Y+25,r24
+ 1548 07d4 FB81      	.L82:
+ 1549               		ldd r25,Y+18
+ 1550               		std Y+13,r25
+ 1551 07d6 8491      		ldd r24,Y+13
+ 1552               		mov r18,r24
+ 1553               		ldi r19,lo8(0)
+ 1554               		std Y+17,r19
+ 1555 07d8 8983      		std Y+16,r18
+ 1556 07da 8981      		ldd r24,Y+16
+ 1557               		ldd r25,Y+17
+ 1558 07dc 8A8B      		cpi r24,100
+ 1559 07de 00C0      		cpc r25,__zero_reg__
+ 1560               		breq .L85
+ 1561 07e0 E98D      		ldd r18,Y+16
+ 1562 07e2 FA8D      		ldd r19,Y+17
+ 1563 07e4 8081      		cpi r18,120
+ 1564 07e6 8A8B      		cpc r19,__zero_reg__
+ 1565 07e8 898D      		breq .L86
+ 1566 07ea 9A8D      		ldd r24,Y+16
+ 1567 07ec 0196      		ldd r25,Y+17
+ 1568 07ee 9A8F      		cpi r24,99
+ 1569 07f0 898F      		cpc r25,__zero_reg__
+ 1570               		brne .L83
+ 1571 07f2 9A89      	.L84:
+ 1573 07f6 8D85      	.LM100:
+ 1574 07f8 282F      		ldd r18,Y+14
+ 1575 07fa 30E0      		ldd r19,Y+15
+ 1576 07fc 398B      		movw r24,r18
+ 1577 07fe 288B      		adiw r24,2
+ 1578 0800 8889      		std Y+15,r25
+ 1579 0802 9989      		std Y+14,r24
+ 1580 0804 8436      		movw r30,r18
+ 1581 0806 9105      		ld r24,Z
+ 1582 0808 01F0      		ldd r25,Z+1
+ 1583 080a 2889      		std Y+13,r24
+ 1584 080c 3989      	.L83:
+ 1586 0810 3105      	.LM101:
+ 1587 0812 01F0      		ldd r24,Y+13
+ 1588 0814 8889      		call rprintfChar
+ 1589 0816 9989      		rjmp .L76
+ 1590 0818 8336      	.L85:
+ 1592 081c 01F4      	.LM102:
+ 1593               		ldi r24,lo8(10)
+ 1594               		ldi r25,hi8(10)
+ 1595               		std Y+8,r25
+ 1596 081e 2E85      		std Y+7,r24
+ 1597 0820 3F85      		ldi r24,lo8(10000)
+ 1598 0822 C901      		ldi r25,hi8(10000)
+ 1599 0824 0296      		std Y+10,r25
+ 1600 0826 9F87      		std Y+9,r24
+ 1601 0828 8E87      		rjmp .L88
+ 1602 082a F901      	.L86:
+ 1604 082e 9181      	.LM103:
+ 1605 0830 8D87      		ldi r24,lo8(16)
+ 1606               		ldi r25,hi8(16)
+ 1607               		std Y+8,r25
+ 1608               		std Y+7,r24
+ 1609 0832 8D85      		ldi r24,lo8(4096)
+ 1610 0834 0E94 0000 		ldi r25,hi8(4096)
+ 1611 0838 00C0      		std Y+10,r25
+ 1612               		std Y+9,r24
+ 1613               	.L88:
+ 1615 083a 8AE0      	.LM104:
+ 1616 083c 90E0      		ldd r18,Y+14
+ 1617 083e 9887      		ldd r19,Y+15
+ 1618 0840 8F83      		movw r24,r18
+ 1619 0842 80E1      		adiw r24,2
+ 1620 0844 97E2      		std Y+15,r25
+ 1621 0846 9A87      		std Y+14,r24
+ 1622 0848 8987      		movw r30,r18
+ 1623 084a 00C0      		ld r24,Z
+ 1624               		ldd r25,Z+1
+ 1625               		std Y+12,r25
+ 1626               		std Y+11,r24
+ 1628 084e 90E0      	.LM105:
+ 1629 0850 9887      		ldd r24,Y+13
+ 1630 0852 8F83      		cpi r24,lo8(100)
+ 1631 0854 80E0      		brne .L89
+ 1633 0858 9A87      	.LM106:
+ 1634 085a 8987      		ldd r24,Y+11
+ 1635               		ldd r25,Y+12
+ 1636               		tst r25
+ 1637               		brge .L91
+ 1639 085e 3F85      	.LM107:
+ 1640 0860 C901      		ldd r24,Y+11
+ 1641 0862 0296      		ldd r25,Y+12
+ 1642 0864 9F87      		com r25
+ 1643 0866 8E87      		neg r24
+ 1644 0868 F901      		sbci r25,lo8(-1)
+ 1645 086a 8081      		std Y+12,r25
+ 1646 086c 9181      		std Y+11,r24
+ 1648 0870 8B87      	.LM108:
+ 1649               		ldi r24,lo8(45)
+ 1650               		call rprintfChar
+ 1651 0872 8D85      		rjmp .L91
+ 1652 0874 8436      	.L92:
+ 1654               	.LM109:
+ 1655               		ldd r24,Y+9
+ 1656 0878 8B85      		ldd r25,Y+10
+ 1657 087a 9C85      		ldi r18,lo8(10)
+ 1658 087c 9923      		ldi r19,hi8(10)
+ 1659 087e 04F4      		movw r22,r18
+ 1660               		call __udivmodhi4
+ 1661               		movw r24,r22
+ 1662 0880 8B85      		std Y+10,r25
+ 1663 0882 9C85      		std Y+9,r24
+ 1664 0884 9095      	.L91:
+ 1665 0886 8195      		ldd r24,Y+9
+ 1666 0888 9F4F      		ldd r25,Y+10
+ 1667 088a 9C87      		cpi r24,2
+ 1668 088c 8B87      		cpc r25,__zero_reg__
+ 1669               		brlo .L89
+ 1670               		ldd r18,Y+9
+ 1671 088e 8DE2      		ldd r19,Y+10
+ 1672 0890 0E94 0000 		ldd r24,Y+11
+ 1673 0894 00C0      		ldd r25,Y+12
+ 1674               		cp r24,r18
+ 1675               		cpc r25,r19
+ 1676               		brlo .L92
+ 1677 0896 8985      	.L89:
+ 1679 089a 2AE0      	.LM110:
+ 1680 089c 30E0      		ldd r24,Y+11
+ 1681 089e B901      		ldd r25,Y+12
+ 1682 08a0 0E94 0000 		ldd r18,Y+9
+ 1683 08a4 CB01      		ldd r19,Y+10
+ 1684 08a6 9A87      		movw r22,r18
+ 1685 08a8 8987      		call __udivmodhi4
+ 1686               		movw r24,r22
+ 1687 08aa 8985      		call rprintfu04
+ 1689 08ae 8230      	.LM111:
+ 1690 08b0 9105      		ldd r24,Y+11
+ 1691 08b2 00F0      		ldd r25,Y+12
+ 1692 08b4 2985      		ldd r18,Y+9
+ 1693 08b6 3A85      		ldd r19,Y+10
+ 1694 08b8 8B85      		movw r22,r18
+ 1695 08ba 9C85      		call __udivmodhi4
+ 1696 08bc 8217      		std Y+12,r25
+ 1697 08be 9307      		std Y+11,r24
+ 1699               	.LM112:
+ 1700               		ldd r24,Y+9
+ 1701               		ldd r25,Y+10
+ 1702 08c2 8B85      		ldd r18,Y+7
+ 1703 08c4 9C85      		ldd r19,Y+8
+ 1704 08c6 2985      		movw r22,r18
+ 1705 08c8 3A85      		call __udivmodhi4
+ 1706 08ca B901      		movw r24,r22
+ 1707 08cc 0E94 0000 		std Y+10,r25
+ 1708 08d0 CB01      		std Y+9,r24
+ 1710               	.LM113:
+ 1711               		ldd r24,Y+9
+ 1712 08d6 8B85      		ldd r25,Y+10
+ 1713 08d8 9C85      		sbiw r24,0
+ 1714 08da 2985      		brne .L89
+ 1715 08dc 3A85      		rjmp .L76
+ 1732               	.Lscope13:
+ 1733 08fc 8985      		.lcomm rputchar,2
+ 1737 0904 00C0      	.Letext0:
+ 1738               	...
+DEFINED SYMBOLS
+                            *ABS*:00000000 rprintf.c
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:2      *ABS*:0000003f __SREG__
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:3      *ABS*:0000003e __SP_H__
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:4      *ABS*:0000003d __SP_L__
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:5      *ABS*:00000034 __CCP__
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:6      *ABS*:00000000 __tmp_reg__
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:7      *ABS*:00000001 __zero_reg__
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:114    .progmem.data:00000000 HexChars
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:121    .text:00000000 rprintfInit
+                             .bss:00000000 rputchar
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:154    .text:00000024 rprintfChar
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:197    .text:00000056 rprintfStr
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:255    .text:00000098 rprintfStrLen
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:401    .text:0000016a rprintfProgStr
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:481    .text:000001c2 rprintfCRLF
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:507    .text:000001d6 rprintfu04
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:564    .text:00000212 rprintfu08
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:599    .text:00000236 rprintfu16
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:637    .text:00000260 rprintfu32
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:688    .text:0000029c rprintfNum
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:1086   .text:00000500 rprintfFloat
+C:\Users\Owner\AppData\Local\Temp/ccKzaOxv.s:1437   .text:00000738 rprintf1RamRom
+
+UNDEFINED SYMBOLS
+__do_copy_data
+__do_clear_bss
+__udivmodsi4
+__ltsf2
+__gtsf2
+__divsf3
+__mulsf3
+__fixunssfsi
+__eqsf2
+__floatsisf
+__subsf3
+__udivmodhi4

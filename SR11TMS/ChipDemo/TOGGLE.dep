@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>3275648940</fileChecksum>
+  <configuration>
+    <name>RAM</name>
+    <outputs>
+      <file>$PROJ_DIR$\RAM\Obj\tms470r1b1m_01.pbi</file>
+      <file>$PROJ_DIR$\tms470r1b1m_01.c</file>
+      <file>$PROJ_DIR$\RAM\Obj\TOGGLE.pbd</file>
+      <file>$PROJ_DIR$\RAM\Exe\TOGGLE.out</file>
+      <file>$TOOLKIT_DIR$\inc\c\io_macros.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\tms470r1B1m_bit_definitions.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\iotms470r1b1m.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+      <file>$PROJ_DIR$\RAM\Obj\tms470r1b1m_01.o</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_01.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 0</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 9</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 7 8 6 4 5</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\RAM\Obj\TOGGLE.pbd</name>
+      <inputs>
+        <tool>
+          <name>BILINK</name>
+          <file> 0</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 3</file>
+        </tool>
+      </outputs>
+    </file>
+    <forcedrebuild>
+      <name>[MULTI_TOOL]</name>
+      <tool>ILINK</tool>
+    </forcedrebuild>
+  </configuration>
+  <configuration>
+    <name>flash</name>
+    <outputs>
+      <file>$PROJ_DIR$\tms470r1b1m_low_level_init_flash.c</file>
+      <file>$PROJ_DIR$\cstartup.s</file>
+      <file>$PROJ_DIR$\tms470r1b1m_01.c</file>
+      <file>$PROJ_DIR$\flash\Exe\TOGGLE.out</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_low_level_init_flash.o</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_01.o</file>
+      <file>$TOOLKIT_DIR$\inc\c\io_macros.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\tms470r1B1m_bit_definitions.h</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_low_level_init_flash.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\iotms470r1b1m.h</file>
+      <file>$PROJ_DIR$\flash\Obj\TOGGLE.pbd</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_01.pbi</file>
+      <file>$PROJ_DIR$\flash\Obj\cstartup.o</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_low_level_init_flash.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 8</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 4</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 9 6 7</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\cstartup.s</name>
+      <outputs>
+        <tool>
+          <name>AARM</name>
+          <file> 12</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_01.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 11</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 5</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 13 14 9 6 7</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 3</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\flash\Obj\TOGGLE.pbd</name>
+      <inputs>
+        <tool>
+          <name>BILINK</name>
+          <file> 11 8</file>
+        </tool>
+      </inputs>
+    </file>
+    <forcedrebuild>
+      <name>[MULTI_TOOL]</name>
+      <tool>ILINK</tool>
+    </forcedrebuild>
+  </configuration>
+</project>
+
+

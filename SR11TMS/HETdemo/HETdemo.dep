@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>3480639254</fileChecksum>
+  <configuration>
+    <name>RAM</name>
+    <outputs>
+      <file>$TOOLKIT_DIR$\lib\dl4t_abn.a</file>
+      <file>$PROJ_DIR$\pwm.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\string.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\yvals.h</file>
+      <file>$TOOLKIT_DIR$\lib\rt4t_ab.a</file>
+      <file>$PROJ_DIR$\RAM\Exe\HETdemo.out</file>
+      <file>$TOOLKIT_DIR$\examples\TexasInstruments\Configuration_Files\B1M_Files\tms470r1b1m_lnk_flash.icf</file>
+      <file>$PROJ_DIR$\RAM\Obj\HETdemo.pbd</file>
+      <file>$PROJ_DIR$\RAM\Obj\main.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\iotms470r1b1m.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\io_macros.h</file>
+      <file>$PROJ_DIR$\RAM\Obj\main.o</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Product_string.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\stdio.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ysizet.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Product.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\xencoding_limits.h</file>
+      <file>$TOOLKIT_DIR$\lib\m4t_ab.a</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ystdio.h</file>
+      <file>$PROJ_DIR$\pwm.c</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Defaults.h</file>
+      <file>$PROJ_DIR$\RAM\Obj\pwm.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Config_Normal.h</file>
+      <file>$TOOLKIT_DIR$\lib\shs_b.a</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Threads.h</file>
+      <file>$PROJ_DIR$\pwm.het</file>
+      <file>$PROJ_DIR$\std_het.h</file>
+      <file>$PROJ_DIR$\main.c</file>
+      <file>$PROJ_DIR$\RAM\Obj\pwm.o</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\RAM\Exe\HETdemo.out</name>
+      <inputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 6 12 30 25 4 18 0</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\RAM\Obj\HETdemo.pbd</name>
+      <inputs>
+        <tool>
+          <name>BILINK</name>
+          <file> 8 23</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\pwm.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 23</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 30</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 28</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 28</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 5</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\pwm.het</name>
+      <outputs>
+        <tool>
+          <name>CUSTOM</name>
+          <file> 21 1</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\main.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 8</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 12</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 14 10 3 22 16 17 26 15 20 2 13 19 9 11 28 1</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 14 10 3 22 24 16 17 26 15 20 2 13 19 9 11 28 1</file>
+        </tool>
+      </inputs>
+    </file>
+  </configuration>
+  <configuration>
+    <name>flash</name>
+    <outputs>
+      <file>$TOOLKIT_DIR$\lib\dl4t_abn.a</file>
+      <file>$PROJ_DIR$\pwm.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\string.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\yvals.h</file>
+      <file>$TOOLKIT_DIR$\lib\rt4t_ab.a</file>
+      <file>$TOOLKIT_DIR$\examples\TexasInstruments\Configuration_Files\B1M_Files\tms470r1b1m_lnk_flash.icf</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\iotms470r1b1m.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\io_macros.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Product_string.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\stdio.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ysizet.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Product.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\xencoding_limits.h</file>
+      <file>$TOOLKIT_DIR$\lib\m4t_ab.a</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ystdio.h</file>
+      <file>$PROJ_DIR$\pwm.c</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Defaults.h</file>
+      <file>$PROJ_DIR$\flash\Obj\cstartup.o</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Config_Normal.h</file>
+      <file>$TOOLKIT_DIR$\lib\shs_b.a</file>
+      <file>$PROJ_DIR$\flash\Obj\pwm.o</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Threads.h</file>
+      <file>$PROJ_DIR$\flash\Obj\main.pbi</file>
+      <file>$PROJ_DIR$\flash\Obj\main.o</file>
+      <file>$PROJ_DIR$\flash\Obj\HETdemo.pbd</file>
+      <file>$PROJ_DIR$\flash\Obj\pwm.pbi</file>
+      <file>$PROJ_DIR$\cstartup.s</file>
+      <file>$PROJ_DIR$\pwm.het</file>
+      <file>$PROJ_DIR$\std_het.h</file>
+      <file>$PROJ_DIR$\tms470r1b1m_low_level_init_flash.c</file>
+      <file>$PROJ_DIR$\main.c</file>
+      <file>$PROJ_DIR$\flash\Exe\HETdemo.out</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_low_level_init_flash.pbi</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_low_level_init_flash.o</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\tms470r1B1m_bit_definitions.h</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\pwm.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 27</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 22</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 30</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 30</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\flash\Obj\HETdemo.pbd</name>
+      <inputs>
+        <tool>
+          <name>BILINK</name>
+          <file> 24 27 34</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 33</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\cstartup.s</name>
+      <outputs>
+        <tool>
+          <name>AARM</name>
+          <file> 19</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\pwm.het</name>
+      <outputs>
+        <tool>
+          <name>CUSTOM</name>
+          <file> 17 1</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_low_level_init_flash.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 34</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 35</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 6 8 36</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 6 8 36</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\main.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 24</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 25</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 10 7 3 18 12 13 23 11 16 2 9 15 6 8 30 1</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 10 7 3 18 20 12 13 23 11 16 2 9 15 6 8 30 1</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\flash\Exe\HETdemo.out</name>
+      <inputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 5 19 25 22 35 21 4 14 0</file>
+        </tool>
+      </inputs>
+    </file>
+  </configuration>
+</project>
+
+

@@ -1,0 +1,195 @@
+   1               		.file	"control.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+   8               		.global __do_copy_data
+   9               		.global __do_clear_bss
+  11               		.text
+  12               	.Ltext0:
+  32               	.global	update_motors
+  34               	update_motors:
+   1:control.c     **** 
+   2:control.c     **** void update_motors(int l, int r)
+   3:control.c     **** {
+  35               	otors:F(0,15)",36,0,0,update_motors
+  38 0000 DF93      	.global	update_motors
+  40 0004 00D0      	update_motors:
+  42 0008 CDB7      	.LM0:
+  43 000a DEB7      	.LFBB1:
+  44               		push r29
+  45               		push r28
+  46 000c 9A83      		rcall .
+  47 000e 8983      		rcall .
+  48 0010 7C83      		in r28,__SP_L__
+  49 0012 6B83      		in r29,__SP_H__
+   4:control.c     **** 	wheel_Right(r);
+  50               		update_motors, @function
+  51               	update_motors:
+  53 0016 9C81      	.LM0:
+  54 0018 0E94 0000 	.LFBB1:
+   5:control.c     **** 	wheel_Left(l);
+  55               	"l:p(0,1)",160,0,0,1
+  57 001c 8981      	.global	update_motors
+  59 0020 0E94 0000 	update_motors:
+   6:control.c     **** }
+  61               	_motors
+  64 0026 0F90      	.global	update_motors
+  66 002a 0F90      	update_motors:
+  68 002e DF91      	.LM0:
+  69 0030 0895      	.LFBB1:
+  70               		push r29
+  71               		push r28
+  72               		rcall .
+  73               		rcall .
+  74               		in r28,__SP_L__
+  75               		in r29,__SP_H__
+  76               	/* prologue: function */
+   7:control.c     **** long servo_degree_convert(int degree)
+   8:control.c     **** 
+   9:control.c     **** {       
+  77               	update_motors:
+  79               	.LM0:
+  80 0032 DF93      	.LFBB1:
+  81 0034 CF93      		push r29
+  82 0036 00D0      		push r28
+  83 0038 00D0      		rcall .
+  84 003a 00D0      		rcall .
+  85 003c CDB7      		in r28,__SP_L__
+  86 003e DEB7      		in r29,__SP_H__
+  87               	/* prologue: function */
+  88               	/* frame size = 4 */
+  89 0040 9E83      		std Y+2,r25
+  90 0042 8D83      		std Y+1,r24
+  10:control.c     ****         long servo_cycle = ((degree * 810)/180) +340; 
+  91               	FBB1:
+  92               		push r29
+  93 0044 2D81      		push r28
+  94 0046 3E81      		rcall .
+  95 0048 8AE2      		rcall .
+  96 004a 93E0      		in r28,__SP_L__
+  97 004c AC01      		in r29,__SP_H__
+  98 004e 249F      	/* prologue: function */
+  99 0050 C001      	/* frame size = 4 */
+ 100 0052 259F      		std Y+2,r25
+ 101 0054 900D      		std Y+1,r24
+ 102 0056 349F      		std Y+4,r23
+ 103 0058 900D      		std Y+3,r22
+ 105 005c 24EB      	.LM1:
+ 106 005e 30E0      		ldd r24,Y+3
+ 107 0060 B901      		ldd r25,Y+4
+ 108 0062 0E94 0000 		call wheel_Right
+ 110 0068 8C5A      	.LM2:
+ 111 006a 9E4F      		ldd r24,Y+1
+ 112 006c AA27      		ldd r25,Y+2
+ 113 006e 97FD      		call wheel_Left
+ 114 0070 A095      	/* epilogue start */
+ 116 0074 8983      	.LM3:
+ 117 0076 9A83      		pop __tmp_reg__
+ 118 0078 AB83      		pop __tmp_reg__
+ 119 007a BC83      		pop __tmp_reg__
+  11:control.c     ****         return servo_cycle;
+ 120               	d r25,Y+2
+ 121               		call wheel_Left
+ 122 007c 8981      	/* epilogue start */
+ 124 0080 AB81      	.LM3:
+ 125 0082 BC81      		pop __tmp_reg__
+  12:control.c     **** }
+ 126               	5,.LM2-.LFBB1
+ 127               	.LM2:
+ 128 0084 BC01      		ldd r24,Y+1
+ 129 0086 CD01      		ldd r25,Y+2
+ 130               		call wheel_Left
+ 131 0088 2696      	/* epilogue start */
+ 133 008c F894      	.LM3:
+ 134 008e DEBF      		pop __tmp_reg__
+ 135 0090 0FBE      		pop __tmp_reg__
+ 136 0092 CDBF      		pop __tmp_reg__
+ 137 0094 CF91      		pop __tmp_reg__
+ 138 0096 DF91      		pop r28
+ 139 0098 0895      		pop r29
+ 140               		ret
+ 142               	.Lscope1:
+ 145               	.global	servo_degree_convert
+ 147               	servo_degree_convert:
+  13:control.c     **** 
+  14:control.c     **** void control()
+  15:control.c     **** {
+ 149               	,5
+ 150               	.global	servo_degree_convert
+ 152 009a DF93      	servo_degree_convert:
+ 154 009e CDB7      	.LM4:
+ 155 00a0 DEB7      	.LFBB2:
+ 156               		push r29
+ 157               		push r28
+  16:control.c     **** 	ir_servo( servo_degree_convert(40) );
+ 158               		servo_degree_convert, @function
+ 159               	servo_degree_convert:
+ 161 00a4 90E0      	.LM4:
+ 162 00a6 0E94 0000 	.LFBB2:
+ 163 00aa DC01      		push r29
+ 164 00ac CB01      		push r28
+ 165 00ae BC01      		rcall .
+ 166 00b0 CD01      		rcall .
+ 167 00b2 0E94 0000 		rcall .
+ 168               		in r28,__SP_L__
+  17:control.c     **** 
+  18:control.c     **** 	do{
+  19:control.c     **** 	
+  20:control.c     **** 		if(a2dConvert8bit(13)<90)
+ 169               	nvert:
+ 171 00b6 8DE0      	.LM4:
+ 172 00b8 90E0      	.LFBB2:
+ 173 00ba 0E94 0000 		push r29
+ 174 00be 8A35      		push r28
+ 175 00c0 9105      		rcall .
+ 176 00c2 04F4      		rcall .
+  21:control.c     **** 		{
+  22:control.c     **** 			update_motors(400, 660);
+ 177               	t, @function
+ 178               	servo_degree_convert:
+ 180 00c6 91E0      	.LM4:
+ 181 00c8 64E9      	.LFBB2:
+ 182 00ca 72E0      		push r29
+ 183 00cc 0E94 0000 		push r28
+ 184 00d0 00C0      		rcall .
+ 185               		rcall .
+  23:control.c     **** 			
+  24:control.c     **** 		}
+  25:control.c     **** 
+  26:control.c     **** 		else
+  27:control.c     **** 		{
+  28:control.c     **** 			update_motors(550,700);
+ 186               	t, @function
+ 187               	servo_degree_convert:
+ 189 00d4 92E0      	.LM4:
+ 190 00d6 6CEB      	.LFBB2:
+ 191 00d8 72E0      		push r29
+ 192 00da 0E94 0000 		push r28
+ 193 00de 00C0      		rcall .
+ 194               		rcall .
+ 195               		rcall .
+ 196               		in r28,__SP_L__
+ 197               		in r29,__SP_H__
+DEFINED SYMBOLS
+                            *ABS*:00000000 control.c
+C:\Users\Owner\AppData\Local\Temp/ccZyL8cx.s:2      *ABS*:0000003f __SREG__
+C:\Users\Owner\AppData\Local\Temp/ccZyL8cx.s:3      *ABS*:0000003e __SP_H__
+C:\Users\Owner\AppData\Local\Temp/ccZyL8cx.s:4      *ABS*:0000003d __SP_L__
+C:\Users\Owner\AppData\Local\Temp/ccZyL8cx.s:5      *ABS*:00000034 __CCP__
+C:\Users\Owner\AppData\Local\Temp/ccZyL8cx.s:6      *ABS*:00000000 __tmp_reg__
+C:\Users\Owner\AppData\Local\Temp/ccZyL8cx.s:7      *ABS*:00000001 __zero_reg__
+C:\Users\Owner\AppData\Local\Temp/ccZyL8cx.s:34     .text:00000000 update_motors
+C:\Users\Owner\AppData\Local\Temp/ccZyL8cx.s:76     .text:00000032 servo_degree_convert
+C:\Users\Owner\AppData\Local\Temp/ccZyL8cx.s:148    .text:0000009a control
+
+UNDEFINED SYMBOLS
+__do_copy_data
+__do_clear_bss
+wheel_Right
+wheel_Left
+__divmodhi4
+ir_servo
+a2dConvert8bit

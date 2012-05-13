@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>3436773199</fileChecksum>
+  <configuration>
+    <name>Debug</name>
+    <outputs>
+      <file>$PROJ_DIR$\B1M_HET_UART_2X115200_H.het</file>
+      <file>$PROJ_DIR$\cstartup.s</file>
+      <file>$PROJ_DIR$\B1M_HET_UART_2X115200_Int.c</file>
+      <file>$PROJ_DIR$\sci.c</file>
+      <file>$PROJ_DIR$\std_het.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\tms470r1b1m_bit_definitions.h</file>
+      <file>$PROJ_DIR$\B1M_HET_UART_2X115200_H.c</file>
+      <file>$TOOLKIT_DIR$\lib\m4t_ab.a</file>
+      <file>$PROJ_DIR$\Debug\Obj\B1M_HET_UART_2X115200_Int.pbi</file>
+      <file>$PROJ_DIR$\Debug\Obj\sci.o</file>
+      <file>$TOOLKIT_DIR$\inc\c\ystdio.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\iotms470r1b1m.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\stdlib.h</file>
+      <file>$TOOLKIT_DIR$\lib\shs_b.a</file>
+      <file>$PROJ_DIR$\Debug\Obj\B1M_HET_UART_2X115200_Int.o</file>
+      <file>$PROJ_DIR$\Debug\Obj\sr_tms.pbd</file>
+      <file>$PROJ_DIR$\Debug\Obj\sci.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Product.h</file>
+      <file>$PROJ_DIR$\Debug\Obj\B1M_HET_UART_2X115200_H.pbi</file>
+      <file>$PROJ_DIR$\het.h</file>
+      <file>$PROJ_DIR$\B1M_HET_UART_2X115200_H.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\io_macros.h</file>
+      <file>$TOOLKIT_DIR$\lib\dl4t_abn.a</file>
+      <file>$TOOLKIT_DIR$\inc\c\yvals.h</file>
+      <file>$PROJ_DIR$\Debug\Exe\sr_tms.out</file>
+      <file>$PROJ_DIR$\sci.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\stdio.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Config_Normal.h</file>
+      <file>$TOOLKIT_DIR$\lib\rt4t_ab.a</file>
+      <file>$TOOLKIT_DIR$\inc\c\xencoding_limits.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Defaults.h</file>
+      <file>$TOOLKIT_DIR$\examples\TexasInstruments\Configuration_Files\B1M_Files\tms470r1b1m_lnk_flash.icf</file>
+      <file>$PROJ_DIR$\Debug\Obj\B1M_HET_UART_2X115200_H.o</file>
+      <file>$TOOLKIT_DIR$\inc\c\ysizet.h</file>
+      <file>$PROJ_DIR$\Debug\Obj\cstartup.o</file>
+      <file>$TOOLKIT_DIR$\inc\c\DLib_Threads.h</file>
+      <file>$TOOLKIT_DIR$\config\debugger\TexasInstruments\iotms470r1b1m.ddf</file>
+    </outputs>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 24</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\B1M_HET_UART_2X115200_H.het</name>
+      <outputs>
+        <tool>
+          <name>CUSTOM</name>
+          <file> 6 20</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\cstartup.s</name>
+      <outputs>
+        <tool>
+          <name>AARM</name>
+          <file> 36</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\B1M_HET_UART_2X115200_Int.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 8</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 14</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 4 20 25 19</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 12 26 23 32 29 17 31 37 35 27 10 28 11 21 5 4 20 25 19</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\sci.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 16</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 9</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 25</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 25 11 21</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\B1M_HET_UART_2X115200_H.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 18</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 34</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 4</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 4</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\Debug\Obj\sr_tms.pbd</name>
+      <inputs>
+        <tool>
+          <name>BILINK</name>
+          <file> 18 8 16</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\Debug\Exe\sr_tms.out</name>
+      <inputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 33 34 14 36 9 13 30 7 22</file>
+        </tool>
+      </inputs>
+    </file>
+  </configuration>
+  <configuration>
+    <name>Release</name>
+    <outputs/>
+    <forcedrebuild>
+      <name>[MULTI_TOOL]</name>
+      <tool>ILINK</tool>
+    </forcedrebuild>
+  </configuration>
+</project>
+
+

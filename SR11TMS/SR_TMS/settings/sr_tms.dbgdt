@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<Project>
+  <Desktop>
+    <Static>
+      <Debug-Log>
+        
+        
+      <ColumnWidth0>20</ColumnWidth0><ColumnWidth1>1221</ColumnWidth1></Debug-Log>
+      <Build>
+        <ColumnWidth0>20</ColumnWidth0>
+        <ColumnWidth1>915</ColumnWidth1>
+        <ColumnWidth2>244</ColumnWidth2>
+        <ColumnWidth3>61</ColumnWidth3>
+      </Build>
+      <Workspace>
+        <ColumnWidths>
+          
+          
+          
+          
+        <Column0>124</Column0><Column1>27</Column1><Column2>27</Column2><Column3>27</Column3></ColumnWidths>
+      </Workspace>
+      <Disassembly>
+        <col-names>
+          
+          
+        <item>Disassembly</item><item>_I0</item></col-names>
+        <col-widths>
+          
+          
+        <item>500</item><item>20</item></col-widths>
+        <DisasmHistory/>
+        
+        
+      <ShowCodeCoverage>0</ShowCodeCoverage><ShowInstrProfiling>0</ShowInstrProfiling></Disassembly>
+    <TerminalIO><PreferedWindows><Position>2</Position><ScreenPosX>0</ScreenPosX><ScreenPosY>0</ScreenPosY><Windows/></PreferedWindows><InputSource>1</InputSource><InputMode>10</InputMode><Filename>$PROJ_DIR$\TermIOInput.txt</Filename><InputEcho>1</InputEcho><ShowReset>0</ShowReset></TerminalIO></Static>
+    <Windows>
+      
+      
+      
+    <Wnd2>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-16015-18141</Identity>
+            <TabName>Debug Log</TabName>
+            <Factory>Debug-Log</Factory>
+            <Session/>
+          </Tab>
+          <Tab>
+            <Identity>TabID-15492-18151</Identity>
+            <TabName>Build</TabName>
+            <Factory>Build</Factory>
+            <Session/>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd2><Wnd4>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-26763-18144</Identity>
+            <TabName>Workspace</TabName>
+            <Factory>Workspace</Factory>
+            <Session>
+              
+            <NodeDict><ExpandedNode>sr_tms</ExpandedNode><ExpandedNode>sr_tms/B1M_HET_UART_2X115200_H.het</ExpandedNode><ExpandedNode>sr_tms/B1M_HET_UART_2X115200_H.het/Output</ExpandedNode></NodeDict></Session>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd4><Wnd5>
+        <Tabs>
+          <Tab>
+            <Identity>TabID-4744-18147</Identity>
+            <TabName>Disassembly</TabName>
+            <Factory>Disassembly</Factory>
+            <Session/>
+          </Tab>
+        </Tabs>
+        
+      <SelectedTab>0</SelectedTab></Wnd5></Windows>
+    <Editor>
+      
+      
+      
+      
+    <Pane><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\Program Files\IAR Systems\Embedded Workbench 6.0 Evaluation\arm\CONFIG\debugger\TexasInstruments\iotms470r1b1m.ddf</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>0</SelStart><SelEnd>0</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\std_het.h</Filename><XPos>0</XPos><YPos>63</YPos><SelStart>3150</SelStart><SelEnd>3150</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\..\..\..\Program Files\IAR Systems\Embedded Workbench 6.0 Evaluation\arm\inc\TexasInstruments\tms470r1b1m_bit_definitions.h</Filename><XPos>0</XPos><YPos>335</YPos><SelStart>23715</SelStart><SelEnd>23715</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\B1M_HET_UART_2X115200_H.h</Filename><XPos>0</XPos><YPos>92</YPos><SelStart>4690</SelStart><SelEnd>4690</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\B1M_HET_UART_2X115200_H.c</Filename><XPos>0</XPos><YPos>408</YPos><SelStart>4499</SelStart><SelEnd>4499</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\B1M_HET_UART_2X115200_H.het</Filename><XPos>7</XPos><YPos>271</YPos><SelStart>11825</SelStart><SelEnd>11825</SelEnd></Tab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\B1M_HET_UART_2X115200_Int.c</Filename><XPos>0</XPos><YPos>261</YPos><SelStart>10923</SelStart><SelEnd>10923</SelEnd></Tab><ActiveTab>6</ActiveTab><Tab><Factory>TextEditor</Factory><Filename>$WS_DIR$\sci.c</Filename><XPos>0</XPos><YPos>0</YPos><SelStart>51</SelStart><SelEnd>51</SelEnd></Tab></Pane><ActivePane>0</ActivePane><Sizes><Pane><X>1000000</X><Y>1000000</Y></Pane></Sizes><SplitMode>1</SplitMode></Editor>
+    <Positions>
+      
+      
+      
+      
+      
+    <Top><Row0><Sizes><Toolbar-0228fcf8><key>iaridepm.enu1</key></Toolbar-0228fcf8></Sizes></Row0><Row1><Sizes><Toolbar-022c0cf0><key>debuggergui.enu1</key></Toolbar-022c0cf0></Sizes></Row1></Top><Left><Row0><Sizes><Wnd4><Rect><Top>-2</Top><Left>-2</Left><Bottom>463</Bottom><Right>198</Right><x>-2</x><y>-2</y><xscreen>200</xscreen><yscreen>200</yscreen><sizeHorzCX>156250</sizeHorzCX><sizeHorzCY>273973</sizeHorzCY><sizeVertCX>156250</sizeVertCX><sizeVertCY>636986</sizeVertCY></Rect></Wnd4></Sizes></Row0></Left><Right><Row0><Sizes><Wnd5><Rect><Top>-2</Top><Left>-2</Left><Bottom>463</Bottom><Right>216</Right><x>-2</x><y>-2</y><xscreen>200</xscreen><yscreen>200</yscreen><sizeHorzCX>156250</sizeHorzCX><sizeHorzCY>273973</sizeHorzCY><sizeVertCX>170313</sizeVertCX><sizeVertCY>636986</sizeVertCY></Rect></Wnd5></Sizes></Row0></Right><Bottom><Row0><Sizes><Wnd2><Rect><Top>-2</Top><Left>-2</Left><Bottom>198</Bottom><Right>1282</Right><x>-2</x><y>-2</y><xscreen>1284</xscreen><yscreen>200</yscreen><sizeHorzCX>1003125</sizeHorzCX><sizeHorzCY>273973</sizeHorzCY><sizeVertCX>156250</sizeVertCX><sizeVertCY>273973</sizeVertCY></Rect></Wnd2></Sizes></Row0></Bottom><Float><Sizes/></Float></Positions>
+  </Desktop>
+</Project>
+
+

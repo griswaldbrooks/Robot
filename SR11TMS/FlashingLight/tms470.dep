@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>2997962135</fileChecksum>
+  <configuration>
+    <name>Flash</name>
+    <outputs>
+      <file>$TOOLKIT_DIR$\lib\shs_b.a</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\tms470r1B1m_bit_definitions.h</file>
+      <file>$PROJ_DIR$\Flash\Exe\tms470.out</file>
+      <file>$PROJ_DIR$\Flash\Obj\tms470r1b1m_flashlight.o</file>
+      <file>$TOOLKIT_DIR$\lib\m4t_tb.a</file>
+      <file>$TOOLKIT_DIR$\lib\dl4t_tbn.a</file>
+      <file>$PROJ_DIR$\Flash\Obj\tms470r1b1m_flashlight.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\iotms470r1b1m.h</file>
+      <file>$TOOLKIT_DIR$\examples\TexasInstruments\Configuration_Files\B1M_Files\tms470r1b1m_lnk_flash.icf</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+      <file>$TOOLKIT_DIR$\lib\rt4t_ab.a</file>
+      <file>$TOOLKIT_DIR$\inc\c\io_macros.h</file>
+      <file>$PROJ_DIR$\Flash\Obj\tms470.pbd</file>
+      <file>$PROJ_DIR$\cstartup.s</file>
+      <file>$PROJ_DIR$\tms470r1b1m_low_level_init_flash.c</file>
+      <file>$PROJ_DIR$\Flash\Obj\tms470r1b1m_low_level_init_flash.pbi</file>
+      <file>$PROJ_DIR$\Flash\Obj\cstartup.o</file>
+      <file>$PROJ_DIR$\Flash\Obj\tms470r1b1m_low_level_init_flash.o</file>
+      <file>$PROJ_DIR$\tms470r1b1m_flashlight.c</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\Flash\Exe\tms470.out</name>
+      <inputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 9 17 3 18 0 11 4 5</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\Flash\Obj\tms470.pbd</name>
+      <inputs>
+        <tool>
+          <name>BILINK</name>
+          <file> 6 16</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 2</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\cstartup.s</name>
+      <outputs>
+        <tool>
+          <name>AARM</name>
+          <file> 17</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_low_level_init_flash.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 16</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 18</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 8 12 1</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 8 12 1</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_flashlight.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 6</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 3</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 10 7 8 12 1</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 10 7 8 12 1</file>
+        </tool>
+      </inputs>
+    </file>
+  </configuration>
+  <configuration>
+    <name>RAM</name>
+    <outputs>
+      <file>$TOOLKIT_DIR$\lib\shs_b.a</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\tms470r1B1m_bit_definitions.h</file>
+      <file>$TOOLKIT_DIR$\lib\m4t_tb.a</file>
+      <file>$TOOLKIT_DIR$\lib\dl4t_tbn.a</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\iotms470r1b1m.h</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+      <file>$TOOLKIT_DIR$\lib\rt4t_ab.a</file>
+      <file>$TOOLKIT_DIR$\inc\c\io_macros.h</file>
+      <file>$PROJ_DIR$\RAM\Obj\tms470r1b1m_flashlight.pbi</file>
+      <file>$PROJ_DIR$\RAM\Obj\tms470r1b1m_flashlight.o</file>
+      <file>$PROJ_DIR$\RAM\Obj\tms470.pbd</file>
+      <file>$TOOLKIT_DIR$\examples\TexasInstruments\Configuration_Files\B1M_Files\tms470r1b1m_lnk_ram.icf</file>
+      <file>$PROJ_DIR$\RAM\Exe\tms470.out</file>
+      <file>$PROJ_DIR$\tms470r1b1m_flashlight.c</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\RAM\Obj\tms470.pbd</name>
+      <inputs>
+        <tool>
+          <name>BILINK</name>
+          <file> 9</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\RAM\Exe\tms470.out</name>
+      <inputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 12 10 0 7 2 3</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 13</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_flashlight.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 9</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 10</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 6 4 5 8 1</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 6 4 5 8 1</file>
+        </tool>
+      </inputs>
+    </file>
+  </configuration>
+</project>
+
+

@@ -1,0 +1,938 @@
+Archive member included because of file (symbol)
+
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodhi4.o)
+                              main.o (__divmodhi4)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodsi4.o)
+                              main.o (__divmodsi4)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+                              c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o (exit)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+                              main.o (__do_copy_data)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+                              main.o (__do_clear_bss)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodhi4.o)
+                              c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodhi4.o) (__udivmodhi4)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodsi4.o)
+                              c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodsi4.o) (__udivmodsi4)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memcpy.o)
+                              ../../Source/queue.o (memcpy)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memset.o)
+                              ../../Source/tasks.o (memset)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(strncpy.o)
+                              ../../Source/tasks.o (strncpy)
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+text             0x00000000         0x00020000         xr
+data             0x00800060         0x0000ffa0         rw !x
+eeprom           0x00810000         0x00010000         rw !x
+fuse             0x00820000         0x00000400         rw !x
+lock             0x00830000         0x00000400         rw !x
+signature        0x00840000         0x00000400         rw !x
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+Address of section .data set to 0x800200
+LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+LOAD main.o
+LOAD ParTest/ParTest.o
+LOAD regtest.o
+LOAD ../../Source/tasks.o
+LOAD ../../Source/queue.o
+LOAD ../../Source/list.o
+LOAD ../../Source/croutine.o
+LOAD ../../Source/portable/MemMang/heap_1.o
+LOAD ../../Source/portable/GCC/ATMega323/port.o
+LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libm.a
+LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
+LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a
+LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
+
+.hash
+ *(.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rel.init
+ *(.rel.init)
+
+.rela.init
+ *(.rela.init)
+
+.rel.text
+ *(.rel.text)
+ *(.rel.text.*)
+ *(.rel.gnu.linkonce.t*)
+
+.rela.text
+ *(.rela.text)
+ *(.rela.text.*)
+ *(.rela.gnu.linkonce.t*)
+
+.rel.fini
+ *(.rel.fini)
+
+.rela.fini
+ *(.rela.fini)
+
+.rel.rodata
+ *(.rel.rodata)
+ *(.rel.rodata.*)
+ *(.rel.gnu.linkonce.r*)
+
+.rela.rodata
+ *(.rela.rodata)
+ *(.rela.rodata.*)
+ *(.rela.gnu.linkonce.r*)
+
+.rel.data
+ *(.rel.data)
+ *(.rel.data.*)
+ *(.rel.gnu.linkonce.d*)
+
+.rela.data
+ *(.rela.data)
+ *(.rela.data.*)
+ *(.rela.gnu.linkonce.d*)
+
+.rel.ctors
+ *(.rel.ctors)
+
+.rela.ctors
+ *(.rela.ctors)
+
+.rel.dtors
+ *(.rel.dtors)
+
+.rela.dtors
+ *(.rela.dtors)
+
+.rel.got
+ *(.rel.got)
+
+.rela.got
+ *(.rela.got)
+
+.rel.bss
+ *(.rel.bss)
+
+.rela.bss
+ *(.rela.bss)
+
+.rel.plt
+ *(.rel.plt)
+
+.rela.plt
+ *(.rela.plt)
+
+.text           0x00000000     0x24cc
+ *(.vectors)
+ .vectors       0x00000000       0xe4 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+                0x00000000                __vectors
+                0x00000000                __vector_default
+ *(.vectors)
+ *(.progmem.gcc*)
+ *(.progmem*)
+                0x000000e4                . = ALIGN (0x2)
+                0x000000e4                __trampolines_start = .
+ *(.trampolines)
+ .trampolines   0x000000e4        0x0 linker stubs
+ *(.trampolines*)
+                0x000000e4                __trampolines_end = .
+ *(.jumptables)
+ *(.jumptables*)
+ *(.lowtext)
+ *(.lowtext*)
+                0x000000e4                __ctors_start = .
+ *(.ctors)
+                0x000000e4                __ctors_end = .
+                0x000000e4                __dtors_start = .
+ *(.dtors)
+                0x000000e4                __dtors_end = .
+ SORT(*)(.ctors)
+ SORT(*)(.dtors)
+ *(.init0)
+ .init0         0x000000e4        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+                0x000000e4                __init
+ *(.init0)
+ *(.init1)
+ *(.init1)
+ *(.init2)
+ .init2         0x000000e4        0xc c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+ *(.init2)
+ *(.init3)
+ *(.init3)
+ *(.init4)
+ .init4         0x000000f0       0x16 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+                0x000000f0                __do_copy_data
+ .init4         0x00000106       0x10 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+                0x00000106                __do_clear_bss
+ *(.init4)
+ *(.init5)
+ *(.init5)
+ *(.init6)
+ *(.init6)
+ *(.init7)
+ *(.init7)
+ *(.init8)
+ *(.init8)
+ *(.init9)
+ .init9         0x00000116        0x8 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+ *(.init9)
+ *(.text)
+ .text          0x0000011e        0x4 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+                0x0000011e                __vector_38
+                0x0000011e                __vector_22
+                0x0000011e                __vector_28
+                0x0000011e                __vector_1
+                0x0000011e                __vector_32
+                0x0000011e                __vector_34
+                0x0000011e                __vector_24
+                0x0000011e                __vector_12
+                0x0000011e                __vector_55
+                0x0000011e                __vector_46
+                0x0000011e                __bad_interrupt
+                0x0000011e                __vector_6
+                0x0000011e                __vector_31
+                0x0000011e                __vector_35
+                0x0000011e                __vector_39
+                0x0000011e                __vector_3
+                0x0000011e                __vector_23
+                0x0000011e                __vector_30
+                0x0000011e                __vector_45
+                0x0000011e                __vector_25
+                0x0000011e                __vector_11
+                0x0000011e                __vector_54
+                0x0000011e                __vector_13
+                0x0000011e                __vector_19
+                0x0000011e                __vector_56
+                0x0000011e                __vector_7
+                0x0000011e                __vector_49
+                0x0000011e                __vector_41
+                0x0000011e                __vector_43
+                0x0000011e                __vector_27
+                0x0000011e                __vector_5
+                0x0000011e                __vector_33
+                0x0000011e                __vector_47
+                0x0000011e                __vector_52
+                0x0000011e                __vector_37
+                0x0000011e                __vector_4
+                0x0000011e                __vector_44
+                0x0000011e                __vector_51
+                0x0000011e                __vector_9
+                0x0000011e                __vector_2
+                0x0000011e                __vector_21
+                0x0000011e                __vector_15
+                0x0000011e                __vector_36
+                0x0000011e                __vector_29
+                0x0000011e                __vector_40
+                0x0000011e                __vector_8
+                0x0000011e                __vector_26
+                0x0000011e                __vector_48
+                0x0000011e                __vector_14
+                0x0000011e                __vector_53
+                0x0000011e                __vector_10
+                0x0000011e                __vector_50
+                0x0000011e                __vector_16
+                0x0000011e                __vector_18
+                0x0000011e                __vector_20
+                0x0000011e                __vector_42
+ .text          0x00000122      0x6f0 main.o
+                0x00000540                PWM_timer3_Off_All
+                0x000004aa                PWM_timer3_Off_E4
+                0x000006a2                sin_SoR
+                0x0000019e                PWM_Init_timer3_E3
+                0x0000025e                PWM_Init_timer4_H3
+                0x0000043e                PWM_timer4_On_H3
+                0x00000522                PWM_timer2_Off_All
+                0x000005e4                PWM_timer4_Set_H4
+                0x00000628                delay_cycles
+                0x000005c6                PWM_timer3_Set_E4
+                0x00000576                PWM_timer4_Off_All
+                0x0000062e                LED_on
+                0x000005ac                PWM_timer1_Set_LED
+                0x000005bc                PWM_timer3_Set_E3
+                0x000005b6                PWM_timer2_Set_H6
+                0x00000162                PWM_Init_timer2_H6
+                0x000005ee                PWM_timer4_Set_H5
+                0x0000031e                timer1PWMInitICR
+                0x000003f6                PWM_timer2_On_H6
+                0x00000486                PWM_timer2_Off_H6
+                0x00000122                PWM_Init_timer1_LED
+                0x000003a2                timer4PWMInitICR
+                0x0000064c                cos_SoR
+                0x0000062a                LED_off
+                0x00000450                PWM_timer4_On_H4
+                0x00000408                PWM_timer3_On_E3
+                0x00000360                timer3PWMInitICR
+                0x000004ce                PWM_timer4_Off_H3
+                0x000007a6                main
+                0x00000632                button_pressed
+                0x00000498                PWM_timer3_Off_E3
+                0x000005da                PWM_timer4_Set_H3
+                0x000004e0                PWM_timer4_Off_H4
+                0x000001de                PWM_Init_timer3_E4
+                0x000005f8                configure_ports
+                0x0000079c                vLEDOff
+                0x00000700                tan_SoR
+                0x00000798                vLEDOn
+                0x0000029e                PWM_Init_timer4_H4
+                0x000003e4                PWM_timer1_On_LED
+                0x00000462                PWM_timer4_On_H5
+                0x0000021e                PWM_Init_timer3_E5
+                0x000004f2                PWM_timer4_Off_H5
+                0x0000041a                PWM_timer3_On_E4
+                0x0000042c                PWM_timer3_On_E5
+                0x00000474                PWM_timer1_Off_LED
+                0x000004bc                PWM_timer3_Off_E5
+                0x000002de                PWM_Init_timer4_H5
+                0x00000504                PWM_timer1_Off_All
+                0x000005d0                PWM_timer3_Set_E5
+                0x000007a0                vApplicationIdleHook
+ .text          0x00000812       0x9e ParTest/ParTest.o
+                0x00000822                vParTestToggleLED
+                0x00000868                vParTestSetLED
+                0x00000812                vParTestInitialise
+ .text          0x000008b0      0x2ec regtest.o
+                0x000008b0                xAreRegTestTasksStillRunning
+                0x00000b48                vStartRegTestTasks
+ .text          0x00000b9c      0x904 ../../Source/tasks.o
+                0x0000117e                vTaskEndScheduler
+                0x00000e4c                vTaskPlaceOnEventList
+                0x0000120e                xTaskGenericCreate
+                0x00000ba8                xTaskGetTickCount
+                0x00000cda                xTaskRemoveFromEventList
+                0x000010e4                vTaskDelete
+                0x00000c5e                xTaskCheckForTimeOut
+                0x00000b9c                vTaskSuspendAll
+                0x00000bc4                vTaskSwitchContext
+                0x00000bbe                uxTaskGetNumberOfTasks
+                0x00000d60                vTaskIncrementTick
+                0x00001036                vTaskDelayUntil
+                0x00000ebe                xTaskResumeAll
+                0x0000144a                vTaskStartScheduler
+                0x00000cd2                vTaskMissedYield
+                0x00000fba                vTaskDelay
+                0x00000c48                vTaskSetTimeOutState
+ .text          0x000014a0      0x778 ../../Source/queue.o
+                0x0000155a                xQueueCRReceiveFromISR
+                0x000017a2                xQueueGenericSendFromISR
+                0x000015d0                xQueueCRSendFromISR
+                0x00001b52                xQueueCreate
+                0x0000169a                xQueueCRSend
+                0x00001708                vQueueDelete
+                0x00001a0a                xQueueGenericSend
+                0x0000160e                xQueueCRReceive
+                0x00001724                xQueueReceiveFromISR
+                0x000014c6                xQueueIsQueueFullFromISR
+                0x00001872                xQueueGenericReceive
+                0x000014a0                uxQueueMessagesWaiting
+                0x000014b0                uxQueueMessagesWaitingFromISR
+                0x000014b6                xQueueIsQueueEmptyFromISR
+ .text          0x00001c18      0x134 ../../Source/list.o
+                0x00001c40                vListInsertEnd
+                0x00001cfc                vListRemove
+                0x00001c38                vListInitialiseItem
+                0x00001c18                vListInitialise
+                0x00001c92                vListInsert
+ .text          0x00001d4c      0x394 ../../Source/croutine.o
+                0x00001d4c                xCoRoutineRemoveFromEventList
+                0x00001fec                xCoRoutineCreate
+                0x00001da2                vCoRoutineSchedule
+                0x00001f72                vCoRoutineAddToDelayedList
+ .text          0x000020e0       0x6e ../../Source/portable/MemMang/heap_1.o
+                0x000020ec                xPortGetFreeHeapSize
+                0x000020e0                vPortFree
+                0x00002100                pvPortMalloc
+                0x000020e2                vPortInitialiseBlocks
+ .text          0x0000214e      0x274 ../../Source/portable/GCC/ATMega323/port.o
+                0x000021de                xPortStartScheduler
+                0x00002254                vPortYieldFromTick
+                0x00002252                vPortEndScheduler
+                0x0000230a                __vector_17
+                0x00002310                vPortYield
+                0x0000214e                pxPortInitialiseStack
+ .text          0x000023c2        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodhi4.o)
+ .text          0x000023c2        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodsi4.o)
+ .text          0x000023c2        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .text          0x000023c2        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+ .text          0x000023c2        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+ .text          0x000023c2        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodhi4.o)
+ .text          0x000023c2        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodsi4.o)
+ .text          0x000023c2       0x12 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memcpy.o)
+                0x000023c2                memcpy
+ .text          0x000023d4        0xe c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memset.o)
+                0x000023d4                memset
+ .text          0x000023e2       0x1e c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(strncpy.o)
+                0x000023e2                strncpy
+                0x00002400                . = ALIGN (0x2)
+ *(.text.*)
+ .text.libgcc   0x00002400       0x26 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodhi4.o)
+                0x00002400                __divmodhi4
+                0x00002400                _div
+ .text.libgcc   0x00002426       0x36 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodsi4.o)
+                0x00002426                __divmodsi4
+ .text.libgcc   0x0000245c        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .text.libgcc   0x0000245c        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+ .text.libgcc   0x0000245c        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+ .text.libgcc   0x0000245c       0x28 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodhi4.o)
+                0x0000245c                __udivmodhi4
+ .text.libgcc   0x00002484       0x44 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodsi4.o)
+                0x00002484                __udivmodsi4
+                0x000024c8                . = ALIGN (0x2)
+ *(.fini9)
+ .fini9         0x000024c8        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+                0x000024c8                exit
+                0x000024c8                _exit
+ *(.fini9)
+ *(.fini8)
+ *(.fini8)
+ *(.fini7)
+ *(.fini7)
+ *(.fini6)
+ *(.fini6)
+ *(.fini5)
+ *(.fini5)
+ *(.fini4)
+ *(.fini4)
+ *(.fini3)
+ *(.fini3)
+ *(.fini2)
+ *(.fini2)
+ *(.fini1)
+ *(.fini1)
+ *(.fini0)
+ .fini0         0x000024c8        0x4 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ *(.fini0)
+                0x000024cc                _etext = .
+
+.data           0x00800200       0xb2 load address 0x000024cc
+                0x00800200                PROVIDE (__data_start, .)
+ *(.data)
+ .data          0x00800200        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+ .data          0x00800200       0xa1 main.o
+                0x0080020f                angtable
+ .data          0x008002a1        0x1 ParTest/ParTest.o
+ .data          0x008002a2        0xa regtest.o
+ .data          0x008002ac        0x5 ../../Source/tasks.o
+ .data          0x008002b1        0x0 ../../Source/queue.o
+ .data          0x008002b1        0x0 ../../Source/list.o
+ .data          0x008002b1        0x0 ../../Source/croutine.o
+ .data          0x008002b1        0x0 ../../Source/portable/MemMang/heap_1.o
+ .data          0x008002b1        0x0 ../../Source/portable/GCC/ATMega323/port.o
+ .data          0x008002b1        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodhi4.o)
+ .data          0x008002b1        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodsi4.o)
+ .data          0x008002b1        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .data          0x008002b1        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+ .data          0x008002b1        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+ .data          0x008002b1        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodhi4.o)
+ .data          0x008002b1        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodsi4.o)
+ .data          0x008002b1        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memcpy.o)
+ .data          0x008002b1        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memset.o)
+ .data          0x008002b1        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(strncpy.o)
+ *(.data*)
+ *(.rodata)
+ *(.rodata*)
+ *(.gnu.linkonce.d*)
+                0x008002b2                . = ALIGN (0x2)
+ *fill*         0x008002b1        0x1 00
+                0x008002b2                _edata = .
+                0x008002b2                PROVIDE (__data_end, .)
+
+.bss            0x008002b2      0x673
+                0x008002b2                PROVIDE (__bss_start, .)
+ *(.bss)
+ .bss           0x008002b2        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+ .bss           0x008002b2        0x0 main.o
+ .bss           0x008002b2        0x0 ParTest/ParTest.o
+ .bss           0x008002b2        0x1 regtest.o
+                0x008002b2                xRegTestError
+ .bss           0x008002b3       0x5a ../../Source/tasks.o
+                0x008002b3                pxCurrentTCB
+ .bss           0x0080030d        0x0 ../../Source/queue.o
+ .bss           0x0080030d        0x0 ../../Source/list.o
+ .bss           0x0080030d       0x3a ../../Source/croutine.o
+                0x0080030d                pxCurrentCoRoutine
+ .bss           0x00800347      0x5de ../../Source/portable/MemMang/heap_1.o
+ .bss           0x00800925        0x0 ../../Source/portable/GCC/ATMega323/port.o
+ .bss           0x00800925        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodhi4.o)
+ .bss           0x00800925        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodsi4.o)
+ .bss           0x00800925        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .bss           0x00800925        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+ .bss           0x00800925        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+ .bss           0x00800925        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodhi4.o)
+ .bss           0x00800925        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodsi4.o)
+ .bss           0x00800925        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memcpy.o)
+ .bss           0x00800925        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memset.o)
+ .bss           0x00800925        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(strncpy.o)
+ *(.bss*)
+ *(COMMON)
+                0x00800925                PROVIDE (__bss_end, .)
+                0x000024cc                __data_load_start = LOADADDR (.data)
+                0x0000257e                __data_load_end = (__data_load_start + SIZEOF (.data))
+
+.noinit         0x00800925        0x0
+                0x00800925                PROVIDE (__noinit_start, .)
+ *(.noinit*)
+                0x00800925                PROVIDE (__noinit_end, .)
+                0x00800925                _end = .
+                0x00800925                PROVIDE (__heap_start, .)
+
+.eeprom         0x00810000        0x0
+ *(.eeprom*)
+                0x00810000                __eeprom_end = .
+
+.fuse
+ *(.fuse)
+ *(.lfuse)
+ *(.hfuse)
+ *(.efuse)
+
+.lock
+ *(.lock*)
+
+.signature
+ *(.signature*)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment
+ *(.comment)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges  0x00000000      0x120
+ *(.debug_aranges)
+ .debug_aranges
+                0x00000000       0x20 main.o
+ .debug_aranges
+                0x00000020       0x20 ParTest/ParTest.o
+ .debug_aranges
+                0x00000040       0x20 regtest.o
+ .debug_aranges
+                0x00000060       0x20 ../../Source/tasks.o
+ .debug_aranges
+                0x00000080       0x20 ../../Source/queue.o
+ .debug_aranges
+                0x000000a0       0x20 ../../Source/list.o
+ .debug_aranges
+                0x000000c0       0x20 ../../Source/croutine.o
+ .debug_aranges
+                0x000000e0       0x20 ../../Source/portable/MemMang/heap_1.o
+ .debug_aranges
+                0x00000100       0x20 ../../Source/portable/GCC/ATMega323/port.o
+
+.debug_pubnames
+                0x00000000      0x9db
+ *(.debug_pubnames)
+ .debug_pubnames
+                0x00000000      0x42a main.o
+ .debug_pubnames
+                0x0000042a       0x52 ParTest/ParTest.o
+ .debug_pubnames
+                0x0000047c       0x5c regtest.o
+ .debug_pubnames
+                0x000004d8      0x19f ../../Source/tasks.o
+ .debug_pubnames
+                0x00000677      0x169 ../../Source/queue.o
+ .debug_pubnames
+                0x000007e0       0x71 ../../Source/list.o
+ .debug_pubnames
+                0x00000851       0x96 ../../Source/croutine.o
+ .debug_pubnames
+                0x000008e7       0x64 ../../Source/portable/MemMang/heap_1.o
+ .debug_pubnames
+                0x0000094b       0x90 ../../Source/portable/GCC/ATMega323/port.o
+
+.debug_info     0x00000000     0x2915
+ *(.debug_info)
+ .debug_info    0x00000000      0x807 main.o
+ .debug_info    0x00000807      0x116 ParTest/ParTest.o
+ .debug_info    0x0000091d      0x113 regtest.o
+ .debug_info    0x00000a30      0xb01 ../../Source/tasks.o
+ .debug_info    0x00001531      0x8fe ../../Source/queue.o
+ .debug_info    0x00001e2f      0x2b1 ../../Source/list.o
+ .debug_info    0x000020e0      0x50a ../../Source/croutine.o
+ .debug_info    0x000025ea      0x169 ../../Source/portable/MemMang/heap_1.o
+ .debug_info    0x00002753      0x1c2 ../../Source/portable/GCC/ATMega323/port.o
+ *(.gnu.linkonce.wi.*)
+
+.debug_abbrev   0x00000000      0xbd5
+ *(.debug_abbrev)
+ .debug_abbrev  0x00000000      0x1a1 main.o
+ .debug_abbrev  0x000001a1       0x93 ParTest/ParTest.o
+ .debug_abbrev  0x00000234       0xaa regtest.o
+ .debug_abbrev  0x000002de      0x25e ../../Source/tasks.o
+ .debug_abbrev  0x0000053c      0x1b3 ../../Source/queue.o
+ .debug_abbrev  0x000006ef       0xdd ../../Source/list.o
+ .debug_abbrev  0x000007cc      0x1dd ../../Source/croutine.o
+ .debug_abbrev  0x000009a9      0x114 ../../Source/portable/MemMang/heap_1.o
+ .debug_abbrev  0x00000abd      0x118 ../../Source/portable/GCC/ATMega323/port.o
+
+.debug_line     0x00000000     0x2c5c
+ *(.debug_line)
+ .debug_line    0x00000000      0x945 main.o
+ .debug_line    0x00000945      0x120 ParTest/ParTest.o
+ .debug_line    0x00000a65      0x8d9 regtest.o
+ .debug_line    0x0000133e      0x76d ../../Source/tasks.o
+ .debug_line    0x00001aab      0x87b ../../Source/queue.o
+ .debug_line    0x00002326      0x227 ../../Source/list.o
+ .debug_line    0x0000254d      0x32a ../../Source/croutine.o
+ .debug_line    0x00002877      0x125 ../../Source/portable/MemMang/heap_1.o
+ .debug_line    0x0000299c      0x2c0 ../../Source/portable/GCC/ATMega323/port.o
+
+.debug_frame    0x00000000      0x780
+ *(.debug_frame)
+ .debug_frame   0x00000000      0x340 main.o
+ .debug_frame   0x00000340       0x40 ParTest/ParTest.o
+ .debug_frame   0x00000380       0x50 regtest.o
+ .debug_frame   0x000003d0      0x130 ../../Source/tasks.o
+ .debug_frame   0x00000500      0x110 ../../Source/queue.o
+ .debug_frame   0x00000610       0x60 ../../Source/list.o
+ .debug_frame   0x00000670       0x50 ../../Source/croutine.o
+ .debug_frame   0x000006c0       0x50 ../../Source/portable/MemMang/heap_1.o
+ .debug_frame   0x00000710       0x70 ../../Source/portable/GCC/ATMega323/port.o
+
+.debug_str      0x00000000     0x1276
+ *(.debug_str)
+ .debug_str     0x00000000      0x3ff main.o
+                                0x43f (size before relaxing)
+ .debug_str     0x000003ff       0x6e ParTest/ParTest.o
+                                0x12d (size before relaxing)
+ .debug_str     0x0000046d       0x79 regtest.o
+                                0x140 (size before relaxing)
+ .debug_str     0x000004e6      0x5d6 ../../Source/tasks.o
+                                0x6bd (size before relaxing)
+ .debug_str     0x00000abc      0x33e ../../Source/queue.o
+                                0x4ef (size before relaxing)
+ .debug_str     0x00000dfa       0xa7 ../../Source/list.o
+                                0x1f1 (size before relaxing)
+ .debug_str     0x00000ea1      0x24c ../../Source/croutine.o
+                                0x415 (size before relaxing)
+ .debug_str     0x000010ed       0xac ../../Source/portable/MemMang/heap_1.o
+                                0x172 (size before relaxing)
+ .debug_str     0x00001199       0xdd ../../Source/portable/GCC/ATMega323/port.o
+                                0x1c2 (size before relaxing)
+
+.debug_loc      0x00000000     0x13c9
+ *(.debug_loc)
+ .debug_loc     0x00000000      0x212 main.o
+ .debug_loc     0x00000212       0xa1 ParTest/ParTest.o
+ .debug_loc     0x000002b3      0x514 ../../Source/tasks.o
+ .debug_loc     0x000007c7      0x867 ../../Source/queue.o
+ .debug_loc     0x0000102e      0x100 ../../Source/list.o
+ .debug_loc     0x0000112e      0x210 ../../Source/croutine.o
+ .debug_loc     0x0000133e       0x50 ../../Source/portable/MemMang/heap_1.o
+ .debug_loc     0x0000138e       0x3b ../../Source/portable/GCC/ATMega323/port.o
+
+.debug_macinfo
+ *(.debug_macinfo)
+OUTPUT(rtosdemo.elf elf32-avr)
+LOAD linker stubs
+
+.debug_ranges   0x00000000       0x18
+ .debug_ranges  0x00000000       0x18 ../../Source/tasks.o
+
+Cross Reference Table
+
+Symbol                                            File
+LED_off                                           main.o
+LED_on                                            main.o
+PWM_Init_timer1_LED                               main.o
+PWM_Init_timer2_H6                                main.o
+PWM_Init_timer3_E3                                main.o
+PWM_Init_timer3_E4                                main.o
+PWM_Init_timer3_E5                                main.o
+PWM_Init_timer4_H3                                main.o
+PWM_Init_timer4_H4                                main.o
+PWM_Init_timer4_H5                                main.o
+PWM_timer1_Off_All                                main.o
+PWM_timer1_Off_LED                                main.o
+PWM_timer1_On_LED                                 main.o
+PWM_timer1_Set_LED                                main.o
+PWM_timer2_Off_All                                main.o
+PWM_timer2_Off_H6                                 main.o
+PWM_timer2_On_H6                                  main.o
+PWM_timer2_Set_H6                                 main.o
+PWM_timer3_Off_All                                main.o
+PWM_timer3_Off_E3                                 main.o
+PWM_timer3_Off_E4                                 main.o
+PWM_timer3_Off_E5                                 main.o
+PWM_timer3_On_E3                                  main.o
+PWM_timer3_On_E4                                  main.o
+PWM_timer3_On_E5                                  main.o
+PWM_timer3_Set_E3                                 main.o
+PWM_timer3_Set_E4                                 main.o
+PWM_timer3_Set_E5                                 main.o
+PWM_timer4_Off_All                                main.o
+PWM_timer4_Off_H3                                 main.o
+PWM_timer4_Off_H4                                 main.o
+PWM_timer4_Off_H5                                 main.o
+PWM_timer4_On_H3                                  main.o
+PWM_timer4_On_H4                                  main.o
+PWM_timer4_On_H5                                  main.o
+PWM_timer4_Set_H3                                 main.o
+PWM_timer4_Set_H4                                 main.o
+PWM_timer4_Set_H5                                 main.o
+__bad_interrupt                                   c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__bss_end                                         c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+__bss_start                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+__data_end                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+__data_load_start                                 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+__data_start                                      c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+__divmodhi4                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodhi4.o)
+                                                  main.o
+__divmodsi4                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodsi4.o)
+                                                  main.o
+__do_clear_bss                                    c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+                                                  ../../Source/portable/GCC/ATMega323/port.o
+                                                  ../../Source/portable/MemMang/heap_1.o
+                                                  ../../Source/croutine.o
+                                                  ../../Source/list.o
+                                                  ../../Source/queue.o
+                                                  ../../Source/tasks.o
+                                                  regtest.o
+                                                  ParTest/ParTest.o
+                                                  main.o
+__do_copy_data                                    c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+                                                  ../../Source/portable/GCC/ATMega323/port.o
+                                                  ../../Source/portable/MemMang/heap_1.o
+                                                  ../../Source/croutine.o
+                                                  ../../Source/list.o
+                                                  ../../Source/queue.o
+                                                  ../../Source/tasks.o
+                                                  regtest.o
+                                                  ParTest/ParTest.o
+                                                  main.o
+__heap_end                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__init                                            c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__stack                                           c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__udivmodhi4                                      c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodhi4.o)
+                                                  c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodhi4.o)
+__udivmodsi4                                      c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_udivmodsi4.o)
+                                                  c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodsi4.o)
+__vector_1                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_10                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_11                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_12                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_13                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_14                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_15                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_16                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_17                                       ../../Source/portable/GCC/ATMega323/port.o
+                                                  c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_18                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_19                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_2                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_20                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_21                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_22                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_23                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_24                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_25                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_26                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_27                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_28                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_29                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_3                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_30                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_31                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_32                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_33                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_34                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_35                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_36                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_37                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_38                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_39                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_4                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_40                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_41                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_42                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_43                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_44                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_45                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_46                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_47                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_48                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_49                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_5                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_50                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_51                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_52                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_53                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_54                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_55                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_56                                       c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_6                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_7                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_8                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_9                                        c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vector_default                                  c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+__vectors                                         c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+_div                                              c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_divmodhi4.o)
+_exit                                             c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+angtable                                          main.o
+button_pressed                                    main.o
+configure_ports                                   main.o
+cos_SoR                                           main.o
+delay_cycles                                      main.o
+exit                                              c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+                                                  c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+main                                              main.o
+                                                  c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm640.o
+memcpy                                            c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memcpy.o)
+                                                  ../../Source/queue.o
+memset                                            c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memset.o)
+                                                  ../../Source/tasks.o
+pvPortMalloc                                      ../../Source/portable/MemMang/heap_1.o
+                                                  ../../Source/croutine.o
+                                                  ../../Source/queue.o
+                                                  ../../Source/tasks.o
+pxCurrentCoRoutine                                ../../Source/croutine.o
+pxCurrentTCB                                      ../../Source/tasks.o
+                                                  ../../Source/portable/GCC/ATMega323/port.o
+pxPortInitialiseStack                             ../../Source/portable/GCC/ATMega323/port.o
+                                                  ../../Source/tasks.o
+sin_SoR                                           main.o
+strncpy                                           c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(strncpy.o)
+                                                  ../../Source/tasks.o
+tan_SoR                                           main.o
+timer1PWMInitICR                                  main.o
+timer3PWMInitICR                                  main.o
+timer4PWMInitICR                                  main.o
+uxQueueMessagesWaiting                            ../../Source/queue.o
+uxQueueMessagesWaitingFromISR                     ../../Source/queue.o
+uxTaskGetNumberOfTasks                            ../../Source/tasks.o
+vApplicationIdleHook                              main.o
+                                                  ../../Source/tasks.o
+vCoRoutineAddToDelayedList                        ../../Source/croutine.o
+                                                  ../../Source/queue.o
+vCoRoutineSchedule                                ../../Source/croutine.o
+                                                  main.o
+vLEDOff                                           main.o
+vLEDOn                                            main.o
+vListInitialise                                   ../../Source/list.o
+                                                  ../../Source/croutine.o
+                                                  ../../Source/queue.o
+                                                  ../../Source/tasks.o
+vListInitialiseItem                               ../../Source/list.o
+                                                  ../../Source/croutine.o
+                                                  ../../Source/tasks.o
+vListInsert                                       ../../Source/list.o
+                                                  ../../Source/croutine.o
+                                                  ../../Source/tasks.o
+vListInsertEnd                                    ../../Source/list.o
+                                                  ../../Source/croutine.o
+                                                  ../../Source/tasks.o
+vListRemove                                       ../../Source/list.o
+                                                  ../../Source/croutine.o
+                                                  ../../Source/tasks.o
+vParTestInitialise                                ParTest/ParTest.o
+vParTestSetLED                                    ParTest/ParTest.o
+vParTestToggleLED                                 ParTest/ParTest.o
+vPortEndScheduler                                 ../../Source/portable/GCC/ATMega323/port.o
+                                                  ../../Source/tasks.o
+vPortFree                                         ../../Source/portable/MemMang/heap_1.o
+                                                  ../../Source/queue.o
+                                                  ../../Source/tasks.o
+vPortInitialiseBlocks                             ../../Source/portable/MemMang/heap_1.o
+vPortYield                                        ../../Source/portable/GCC/ATMega323/port.o
+                                                  ../../Source/queue.o
+                                                  ../../Source/tasks.o
+vPortYieldFromTick                                ../../Source/portable/GCC/ATMega323/port.o
+vQueueDelete                                      ../../Source/queue.o
+vStartRegTestTasks                                regtest.o
+vTaskDelay                                        ../../Source/tasks.o
+vTaskDelayUntil                                   ../../Source/tasks.o
+vTaskDelete                                       ../../Source/tasks.o
+vTaskEndScheduler                                 ../../Source/tasks.o
+vTaskIncrementTick                                ../../Source/tasks.o
+                                                  ../../Source/portable/GCC/ATMega323/port.o
+vTaskMissedYield                                  ../../Source/tasks.o
+                                                  ../../Source/queue.o
+vTaskPlaceOnEventList                             ../../Source/tasks.o
+                                                  ../../Source/queue.o
+vTaskSetTimeOutState                              ../../Source/tasks.o
+                                                  ../../Source/queue.o
+vTaskStartScheduler                               ../../Source/tasks.o
+                                                  main.o
+vTaskSuspendAll                                   ../../Source/tasks.o
+                                                  ../../Source/portable/MemMang/heap_1.o
+                                                  ../../Source/queue.o
+                                                  ParTest/ParTest.o
+vTaskSwitchContext                                ../../Source/tasks.o
+                                                  ../../Source/portable/GCC/ATMega323/port.o
+xAreRegTestTasksStillRunning                      regtest.o
+xCoRoutineCreate                                  ../../Source/croutine.o
+xCoRoutineRemoveFromEventList                     ../../Source/croutine.o
+                                                  ../../Source/queue.o
+xPortGetFreeHeapSize                              ../../Source/portable/MemMang/heap_1.o
+xPortStartScheduler                               ../../Source/portable/GCC/ATMega323/port.o
+                                                  ../../Source/tasks.o
+xQueueCRReceive                                   ../../Source/queue.o
+xQueueCRReceiveFromISR                            ../../Source/queue.o
+xQueueCRSend                                      ../../Source/queue.o
+xQueueCRSendFromISR                               ../../Source/queue.o
+xQueueCreate                                      ../../Source/queue.o
+xQueueGenericReceive                              ../../Source/queue.o
+xQueueGenericSend                                 ../../Source/queue.o
+xQueueGenericSendFromISR                          ../../Source/queue.o
+xQueueIsQueueEmptyFromISR                         ../../Source/queue.o
+xQueueIsQueueFullFromISR                          ../../Source/queue.o
+xQueueReceiveFromISR                              ../../Source/queue.o
+xRegTestError                                     regtest.o
+xTaskCheckForTimeOut                              ../../Source/tasks.o
+                                                  ../../Source/queue.o
+xTaskGenericCreate                                ../../Source/tasks.o
+                                                  regtest.o
+                                                  main.o
+xTaskGetTickCount                                 ../../Source/tasks.o
+                                                  ../../Source/croutine.o
+xTaskRemoveFromEventList                          ../../Source/tasks.o
+                                                  ../../Source/queue.o
+xTaskResumeAll                                    ../../Source/tasks.o
+                                                  ../../Source/portable/MemMang/heap_1.o
+                                                  ../../Source/queue.o
+                                                  ParTest/ParTest.o

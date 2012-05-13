@@ -1,0 +1,6 @@
+#define Het0 0x01
+#define Het1 0x02
+#define Het2 0x04
+#define Het3 0x08
+#define Het4 0x10
+#define Het5 0x20

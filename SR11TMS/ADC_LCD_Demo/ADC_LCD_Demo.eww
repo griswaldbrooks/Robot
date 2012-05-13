@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<workspace>
+  <project>
+    <path>$WS_DIR$\ADC_LCD.ewp</path>
+  </project>
+  <batchBuild>
+    <batchDefinition>
+      <name>All</name>
+      <member>
+        <project>ADC_LCD</project>
+        <configuration>FLASH</configuration>
+      </member>
+      <member>
+        <project>ADC_LCD</project>
+        <configuration>RAM</configuration>
+      </member>
+    </batchDefinition>
+  </batchBuild>
+</workspace>
+
+

@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<project>
+  <fileVersion>2</fileVersion>
+  <fileChecksum>1521825139</fileChecksum>
+  <configuration>
+    <name>RAM</name>
+    <outputs/>
+    <forcedrebuild>
+      <name>[MULTI_TOOL]</name>
+      <tool>ILINK</tool>
+    </forcedrebuild>
+  </configuration>
+  <configuration>
+    <name>flash</name>
+    <outputs>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_low_level_init_flash.o</file>
+      <file>$PROJ_DIR$\flash\Obj\SCI.pbd</file>
+      <file>$TOOLKIT_DIR$\lib\dl4t_abn.a</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_SCI2_01.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\c\ycheck.h</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_SCI2_01.o</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\iotms470r1b1m.h</file>
+      <file>$TOOLKIT_DIR$\inc\TexasInstruments\tms470r1B1m_bit_definitions.h</file>
+      <file>$TOOLKIT_DIR$\lib\shs_b.a</file>
+      <file>$TOOLKIT_DIR$\examples\TexasInstruments\Configuration_Files\B1M_Files\tms470r1b1m_lnk_flash.icf</file>
+      <file>$TOOLKIT_DIR$\inc\c\io_macros.h</file>
+      <file>$PROJ_DIR$\flash\Obj\tms470r1b1m_low_level_init_flash.pbi</file>
+      <file>$TOOLKIT_DIR$\inc\c\intrinsics.h</file>
+      <file>$TOOLKIT_DIR$\lib\rt4t_ab.a</file>
+      <file>$PROJ_DIR$\flash\Exe\SCI.out</file>
+      <file>$PROJ_DIR$\flash\Obj\cstartup.o</file>
+      <file>$TOOLKIT_DIR$\lib\m4t_ab.a</file>
+      <file>$PROJ_DIR$\cstartup.s</file>
+      <file>$PROJ_DIR$\tms470r1b1m_low_level_init_flash.c</file>
+      <file>$PROJ_DIR$\tms470r1b1m_SCI2_01.c</file>
+    </outputs>
+    <file>
+      <name>$PROJ_DIR$\flash\Obj\SCI.pbd</name>
+      <inputs>
+        <tool>
+          <name>BILINK</name>
+          <file> 3 11</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\flash\Exe\SCI.out</name>
+      <inputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 9 15 5 0 8 13 16 2</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\cstartup.s</name>
+      <outputs>
+        <tool>
+          <name>AARM</name>
+          <file> 15</file>
+        </tool>
+      </outputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_low_level_init_flash.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 11</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 0</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 6 10 7</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 6 10 7</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>$PROJ_DIR$\tms470r1b1m_SCI2_01.c</name>
+      <outputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 3</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 5</file>
+        </tool>
+      </outputs>
+      <inputs>
+        <tool>
+          <name>BICOMP</name>
+          <file> 12 4 6 10 7</file>
+        </tool>
+        <tool>
+          <name>ICCARM</name>
+          <file> 12 4 6 10 7</file>
+        </tool>
+      </inputs>
+    </file>
+    <file>
+      <name>[ROOT_NODE]</name>
+      <outputs>
+        <tool>
+          <name>ILINK</name>
+          <file> 14</file>
+        </tool>
+      </outputs>
+    </file>
+  </configuration>
+</project>
+
+

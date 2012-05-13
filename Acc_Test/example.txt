@@ -1,0 +1,56 @@
+#include "hardware.h"
+
+// Initialise the hardware
+void appInitHardware(void) {
+	initHardware();
+
+
+}
+// Initialise the software
+TICK_COUNT appInitSoftware(TICK_COUNT loopStart){
+	return 0;
+}
+// This is the main loop
+TICK_COUNT appControl(LOOP_COUNT loopCount, TICK_COUNT loopStart) {
+
+	// -------- Start Switch/Button-------
+	// Switch/Button - see switch.h
+	
+	// To test if it is pressed then
+	if(SWITCH_pressed(&button)){
+		// pressed
+	}
+	
+	// To test if it is released then
+	if(SWITCH_released(&button)){
+		// released
+	}
+	// -------- End   Switch/Button-------
+
+	// -------- Start ADXL335 3 Axis Accelerometer-------
+	// Read the ADXL335 3 Axis Accelerometer and store results
+	accelerometerRead(acc_330);
+	// The x axis value is stored in acc_330.accelerometer.x_axis_mG;
+	// The y axis value is stored in acc_330.accelerometer.y_axis_mG;
+	// The z axis value is stored in acc_330.accelerometer.z_axis_mG;
+	// Each value can be printed using %d eg rprintf("x=%d",acc_330.accelerometer.x_axis_mG);
+	// or all values can be dumped out using
+	rprintf("acc_330: ");
+	accelerometerDump(acc_330);
+	rprintfCRLF();
+	// -------- End   ADXL335 3 Axis Accelerometer-------
+
+	// -------- Start IDG300-------
+	// Read the IDG300 and store results
+	gyroRead(gyro_300);
+	// The x axis value is stored in gyro_300.gyro.x_axis_degrees_per_second;
+	// The y axis value is stored in gyro_300.gyro.y_axis_degrees_per_second;
+	// Each value can be printed using %d eg rprintf("x=%d",gyro_300.gyro.x_axis_degrees_per_second);
+	// or all values can be dumped out using
+	rprintf("gyro_300: ");
+	gyroDump(gyro_300);
+	rprintfCRLF();
+	// -------- End   IDG300-------
+
+	return 0;
+}

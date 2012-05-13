@@ -1,0 +1,99 @@
+cla,clc,clear
+hold all
+
+axis([-2 2 -2 2])
+axis square
+
+% Initial Conditions, radians
+th1 = 0;
+th2 = 0;
+dth1 = 0;
+dth2 = 0;
+
+th = [th1;th2];
+th_prev = th;
+dth = [dth1;dth2];
+dth_prev = dth;
+
+% Parameters
+m1 = 1;     % kg
+m2 = 0.9;     % kg
+g = 9.81;    % m/s^2
+a1 = 1;     % length 1
+a2 = 0.9;     % length 2
+T1 = 0;     % external torque 1
+T2 = 0;     % external torque 2
+b1 = 0.0;     % dampening 1
+b2 = 0.0;     % dampening 2
+
+% Inertia
+J = [(a1^2)*(m1 + m2) + m2*a2^2 + 2*m2*a1*a2*cos(th(2)), m2*a2^2 + m2*a1*a2*cos(th(2));
+      m2*a2^2 + m2*a1*a2*cos(th(2)), m2*a2^2];
+
+% Coriolis and Centripetal
+% F = [-m2*a1*a2*sin(th(2))*(dth(2))*(2*dth(1) + dth(2)); -m2*sin(th(2))*dth(1)*(1 + a1*a2*(dth(1) + dth(2)))];
+F = [-m2*a1*a2*sin(th(2))*(dth(2))*(2*dth(1) + dth(2)); m2*sin(th(2))*dth(1)*(1 + a1*a2*(dth(1) + dth(2)))];
+
+% Gravity Terms
+% G = g.*[-m1*a1*cos(th(1)) - m2*a2*cos(th(1) + th(2)) - m2*a1*cos(th(1)); -m2*a2*cos(th(1) + th(2))];
+G = g.*[m1*a1*cos(th(1)) + m2*a2*cos(th(1) + th(2)) + m2*a1*cos(th(1)); m2*a2*cos(th(1) + th(2))];
+
+% Dampening
+B = [-b1*dth(1); -b2*dth(2)];
+
+% 
+% H=[-2*m2*a1*a2*sin(theta2)*(theta1dot*theta2dot) - m2*a1*a2*sin(theta2)*theta2dot^2;
+%     m2*a1*a2*sin(theta2)*theta1dot^2];
+% G=[(m1*a1 + m2*a1)*g*cos(theta1) + m2*a2*g*cos(theta1+theta2);
+%     m2*a2*g*cos(theta1+theta2)];
+
+% Time Step
+dt = 0.001; 
+
+for t = 0:dt:50
+    cla
+    
+    % Inertia
+    J = [(a1^2)*(m1 + m2) + m2*a2^2 + 2*m2*a1*a2*cos(th(2)), m2*a2^2 + m2*a1*a2*cos(th(2));
+      m2*a2^2 + m2*a1*a2*cos(th(2)), m2*a2^2];
+
+    % Coriolis and Centripetal
+    % F = [-m2*a1*a2*sin(th(2))*(dth(2))*(2*dth(1) + dth(2)); -m2*sin(th(2))*dth(1)*(1 + a1*a2*(dth(1) + dth(2)))];
+    F = [-m2*a1*a2*sin(th(2))*(dth(2))*(2*dth(1) + dth(2)); m2*sin(th(2))*dth(1)*(1 + a1*a2*(dth(1) + dth(2)))];
+
+    % Gravity Terms
+    % G = g.*[-m1*a1*cos(th(1)) - m2*a2*cos(th(1) + th(2)) - m2*a1*cos(th(1)); -m2*a2*cos(th(1) + th(2))];
+    G = g.*[m1*a1*cos(th(1)) + m2*a2*cos(th(1) + th(2)) + m2*a1*cos(th(1)); m2*a2*cos(th(1) + th(2))];
+
+    % Dampening
+    B = [-b1*dth(1); -b2*dth(2)];
+    
+    % Input Torques
+    U = -0.25*G + [-100*dth(1);-100*dth(2)];
+
+    th = th + dt*dth;
+    %th = th_prev + 2*dt*dth;
+    dth = dth + dt*(inv(J)*(-F - G + B));
+    %dth = dth_prev + 2*dt*(inv(J)*(F + G + B));
+    
+%     line([0, a1*sin(th(1))],[0, -a1*cos(th(1))],'Color','b','LineWidth',3);
+%     line([a1*sin(th(1)), a1*sin(th(1)) + a2*sin(th(1)+th(2)) ],[-a1*cos(th(1)), -a1*cos(th(1)) - a2*cos(th(1)+th(2)) ],'Color','b','LineWidth',3);
+%     plot(a1*sin(th(1)), -a1*cos(th(1)),'bo','MarkerSize',20,'MarkerFaceColor','k');
+%     plot(a1*sin(th(1)) + a2*sin(th(1) + th(2)), -a1*cos(th(1)) - a2*cos(th(1) + th(2)),'bo','MarkerSize',20,'MarkerFaceColor','k');
+    line([0, -a1*cos(th(1))],[0, a1*sin(th(1))],'Color','b','LineWidth',3);
+    line([-a1*cos(th(1)), -a1*cos(th(1)) - a2*cos(th(1)+th(2)) ],[a1*sin(th(1)), a1*sin(th(1)) + a2*sin(th(1)+th(2)) ],'Color','b','LineWidth',3);
+    plot(-a1*cos(th(1)),a1*sin(th(1)), 'bo','MarkerSize',20,'MarkerFaceColor','k');
+    plot( -a1*cos(th(1)) - a2*cos(th(1) + th(2)),a1*sin(th(1)) + a2*sin(th(1) + th(2)),'bo','MarkerSize',20,'MarkerFaceColor','k');
+    
+    th_prev = th;
+    dth_prev = dth;
+    pause(dt)
+    %input('Pause')
+end
+
+
+
+
+
+
+

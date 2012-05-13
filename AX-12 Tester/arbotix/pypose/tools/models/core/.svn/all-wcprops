@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 48
+/svn/!svn/ver/470/trunk/pypose/tools/models/core
+END
+nuke.cpp
+K 25
+svn:wc:ra_dav:version-url
+V 57
+/svn/!svn/ver/459/trunk/pypose/tools/models/core/nuke.cpp
+END
+nuke.h
+K 25
+svn:wc:ra_dav:version-url
+V 55
+/svn/!svn/ver/404/trunk/pypose/tools/models/core/nuke.h
+END
+default.pde
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/467/trunk/pypose/tools/models/core/default.pde
+END
+gaits.h
+K 25
+svn:wc:ra_dav:version-url
+V 56
+/svn/!svn/ver/470/trunk/pypose/tools/models/core/gaits.h
+END
+template.ik
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/404/trunk/pypose/tools/models/core/template.ik
+END

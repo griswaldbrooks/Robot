@@ -1,0 +1,533 @@
+Archive member included because of file (symbol)
+
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+                              c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm323.o (exit)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+                              rtos323.o (__do_copy_data)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+                              rtos323.o (__do_clear_bss)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memcpy.o)
+                              queue.o (memcpy)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memset.o)
+                              tasks.o (memset)
+c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(strncpy.o)
+                              tasks.o (strncpy)
+
+Allocating common symbols
+Common symbol       size              file
+
+j                   0x2               rtos323.o
+i                   0x2               rtos323.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+text             0x00000000         0x00020000         xr
+data             0x00800060         0x0000ffa0         rw !x
+eeprom           0x00810000         0x00010000         rw !x
+fuse             0x00820000         0x00000400         rw !x
+lock             0x00830000         0x00000400         rw !x
+signature        0x00840000         0x00000400         rw !x
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm323.o
+LOAD rtos323.o
+LOAD croutine.o
+LOAD list.o
+LOAD queue.o
+LOAD tasks.o
+LOAD heap_1.o
+LOAD port.o
+LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
+LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a
+LOAD c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a
+
+.hash
+ *(.hash)
+
+.dynsym
+ *(.dynsym)
+
+.dynstr
+ *(.dynstr)
+
+.gnu.version
+ *(.gnu.version)
+
+.gnu.version_d
+ *(.gnu.version_d)
+
+.gnu.version_r
+ *(.gnu.version_r)
+
+.rel.init
+ *(.rel.init)
+
+.rela.init
+ *(.rela.init)
+
+.rel.text
+ *(.rel.text)
+ *(.rel.text.*)
+ *(.rel.gnu.linkonce.t*)
+
+.rela.text
+ *(.rela.text)
+ *(.rela.text.*)
+ *(.rela.gnu.linkonce.t*)
+
+.rel.fini
+ *(.rel.fini)
+
+.rela.fini
+ *(.rela.fini)
+
+.rel.rodata
+ *(.rel.rodata)
+ *(.rel.rodata.*)
+ *(.rel.gnu.linkonce.r*)
+
+.rela.rodata
+ *(.rela.rodata)
+ *(.rela.rodata.*)
+ *(.rela.gnu.linkonce.r*)
+
+.rel.data
+ *(.rel.data)
+ *(.rel.data.*)
+ *(.rel.gnu.linkonce.d*)
+
+.rela.data
+ *(.rela.data)
+ *(.rela.data.*)
+ *(.rela.gnu.linkonce.d*)
+
+.rel.ctors
+ *(.rel.ctors)
+
+.rela.ctors
+ *(.rela.ctors)
+
+.rel.dtors
+ *(.rel.dtors)
+
+.rela.dtors
+ *(.rela.dtors)
+
+.rel.got
+ *(.rel.got)
+
+.rela.got
+ *(.rela.got)
+
+.rel.bss
+ *(.rel.bss)
+
+.rela.bss
+ *(.rela.bss)
+
+.rel.plt
+ *(.rel.plt)
+
+.rela.plt
+ *(.rela.plt)
+
+.text           0x00000000     0x19b2
+ *(.vectors)
+ .vectors       0x00000000       0x50 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm323.o
+                0x00000000                __vectors
+                0x00000000                __vector_default
+ *(.vectors)
+ *(.progmem.gcc*)
+ *(.progmem*)
+                0x00000050                . = ALIGN (0x2)
+                0x00000050                __trampolines_start = .
+ *(.trampolines)
+ .trampolines   0x00000050        0x0 linker stubs
+ *(.trampolines*)
+                0x00000050                __trampolines_end = .
+ *(.jumptables)
+ *(.jumptables*)
+ *(.lowtext)
+ *(.lowtext*)
+                0x00000050                __ctors_start = .
+ *(.ctors)
+                0x00000050                __ctors_end = .
+                0x00000050                __dtors_start = .
+ *(.dtors)
+                0x00000050                __dtors_end = .
+ SORT(*)(.ctors)
+ SORT(*)(.dtors)
+ *(.init0)
+ .init0         0x00000050        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm323.o
+                0x00000050                __init
+ *(.init0)
+ *(.init1)
+ *(.init1)
+ *(.init2)
+ .init2         0x00000050        0xc c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm323.o
+ *(.init2)
+ *(.init3)
+ *(.init3)
+ *(.init4)
+ .init4         0x0000005c       0x16 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+                0x0000005c                __do_copy_data
+ .init4         0x00000072       0x10 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+                0x00000072                __do_clear_bss
+ *(.init4)
+ *(.init5)
+ *(.init5)
+ *(.init6)
+ *(.init6)
+ *(.init7)
+ *(.init7)
+ *(.init8)
+ *(.init8)
+ *(.init9)
+ .init9         0x00000082        0x8 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm323.o
+ *(.init9)
+ *(.text)
+ .text          0x0000008a        0x4 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm323.o
+                0x0000008a                __vector_1
+                0x0000008a                __vector_12
+                0x0000008a                __bad_interrupt
+                0x0000008a                __vector_6
+                0x0000008a                __vector_3
+                0x0000008a                __vector_11
+                0x0000008a                __vector_13
+                0x0000008a                __vector_17
+                0x0000008a                __vector_19
+                0x0000008a                __vector_5
+                0x0000008a                __vector_4
+                0x0000008a                __vector_9
+                0x0000008a                __vector_2
+                0x0000008a                __vector_15
+                0x0000008a                __vector_8
+                0x0000008a                __vector_14
+                0x0000008a                __vector_10
+                0x0000008a                __vector_16
+                0x0000008a                __vector_18
+ .text          0x0000008e       0x7a rtos323.o
+                0x000000f0                vTaskA
+                0x000000d8                vTaskB
+                0x0000008e                main
+ .text          0x00000108      0x394 croutine.o
+                0x00000108                xCoRoutineRemoveFromEventList
+                0x000003a8                xCoRoutineCreate
+                0x0000015e                vCoRoutineSchedule
+                0x0000032e                vCoRoutineAddToDelayedList
+ .text          0x0000049c      0x134 list.o
+                0x000004c4                vListInsertEnd
+                0x00000580                vListRemove
+                0x000004bc                vListInitialiseItem
+                0x0000049c                vListInitialise
+                0x00000516                vListInsert
+ .text          0x000005d0      0x778 queue.o
+                0x0000068a                xQueueCRReceiveFromISR
+                0x000008d2                xQueueGenericSendFromISR
+                0x00000700                xQueueCRSendFromISR
+                0x00000c82                xQueueCreate
+                0x000007ca                xQueueCRSend
+                0x00000838                vQueueDelete
+                0x00000b3a                xQueueGenericSend
+                0x0000073e                xQueueCRReceive
+                0x00000854                xQueueReceiveFromISR
+                0x000005f6                xQueueIsQueueFullFromISR
+                0x000009a2                xQueueGenericReceive
+                0x000005d0                uxQueueMessagesWaiting
+                0x000005e0                uxQueueMessagesWaitingFromISR
+                0x000005e6                xQueueIsQueueEmptyFromISR
+ .text          0x00000d48      0x90e tasks.o
+                0x00001334                vTaskEndScheduler
+                0x00001004                vTaskPlaceOnEventList
+                0x000013b8                xTaskGenericCreate
+                0x00000d54                xTaskGetTickCount
+                0x00000e92                xTaskRemoveFromEventList
+                0x0000129a                vTaskDelete
+                0x00000e16                xTaskCheckForTimeOut
+                0x00000d48                vTaskSuspendAll
+                0x00000d6a                xTaskGetTickCountFromISR
+                0x00000d7c                vTaskSwitchContext
+                0x00000d76                uxTaskGetNumberOfTasks
+                0x00000f18                vTaskIncrementTick
+                0x000011ec                vTaskDelayUntil
+                0x00001076                xTaskResumeAll
+                0x00001600                vTaskStartScheduler
+                0x00000e8a                vTaskMissedYield
+                0x00001170                vTaskDelay
+                0x00000e00                vTaskSetTimeOutState
+ .text          0x00001656       0x6e heap_1.o
+                0x00001662                xPortGetFreeHeapSize
+                0x00001656                vPortFree
+                0x00001676                pvPortMalloc
+                0x00001658                vPortInitialiseBlocks
+ .text          0x000016c4      0x2ac port.o
+                0x00001754                xPortStartScheduler
+                0x00001808                vPortYieldFromTick
+                0x000017be                vPortEndScheduler
+                0x000017c0                __vector_7
+                0x000018be                vPortYield
+                0x000016c4                pxPortInitialiseStack
+ .text          0x00001970        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .text          0x00001970        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+ .text          0x00001970        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+ .text          0x00001970       0x12 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memcpy.o)
+                0x00001970                memcpy
+ .text          0x00001982        0xe c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memset.o)
+                0x00001982                memset
+ .text          0x00001990       0x1e c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(strncpy.o)
+                0x00001990                strncpy
+                0x000019ae                . = ALIGN (0x2)
+ *(.text.*)
+ .text.libgcc   0x000019ae        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .text.libgcc   0x000019ae        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+ .text.libgcc   0x000019ae        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+                0x000019ae                . = ALIGN (0x2)
+ *(.fini9)
+ .fini9         0x000019ae        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+                0x000019ae                exit
+                0x000019ae                _exit
+ *(.fini9)
+ *(.fini8)
+ *(.fini8)
+ *(.fini7)
+ *(.fini7)
+ *(.fini6)
+ *(.fini6)
+ *(.fini5)
+ *(.fini5)
+ *(.fini4)
+ *(.fini4)
+ *(.fini3)
+ *(.fini3)
+ *(.fini2)
+ *(.fini2)
+ *(.fini1)
+ *(.fini1)
+ *(.fini0)
+ .fini0         0x000019ae        0x4 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ *(.fini0)
+                0x000019b2                _etext = .
+
+.data           0x00800060        0xa load address 0x000019b2
+                0x00800060                PROVIDE (__data_start, .)
+ *(.data)
+ .data          0x00800060        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm323.o
+ .data          0x00800060        0x4 rtos323.o
+ .data          0x00800064        0x0 croutine.o
+ .data          0x00800064        0x0 list.o
+ .data          0x00800064        0x0 queue.o
+ .data          0x00800064        0x5 tasks.o
+ .data          0x00800069        0x0 heap_1.o
+ .data          0x00800069        0x0 port.o
+ .data          0x00800069        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .data          0x00800069        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+ .data          0x00800069        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+ .data          0x00800069        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memcpy.o)
+ .data          0x00800069        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memset.o)
+ .data          0x00800069        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(strncpy.o)
+ *(.data*)
+ *(.rodata)
+ *(.rodata*)
+ *(.gnu.linkonce.d*)
+                0x0080006a                . = ALIGN (0x2)
+ *fill*         0x00800069        0x1 00
+                0x0080006a                _edata = .
+                0x0080006a                PROVIDE (__data_end, .)
+
+.bss            0x0080006a      0x676
+                0x0080006a                PROVIDE (__bss_start, .)
+ *(.bss)
+ .bss           0x0080006a        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5/crtm323.o
+ .bss           0x0080006a        0x0 rtos323.o
+ .bss           0x0080006a       0x3a croutine.o
+                0x0080006a                pxCurrentCoRoutine
+ .bss           0x008000a4        0x0 list.o
+ .bss           0x008000a4        0x0 queue.o
+ .bss           0x008000a4       0x5a tasks.o
+                0x008000a4                pxCurrentTCB
+ .bss           0x008000fe      0x5de heap_1.o
+ .bss           0x008006dc        0x0 port.o
+ .bss           0x008006dc        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_exit.o)
+ .bss           0x008006dc        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_copy_data.o)
+ .bss           0x008006dc        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/avr5\libgcc.a(_clear_bss.o)
+ .bss           0x008006dc        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memcpy.o)
+ .bss           0x008006dc        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(memset.o)
+ .bss           0x008006dc        0x0 c:/winavr-20081205/bin/../lib/gcc/avr/4.3.2/../../../../avr/lib/avr5\libc.a(strncpy.o)
+ *(.bss*)
+ *(COMMON)
+ COMMON         0x008006dc        0x4 rtos323.o
+                0x008006dc                j
+                0x008006de                i
+                0x008006e0                PROVIDE (__bss_end, .)
+                0x000019b2                __data_load_start = LOADADDR (.data)
+                0x000019bc                __data_load_end = (__data_load_start + SIZEOF (.data))
+
+.noinit         0x008006e0        0x0
+                0x008006e0                PROVIDE (__noinit_start, .)
+ *(.noinit*)
+                0x008006e0                PROVIDE (__noinit_end, .)
+                0x008006e0                _end = .
+                0x008006e0                PROVIDE (__heap_start, .)
+
+.eeprom         0x00810000        0x0
+ *(.eeprom*)
+                0x00810000                __eeprom_end = .
+
+.fuse
+ *(.fuse)
+ *(.lfuse)
+ *(.hfuse)
+ *(.efuse)
+
+.lock
+ *(.lock*)
+
+.signature
+ *(.signature*)
+
+.stab
+ *(.stab)
+
+.stabstr
+ *(.stabstr)
+
+.stab.excl
+ *(.stab.excl)
+
+.stab.exclstr
+ *(.stab.exclstr)
+
+.stab.index
+ *(.stab.index)
+
+.stab.indexstr
+ *(.stab.indexstr)
+
+.comment
+ *(.comment)
+
+.debug
+ *(.debug)
+
+.line
+ *(.line)
+
+.debug_srcinfo
+ *(.debug_srcinfo)
+
+.debug_sfnames
+ *(.debug_sfnames)
+
+.debug_aranges  0x00000000       0xe0
+ *(.debug_aranges)
+ .debug_aranges
+                0x00000000       0x20 rtos323.o
+ .debug_aranges
+                0x00000020       0x20 croutine.o
+ .debug_aranges
+                0x00000040       0x20 list.o
+ .debug_aranges
+                0x00000060       0x20 queue.o
+ .debug_aranges
+                0x00000080       0x20 tasks.o
+ .debug_aranges
+                0x000000a0       0x20 heap_1.o
+ .debug_aranges
+                0x000000c0       0x20 port.o
+
+.debug_pubnames
+                0x00000000      0x55c
+ *(.debug_pubnames)
+ .debug_pubnames
+                0x00000000       0x3d rtos323.o
+ .debug_pubnames
+                0x0000003d       0x96 croutine.o
+ .debug_pubnames
+                0x000000d3       0x71 list.o
+ .debug_pubnames
+                0x00000144      0x169 queue.o
+ .debug_pubnames
+                0x000002ad      0x1bc tasks.o
+ .debug_pubnames
+                0x00000469       0x64 heap_1.o
+ .debug_pubnames
+                0x000004cd       0x8f port.o
+
+.debug_info     0x00000000     0x1ff7
+ *(.debug_info)
+ .debug_info    0x00000000       0xf9 rtos323.o
+ .debug_info    0x000000f9      0x50a croutine.o
+ .debug_info    0x00000603      0x2b1 list.o
+ .debug_info    0x000008b4      0x8fe queue.o
+ .debug_info    0x000011b2      0xb1a tasks.o
+ .debug_info    0x00001ccc      0x169 heap_1.o
+ .debug_info    0x00001e35      0x1c2 port.o
+ *(.gnu.linkonce.wi.*)
+
+.debug_abbrev   0x00000000      0x97f
+ *(.debug_abbrev)
+ .debug_abbrev  0x00000000       0x88 rtos323.o
+ .debug_abbrev  0x00000088      0x1dd croutine.o
+ .debug_abbrev  0x00000265       0xdd list.o
+ .debug_abbrev  0x00000342      0x1b3 queue.o
+ .debug_abbrev  0x000004f5      0x25e tasks.o
+ .debug_abbrev  0x00000753      0x114 heap_1.o
+ .debug_abbrev  0x00000867      0x118 port.o
+
+.debug_line     0x00000000     0x190f
+ *(.debug_line)
+ .debug_line    0x00000000       0xa3 rtos323.o
+ .debug_line    0x000000a3      0x303 croutine.o
+ .debug_line    0x000003a6      0x1f0 list.o
+ .debug_line    0x00000596      0x854 queue.o
+ .debug_line    0x00000dea      0x756 tasks.o
+ .debug_line    0x00001540      0x11b heap_1.o
+ .debug_line    0x0000165b      0x2b4 port.o
+
+.debug_frame    0x00000000      0x400
+ *(.debug_frame)
+ .debug_frame   0x00000000       0x40 rtos323.o
+ .debug_frame   0x00000040       0x50 croutine.o
+ .debug_frame   0x00000090       0x60 list.o
+ .debug_frame   0x000000f0      0x110 queue.o
+ .debug_frame   0x00000200      0x140 tasks.o
+ .debug_frame   0x00000340       0x50 heap_1.o
+ .debug_frame   0x00000390       0x70 port.o
+
+.debug_str      0x00000000      0xe04
+ *(.debug_str)
+ .debug_str     0x00000000       0x98 rtos323.o
+                                 0xd1 (size before relaxing)
+ .debug_str     0x00000098      0x33e croutine.o
+                                0x3f0 (size before relaxing)
+ .debug_str     0x000003d6       0x9d list.o
+                                0x1cc (size before relaxing)
+ .debug_str     0x00000473      0x36a queue.o
+                                0x4ca (size before relaxing)
+ .debug_str     0x000007dd      0x4b3 tasks.o
+                                0x6b1 (size before relaxing)
+ .debug_str     0x00000c90       0xa2 heap_1.o
+                                0x14d (size before relaxing)
+ .debug_str     0x00000d32       0xd2 port.o
+                                0x19c (size before relaxing)
+
+.debug_loc      0x00000000     0x1146
+ *(.debug_loc)
+ .debug_loc     0x00000000       0x30 rtos323.o
+ .debug_loc     0x00000030      0x210 croutine.o
+ .debug_loc     0x00000240      0x100 list.o
+ .debug_loc     0x00000340      0x867 queue.o
+ .debug_loc     0x00000ba7      0x514 tasks.o
+ .debug_loc     0x000010bb       0x50 heap_1.o
+ .debug_loc     0x0000110b       0x3b port.o
+
+.debug_macinfo
+ *(.debug_macinfo)
+OUTPUT(rtos323.elf elf32-avr)
+LOAD linker stubs
+
+.debug_ranges   0x00000000       0x18
+ .debug_ranges  0x00000000       0x18 tasks.o

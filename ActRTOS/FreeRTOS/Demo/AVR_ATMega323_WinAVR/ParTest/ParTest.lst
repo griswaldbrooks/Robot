@@ -1,0 +1,162 @@
+   1               		.file	"ParTest.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+   8               		.global __do_copy_data
+   9               		.global __do_clear_bss
+  17               	.Ltext0:
+  18               	.global	vParTestInitialise
+  20               	vParTestInitialise:
+  21               	.LFB2:
+  22               	.LM1:
+  23               	/* prologue: function */
+  24               	/* frame size = 0 */
+  25               	.LM2:
+  26 0000 8FEF      		ldi r24,lo8(-1)
+  27 0002 8093 0000 		sts ucCurrentOutputValue,r24
+  28               	.LM3:
+  29 0006 81B9      		out 33-32,r24
+  30               	.LM4:
+  31 0008 8091 0000 		lds r24,ucCurrentOutputValue
+  32 000c 82B9      		out 34-32,r24
+  33               	/* epilogue start */
+  34               	.LM5:
+  35 000e 0895      		ret
+  36               	.LFE2:
+  38               	.global	vParTestToggleLED
+  40               	vParTestToggleLED:
+  41               	.LFB4:
+  42               	.LM6:
+  43               	.LVL0:
+  44 0010 1F93      		push r17
+  45               	/* prologue: function */
+  46               	/* frame size = 0 */
+  47 0012 282F      		mov r18,r24
+  48               	.LM7:
+  49 0014 8830      		cpi r24,lo8(8)
+  50 0016 00F4      		brsh .L7
+  51               	.LM8:
+  52 0018 81E0      		ldi r24,lo8(1)
+  53 001a 90E0      		ldi r25,hi8(1)
+  54               	.LVL1:
+  55 001c 00C0      		rjmp 2f
+  56 001e 880F      	1:	lsl r24
+  57 0020 991F      		rol r25
+  58 0022 2A95      	2:	dec r18
+  59 0024 02F4      		brpl 1b
+  60 0026 182F      		mov r17,r24
+  61               	.LVL2:
+  62               	.LM9:
+  63 0028 0E94 0000 		call vTaskSuspendAll
+  64               	.LVL3:
+  65               	.LM10:
+  66 002c 8091 0000 		lds r24,ucCurrentOutputValue
+  67 0030 8123      		and r24,r17
+  68 0032 01F0      		breq .L5
+  69               	.LM11:
+  70 0034 8091 0000 		lds r24,ucCurrentOutputValue
+  71 0038 1095      		com r17
+  72 003a 1823      		and r17,r24
+  73 003c 00C0      		rjmp .L8
+  74               	.L5:
+  75               	.LM12:
+  76 003e 8091 0000 		lds r24,ucCurrentOutputValue
+  77 0042 182B      		or r17,r24
+  78               	.L8:
+  79 0044 1093 0000 		sts ucCurrentOutputValue,r17
+  80               	.LM13:
+  81 0048 8091 0000 		lds r24,ucCurrentOutputValue
+  82 004c 82B9      		out 34-32,r24
+  83               	.LM14:
+  84 004e 0E94 0000 		call xTaskResumeAll
+  85               	.LVL4:
+  86               	.L7:
+  87               	/* epilogue start */
+  88               	.LM15:
+  89 0052 1F91      		pop r17
+  90               	.LVL5:
+  91 0054 0895      		ret
+  92               	.LFE4:
+  94               	.global	vParTestSetLED
+  96               	vParTestSetLED:
+  97               	.LFB3:
+  98               	.LM16:
+  99               	.LVL6:
+ 100 0056 0F93      		push r16
+ 101 0058 1F93      		push r17
+ 102               	/* prologue: function */
+ 103               	/* frame size = 0 */
+ 104 005a 282F      		mov r18,r24
+ 105 005c 062F      		mov r16,r22
+ 106               	.LM17:
+ 107 005e 8830      		cpi r24,lo8(8)
+ 108 0060 00F4      		brsh .L13
+ 109               	.LVL7:
+ 110               	.LM18:
+ 111 0062 81E0      		ldi r24,lo8(1)
+ 112 0064 90E0      		ldi r25,hi8(1)
+ 113               	.LVL8:
+ 114 0066 00C0      		rjmp 2f
+ 115 0068 880F      	1:	lsl r24
+ 116 006a 991F      		rol r25
+ 117 006c 2A95      	2:	dec r18
+ 118 006e 02F4      		brpl 1b
+ 119 0070 182F      		mov r17,r24
+ 120               	.LVL9:
+ 121               	.LM19:
+ 122 0072 0E94 0000 		call vTaskSuspendAll
+ 123               	.LVL10:
+ 124               	.LM20:
+ 125 0076 0130      		cpi r16,lo8(1)
+ 126 0078 01F4      		brne .L11
+ 127               	.LM21:
+ 128 007a 8091 0000 		lds r24,ucCurrentOutputValue
+ 129 007e 1095      		com r17
+ 130 0080 1823      		and r17,r24
+ 131 0082 00C0      		rjmp .L14
+ 132               	.L11:
+ 133               	.LM22:
+ 134 0084 8091 0000 		lds r24,ucCurrentOutputValue
+ 135 0088 182B      		or r17,r24
+ 136               	.L14:
+ 137 008a 1093 0000 		sts ucCurrentOutputValue,r17
+ 138               	.LM23:
+ 139 008e 8091 0000 		lds r24,ucCurrentOutputValue
+ 140 0092 82B9      		out 34-32,r24
+ 141               	.LM24:
+ 142 0094 0E94 0000 		call xTaskResumeAll
+ 143               	.LVL11:
+ 144               	.L13:
+ 145               	/* epilogue start */
+ 146               	.LM25:
+ 147 0098 1F91      		pop r17
+ 148               	.LVL12:
+ 149 009a 0F91      		pop r16
+ 150               	.LVL13:
+ 151 009c 0895      		ret
+ 152               	.LFE3:
+ 154               		.data
+ 157               	ucCurrentOutputValue:
+ 158 0000 FF        		.byte	-1
+ 199               	.Letext0:
+DEFINED SYMBOLS
+                            *ABS*:00000000 ParTest.c
+C:\Users\Owner\AppData\Local\Temp/cciMAgQQ.s:2      *ABS*:0000003f __SREG__
+C:\Users\Owner\AppData\Local\Temp/cciMAgQQ.s:3      *ABS*:0000003e __SP_H__
+C:\Users\Owner\AppData\Local\Temp/cciMAgQQ.s:4      *ABS*:0000003d __SP_L__
+C:\Users\Owner\AppData\Local\Temp/cciMAgQQ.s:5      *ABS*:00000034 __CCP__
+C:\Users\Owner\AppData\Local\Temp/cciMAgQQ.s:6      *ABS*:00000000 __tmp_reg__
+C:\Users\Owner\AppData\Local\Temp/cciMAgQQ.s:7      *ABS*:00000001 __zero_reg__
+C:\Users\Owner\AppData\Local\Temp/cciMAgQQ.s:20     .text:00000000 vParTestInitialise
+C:\Users\Owner\AppData\Local\Temp/cciMAgQQ.s:157    .data:00000000 ucCurrentOutputValue
+C:\Users\Owner\AppData\Local\Temp/cciMAgQQ.s:40     .text:00000010 vParTestToggleLED
+C:\Users\Owner\AppData\Local\Temp/cciMAgQQ.s:96     .text:00000056 vParTestSetLED
+
+UNDEFINED SYMBOLS
+__do_copy_data
+__do_clear_bss
+vTaskSuspendAll
+xTaskResumeAll

@@ -1,0 +1,2935 @@
+   1               		.file	"uart4.c"
+   2               	__SREG__ = 0x3f
+   3               	__SP_H__ = 0x3e
+   4               	__SP_L__ = 0x3d
+   5               	__CCP__  = 0x34
+   6               	__tmp_reg__ = 0
+   7               	__zero_reg__ = 1
+   8               		.global __do_copy_data
+   9               		.global __do_clear_bss
+  11               		.text
+  12               	.Ltext0:
+ 101               	.global	uartInit
+ 103               	uartInit:
+   1:uart4.c       **** /*! \file uart2.c \brief Dual UART driver with buffer support. */
+   2:uart4.c       **** //*****************************************************************************
+   3:uart4.c       **** //
+   4:uart4.c       **** // File Name	: 'uart2.h' changed to 'uart4.h' (see footnote *)
+   5:uart4.c       **** // Title		: Dual UART driver with buffer support
+   6:uart4.c       **** // Author		: Pascal Stang - Copyright (C) 2000-2004
+   7:uart4.c       **** // Created		: 11/20/2000
+   8:uart4.c       **** // Revised		: 07/04/2004
+   9:uart4.c       **** // Version		: 1.0
+  10:uart4.c       **** // Target MCU	: ATMEL AVR Series
+  11:uart4.c       **** // Editor Tabs	: 4
+  12:uart4.c       **** //
+  13:uart4.c       **** // Description	: This is a UART driver for AVR-series processors with two
+  14:uart4.c       **** //		hardware UARTs such as the mega161 and mega128 
+  15:uart4.c       **** //
+  16:uart4.c       **** // This code is distributed under the GNU Public License
+  17:uart4.c       **** //		which can be found at http://www.gnu.org/licenses/gpl.txt
+  18:uart4.c       **** // 
+  19:uart4.c       **** // 
+  20:uart4.c       **** //   * Code modified by societyofrobots.com to handle four UARTs - using ATmega2560
+  21:uart4.c       **** //	  Dec 6th, 2007
+  22:uart4.c       **** //
+  23:uart4.c       **** //
+  24:uart4.c       **** //*****************************************************************************
+  25:uart4.c       **** 
+  26:uart4.c       **** #include <avr/io.h>
+  27:uart4.c       **** #include <avr/interrupt.h>
+  28:uart4.c       **** 
+  29:uart4.c       **** #include "buffer.h"
+  30:uart4.c       **** #include "uart4.h"
+  31:uart4.c       **** 
+  32:uart4.c       **** // UART global variables
+  33:uart4.c       **** // flag variables
+  34:uart4.c       **** volatile u08   uartReadyTx[4];
+  35:uart4.c       **** volatile u08   uartBufferedTx[4];
+  36:uart4.c       **** // receive and transmit buffers
+  37:uart4.c       **** cBuffer uartRxBuffer[4];
+  38:uart4.c       **** cBuffer uartTxBuffer[4];
+  39:uart4.c       **** unsigned short uartRxOverflow[4];
+  40:uart4.c       **** #ifndef UART_BUFFER_EXTERNAL_RAM
+  41:uart4.c       **** 	// using internal ram,
+  42:uart4.c       **** 	// automatically allocate space in ram for each buffer
+  43:uart4.c       **** 	static char uart0RxData[UART0_RX_BUFFER_SIZE];
+  44:uart4.c       **** 	static char uart0TxData[UART0_TX_BUFFER_SIZE];
+  45:uart4.c       **** 	static char uart1RxData[UART1_RX_BUFFER_SIZE];
+  46:uart4.c       **** 	static char uart1TxData[UART1_TX_BUFFER_SIZE];
+  47:uart4.c       **** 	static char uart2RxData[UART2_RX_BUFFER_SIZE];
+  48:uart4.c       **** 	static char uart2TxData[UART2_TX_BUFFER_SIZE];
+  49:uart4.c       **** 	static char uart3RxData[UART3_RX_BUFFER_SIZE];
+  50:uart4.c       **** 	static char uart3TxData[UART3_TX_BUFFER_SIZE];
+  51:uart4.c       **** #endif
+  52:uart4.c       **** 
+  53:uart4.c       **** typedef void (*voidFuncPtru08)(unsigned char);
+  54:uart4.c       **** volatile static voidFuncPtru08 UartRxFunc[4];
+  55:uart4.c       **** 
+  56:uart4.c       **** void uartInit(void)
+  57:uart4.c       **** {
+ 104               	bn	68,0,57,.LM0-.LFBB1
+ 105               	.LM0:
+ 106               	.LFBB1:
+ 107 0000 DF93      		push r29
+ 108 0002 CF93      		push r28
+ 109 0004 CDB7      		in r28,__SP_L__
+ 110 0006 DEB7      		in r29,__SP_H__
+ 111               	/* prologue: function */
+ 112               	/* frame size = 0 */
+  58:uart4.c       **** 	// initialize all uarts
+  59:uart4.c       **** 	uart0Init();
+ 113               	8,0,59,.LM1-.LFBB1
+ 114               	.LM1:
+ 115 0008 0E94 0000 		call uart0Init
+  60:uart4.c       **** 	uart1Init();
+ 116               	tabn	68,0,60,.LM2-.LFBB1
+ 117               	.LM2:
+ 118 000c 0E94 0000 		call uart1Init
+  61:uart4.c       **** 	uart2Init();
+ 119               	tabn	68,0,61,.LM3-.LFBB1
+ 120               	.LM3:
+ 121 0010 0E94 0000 		call uart2Init
+  62:uart4.c       **** 	uart3Init();
+ 122               	tabn	68,0,62,.LM4-.LFBB1
+ 123               	.LM4:
+ 124 0014 0E94 0000 		call uart3Init
+ 125               	/* epilogue start */
+  63:uart4.c       **** }
+ 126               	abn	68,0,63,.LM5-.LFBB1
+ 127               	.LM5:
+ 128 0018 CF91      		pop r28
+ 129 001a DF91      		pop r29
+ 130 001c 0895      		ret
+ 132               	.Lscope1:
+ 134               	.global	uart0Init
+ 136               	uart0Init:
+  64:uart4.c       **** 
+  65:uart4.c       **** void uart0Init(void)
+  66:uart4.c       **** {
+ 137               	0,66,.LM6-.LFBB2
+ 138               	.LM6:
+ 139               	.LFBB2:
+ 140 001e DF93      		push r29
+ 141 0020 CF93      		push r28
+ 142 0022 CDB7      		in r28,__SP_L__
+ 143 0024 DEB7      		in r29,__SP_H__
+ 144               	/* prologue: function */
+ 145               	/* frame size = 0 */
+  67:uart4.c       **** 	// initialize the buffers
+  68:uart4.c       **** 	uart0InitBuffers();
+ 146               	8,0,68,.LM7-.LFBB2
+ 147               	.LM7:
+ 148 0026 0E94 0000 		call uart0InitBuffers
+  69:uart4.c       **** 	// initialize user receive handlers
+  70:uart4.c       **** 	UartRxFunc[0] = 0;
+ 149               	tabn	68,0,70,.LM8-.LFBB2
+ 150               	.LM8:
+ 151 002a 1092 0000 		sts (UartRxFunc)+1,__zero_reg__
+ 152 002e 1092 0000 		sts UartRxFunc,__zero_reg__
+  71:uart4.c       **** 	// enable RxD/TxD and interrupts
+  72:uart4.c       **** 	outb(UCSR0B, BV(RXCIE)|BV(TXCIE)|BV(RXEN)|BV(TXEN));
+ 153               	abn	68,0,72,.LM9-.LFBB2
+ 154               	.LM9:
+ 155 0032 E1EC      		ldi r30,lo8(193)
+ 156 0034 F0E0      		ldi r31,hi8(193)
+ 157 0036 88ED      		ldi r24,lo8(-40)
+ 158 0038 8083      		st Z,r24
+  73:uart4.c       **** 	// set default baud rate
+  74:uart4.c       **** 	uartSetBaudRate(0, UART0_DEFAULT_BAUD_RATE); 
+ 159               	n	68,0,74,.LM10-.LFBB2
+ 160               	.LM10:
+ 161 003a 80E0      		ldi r24,lo8(0)
+ 162 003c 40E8      		ldi r20,lo8(9600)
+ 163 003e 55E2      		ldi r21,hi8(9600)
+ 164 0040 60E0      		ldi r22,hlo8(9600)
+ 165 0042 70E0      		ldi r23,hhi8(9600)
+ 166 0044 0E94 0000 		call uartSetBaudRate
+  75:uart4.c       **** 	// initialize states
+  76:uart4.c       **** 	uartReadyTx[0] = TRUE;
+ 167               	68,0,76,.LM11-.LFBB2
+ 168               	.LM11:
+ 169 0048 8FEF      		ldi r24,lo8(-1)
+ 170 004a 8093 0000 		sts uartReadyTx,r24
+  77:uart4.c       **** 	uartBufferedTx[0] = FALSE;
+ 171               	abn	68,0,77,.LM12-.LFBB2
+ 172               	.LM12:
+ 173 004e 1092 0000 		sts uartBufferedTx,__zero_reg__
+  78:uart4.c       **** 	// clear overflow count
+  79:uart4.c       **** 	uartRxOverflow[0] = 0;
+ 174               	tabn	68,0,79,.LM13-.LFBB2
+ 175               	.LM13:
+ 176 0052 1092 0000 		sts (uartRxOverflow)+1,__zero_reg__
+ 177 0056 1092 0000 		sts uartRxOverflow,__zero_reg__
+  80:uart4.c       **** 	// enable interrupts
+  81:uart4.c       **** 	sei();
+ 178               	abn	68,0,81,.LM14-.LFBB2
+ 179               	.LM14:
+ 180               	/* #APP */
+ 181               	 ;  81 "uart4.c" 1
+ 182 005a 7894      		sei
+ 183               	 ;  0 "" 2
+ 184               	/* epilogue start */
+  82:uart4.c       **** }
+ 185               		68,0,82,.LM15-.LFBB2
+ 186               	.LM15:
+ 187               	/* #NOAPP */
+ 188 005c CF91      		pop r28
+ 189 005e DF91      		pop r29
+ 190 0060 0895      		ret
+ 192               	.Lscope2:
+ 194               	.global	uart1Init
+ 196               	uart1Init:
+  83:uart4.c       **** 
+  84:uart4.c       **** void uart1Init(void)
+  85:uart4.c       **** {
+ 197               	,85,.LM16-.LFBB3
+ 198               	.LM16:
+ 199               	.LFBB3:
+ 200 0062 DF93      		push r29
+ 201 0064 CF93      		push r28
+ 202 0066 CDB7      		in r28,__SP_L__
+ 203 0068 DEB7      		in r29,__SP_H__
+ 204               	/* prologue: function */
+ 205               	/* frame size = 0 */
+  86:uart4.c       **** 	// initialize the buffers
+  87:uart4.c       **** 	uart1InitBuffers();
+ 206               	8,0,87,.LM17-.LFBB3
+ 207               	.LM17:
+ 208 006a 0E94 0000 		call uart1InitBuffers
+  88:uart4.c       **** 	// initialize user receive handlers
+  89:uart4.c       **** 	UartRxFunc[1] = 0;
+ 209               	tabn	68,0,89,.LM18-.LFBB3
+ 210               	.LM18:
+ 211 006e 1092 0000 		sts (UartRxFunc+2)+1,__zero_reg__
+ 212 0072 1092 0000 		sts UartRxFunc+2,__zero_reg__
+  90:uart4.c       **** 	// enable RxD/TxD and interrupts
+  91:uart4.c       **** 	outb(UCSR1B, BV(RXCIE)|BV(TXCIE)|BV(RXEN)|BV(TXEN));
+ 213               	abn	68,0,91,.LM19-.LFBB3
+ 214               	.LM19:
+ 215 0076 E9EC      		ldi r30,lo8(201)
+ 216 0078 F0E0      		ldi r31,hi8(201)
+ 217 007a 88ED      		ldi r24,lo8(-40)
+ 218 007c 8083      		st Z,r24
+  92:uart4.c       **** 	// set default baud rate
+  93:uart4.c       **** 	uartSetBaudRate(1, UART1_DEFAULT_BAUD_RATE);
+ 219               	n	68,0,93,.LM20-.LFBB3
+ 220               	.LM20:
+ 221 007e 81E0      		ldi r24,lo8(1)
+ 222 0080 40E8      		ldi r20,lo8(9600)
+ 223 0082 55E2      		ldi r21,hi8(9600)
+ 224 0084 60E0      		ldi r22,hlo8(9600)
+ 225 0086 70E0      		ldi r23,hhi8(9600)
+ 226 0088 0E94 0000 		call uartSetBaudRate
+  94:uart4.c       **** 	// initialize states
+  95:uart4.c       **** 	uartReadyTx[1] = TRUE;
+ 227               	68,0,95,.LM21-.LFBB3
+ 228               	.LM21:
+ 229 008c 8FEF      		ldi r24,lo8(-1)
+ 230 008e 8093 0000 		sts uartReadyTx+1,r24
+  96:uart4.c       **** 	uartBufferedTx[1] = FALSE;
+ 231               	abn	68,0,96,.LM22-.LFBB3
+ 232               	.LM22:
+ 233 0092 1092 0000 		sts uartBufferedTx+1,__zero_reg__
+  97:uart4.c       **** 	// clear overflow count
+  98:uart4.c       **** 	uartRxOverflow[1] = 0;
+ 234               	tabn	68,0,98,.LM23-.LFBB3
+ 235               	.LM23:
+ 236 0096 1092 0000 		sts (uartRxOverflow+2)+1,__zero_reg__
+ 237 009a 1092 0000 		sts uartRxOverflow+2,__zero_reg__
+  99:uart4.c       **** 	// enable interrupts
+ 100:uart4.c       **** 	sei();
+ 238               	abn	68,0,100,.LM24-.LFBB3
+ 239               	.LM24:
+ 240               	/* #APP */
+ 241               	 ;  100 "uart4.c" 1
+ 242 009e 7894      		sei
+ 243               	 ;  0 "" 2
+ 244               	/* epilogue start */
+ 101:uart4.c       **** }
+ 245               		68,0,101,.LM25-.LFBB3
+ 246               	.LM25:
+ 247               	/* #NOAPP */
+ 248 00a0 CF91      		pop r28
+ 249 00a2 DF91      		pop r29
+ 250 00a4 0895      		ret
+ 252               	.Lscope3:
+ 254               	.global	uart2Init
+ 256               	uart2Init:
+ 102:uart4.c       **** 
+ 103:uart4.c       **** void uart2Init(void)
+ 104:uart4.c       **** {
+ 257               	,104,.LM26-.LFBB4
+ 258               	.LM26:
+ 259               	.LFBB4:
+ 260 00a6 DF93      		push r29
+ 261 00a8 CF93      		push r28
+ 262 00aa CDB7      		in r28,__SP_L__
+ 263 00ac DEB7      		in r29,__SP_H__
+ 264               	/* prologue: function */
+ 265               	/* frame size = 0 */
+ 105:uart4.c       **** 	// initialize the buffers
+ 106:uart4.c       **** 	uart2InitBuffers();
+ 266               	8,0,106,.LM27-.LFBB4
+ 267               	.LM27:
+ 268 00ae 0E94 0000 		call uart2InitBuffers
+ 107:uart4.c       **** 	// initialize user receive handlers
+ 108:uart4.c       **** 	UartRxFunc[2] = 0;
+ 269               	tabn	68,0,108,.LM28-.LFBB4
+ 270               	.LM28:
+ 271 00b2 1092 0000 		sts (UartRxFunc+4)+1,__zero_reg__
+ 272 00b6 1092 0000 		sts UartRxFunc+4,__zero_reg__
+ 109:uart4.c       **** 	// enable RxD/TxD and interrupts
+ 110:uart4.c       **** 	outb(UCSR2B, BV(RXCIE)|BV(TXCIE)|BV(RXEN)|BV(TXEN));
+ 273               	abn	68,0,110,.LM29-.LFBB4
+ 274               	.LM29:
+ 275 00ba E1ED      		ldi r30,lo8(209)
+ 276 00bc F0E0      		ldi r31,hi8(209)
+ 277 00be 88ED      		ldi r24,lo8(-40)
+ 278 00c0 8083      		st Z,r24
+ 111:uart4.c       **** 	// set default baud rate
+ 112:uart4.c       **** 	uartSetBaudRate(2, UART2_DEFAULT_BAUD_RATE);
+ 279               	n	68,0,112,.LM30-.LFBB4
+ 280               	.LM30:
+ 281 00c2 82E0      		ldi r24,lo8(2)
+ 282 00c4 40E8      		ldi r20,lo8(9600)
+ 283 00c6 55E2      		ldi r21,hi8(9600)
+ 284 00c8 60E0      		ldi r22,hlo8(9600)
+ 285 00ca 70E0      		ldi r23,hhi8(9600)
+ 286 00cc 0E94 0000 		call uartSetBaudRate
+ 113:uart4.c       **** 	// initialize states
+ 114:uart4.c       **** 	uartReadyTx[2] = TRUE;
+ 287               	68,0,114,.LM31-.LFBB4
+ 288               	.LM31:
+ 289 00d0 8FEF      		ldi r24,lo8(-1)
+ 290 00d2 8093 0000 		sts uartReadyTx+2,r24
+ 115:uart4.c       **** 	uartBufferedTx[2] = FALSE;
+ 291               	abn	68,0,115,.LM32-.LFBB4
+ 292               	.LM32:
+ 293 00d6 1092 0000 		sts uartBufferedTx+2,__zero_reg__
+ 116:uart4.c       **** 	// clear overflow count
+ 117:uart4.c       **** 	uartRxOverflow[2] = 0;
+ 294               	tabn	68,0,117,.LM33-.LFBB4
+ 295               	.LM33:
+ 296 00da 1092 0000 		sts (uartRxOverflow+4)+1,__zero_reg__
+ 297 00de 1092 0000 		sts uartRxOverflow+4,__zero_reg__
+ 118:uart4.c       **** 	// enable interrupts
+ 119:uart4.c       **** 	sei();
+ 298               	abn	68,0,119,.LM34-.LFBB4
+ 299               	.LM34:
+ 300               	/* #APP */
+ 301               	 ;  119 "uart4.c" 1
+ 302 00e2 7894      		sei
+ 303               	 ;  0 "" 2
+ 304               	/* epilogue start */
+ 120:uart4.c       **** }
+ 305               		68,0,120,.LM35-.LFBB4
+ 306               	.LM35:
+ 307               	/* #NOAPP */
+ 308 00e4 CF91      		pop r28
+ 309 00e6 DF91      		pop r29
+ 310 00e8 0895      		ret
+ 312               	.Lscope4:
+ 314               	.global	uart3Init
+ 316               	uart3Init:
+ 121:uart4.c       **** 
+ 122:uart4.c       **** void uart3Init(void)
+ 123:uart4.c       **** {
+ 317               	,123,.LM36-.LFBB5
+ 318               	.LM36:
+ 319               	.LFBB5:
+ 320 00ea DF93      		push r29
+ 321 00ec CF93      		push r28
+ 322 00ee CDB7      		in r28,__SP_L__
+ 323 00f0 DEB7      		in r29,__SP_H__
+ 324               	/* prologue: function */
+ 325               	/* frame size = 0 */
+ 124:uart4.c       **** 	// initialize the buffers
+ 125:uart4.c       **** 	uart3InitBuffers();
+ 326               	8,0,125,.LM37-.LFBB5
+ 327               	.LM37:
+ 328 00f2 0E94 0000 		call uart3InitBuffers
+ 126:uart4.c       **** 	// initialize user receive handlers
+ 127:uart4.c       **** 	UartRxFunc[3] = 0;
+ 329               	tabn	68,0,127,.LM38-.LFBB5
+ 330               	.LM38:
+ 331 00f6 1092 0000 		sts (UartRxFunc+6)+1,__zero_reg__
+ 332 00fa 1092 0000 		sts UartRxFunc+6,__zero_reg__
+ 128:uart4.c       **** 	// enable RxD/TxD and interrupts
+ 129:uart4.c       **** 	outb(UCSR3B, BV(RXCIE)|BV(TXCIE)|BV(RXEN)|BV(TXEN));
+ 333               	abn	68,0,129,.LM39-.LFBB5
+ 334               	.LM39:
+ 335 00fe E1E3      		ldi r30,lo8(305)
+ 336 0100 F1E0      		ldi r31,hi8(305)
+ 337 0102 88ED      		ldi r24,lo8(-40)
+ 338 0104 8083      		st Z,r24
+ 130:uart4.c       **** 	// set default baud rate
+ 131:uart4.c       **** 	uartSetBaudRate(3, UART3_DEFAULT_BAUD_RATE);
+ 339               	n	68,0,131,.LM40-.LFBB5
+ 340               	.LM40:
+ 341 0106 83E0      		ldi r24,lo8(3)
+ 342 0108 40E8      		ldi r20,lo8(9600)
+ 343 010a 55E2      		ldi r21,hi8(9600)
+ 344 010c 60E0      		ldi r22,hlo8(9600)
+ 345 010e 70E0      		ldi r23,hhi8(9600)
+ 346 0110 0E94 0000 		call uartSetBaudRate
+ 132:uart4.c       **** 	// initialize states
+ 133:uart4.c       **** 	uartReadyTx[3] = TRUE;
+ 347               	68,0,133,.LM41-.LFBB5
+ 348               	.LM41:
+ 349 0114 8FEF      		ldi r24,lo8(-1)
+ 350 0116 8093 0000 		sts uartReadyTx+3,r24
+ 134:uart4.c       **** 	uartBufferedTx[3] = FALSE;
+ 351               	abn	68,0,134,.LM42-.LFBB5
+ 352               	.LM42:
+ 353 011a 1092 0000 		sts uartBufferedTx+3,__zero_reg__
+ 135:uart4.c       **** 	// clear overflow count
+ 136:uart4.c       **** 	uartRxOverflow[3] = 0;
+ 354               	tabn	68,0,136,.LM43-.LFBB5
+ 355               	.LM43:
+ 356 011e 1092 0000 		sts (uartRxOverflow+6)+1,__zero_reg__
+ 357 0122 1092 0000 		sts uartRxOverflow+6,__zero_reg__
+ 137:uart4.c       **** 	// enable interrupts
+ 138:uart4.c       **** 	sei();
+ 358               	abn	68,0,138,.LM44-.LFBB5
+ 359               	.LM44:
+ 360               	/* #APP */
+ 361               	 ;  138 "uart4.c" 1
+ 362 0126 7894      		sei
+ 363               	 ;  0 "" 2
+ 364               	/* epilogue start */
+ 139:uart4.c       **** }
+ 365               		68,0,139,.LM45-.LFBB5
+ 366               	.LM45:
+ 367               	/* #NOAPP */
+ 368 0128 CF91      		pop r28
+ 369 012a DF91      		pop r29
+ 370 012c 0895      		ret
+ 372               	.Lscope5:
+ 374               	.global	uart0InitBuffers
+ 376               	uart0InitBuffers:
+ 140:uart4.c       **** 
+ 141:uart4.c       **** void uart0InitBuffers(void)
+ 142:uart4.c       **** {
+ 377               	,142,.LM46-.LFBB6
+ 378               	.LM46:
+ 379               	.LFBB6:
+ 380 012e DF93      		push r29
+ 381 0130 CF93      		push r28
+ 382 0132 CDB7      		in r28,__SP_L__
+ 383 0134 DEB7      		in r29,__SP_H__
+ 384               	/* prologue: function */
+ 385               	/* frame size = 0 */
+ 143:uart4.c       **** 	#ifndef UART_BUFFER_EXTERNAL_RAM
+ 144:uart4.c       **** 		// initialize the UART0 buffers
+ 145:uart4.c       **** 		bufferInit(&uartRxBuffer[0], (u08*) uart0RxData, UART0_RX_BUFFER_SIZE);
+ 386               	8,0,145,.LM47-.LFBB6
+ 387               	.LM47:
+ 388 0136 80E0      		ldi r24,lo8(uartRxBuffer)
+ 389 0138 90E0      		ldi r25,hi8(uartRxBuffer)
+ 390 013a 20E0      		ldi r18,lo8(uart0RxData)
+ 391 013c 30E0      		ldi r19,hi8(uart0RxData)
+ 392 013e B901      		movw r22,r18
+ 393 0140 40E8      		ldi r20,lo8(128)
+ 394 0142 50E0      		ldi r21,hi8(128)
+ 395 0144 0E94 0000 		call bufferInit
+ 146:uart4.c       **** 		bufferInit(&uartTxBuffer[0], (u08*) uart0TxData, UART0_TX_BUFFER_SIZE);
+ 396               	,0,146,.LM48-.LFBB6
+ 397               	.LM48:
+ 398 0148 80E0      		ldi r24,lo8(uartTxBuffer)
+ 399 014a 90E0      		ldi r25,hi8(uartTxBuffer)
+ 400 014c 20E0      		ldi r18,lo8(uart0TxData)
+ 401 014e 30E0      		ldi r19,hi8(uart0TxData)
+ 402 0150 B901      		movw r22,r18
+ 403 0152 40E1      		ldi r20,lo8(16)
+ 404 0154 50E0      		ldi r21,hi8(16)
+ 405 0156 0E94 0000 		call bufferInit
+ 406               	/* epilogue start */
+ 147:uart4.c       **** 	#else
+ 148:uart4.c       **** 		// initialize the UART0 buffers
+ 149:uart4.c       **** 		bufferInit(&uartRxBuffer[0], (u08*) UART0_RX_BUFFER_ADDR, UART0_RX_BUFFER_SIZE);
+ 150:uart4.c       **** 		bufferInit(&uartTxBuffer[0], (u08*) UART0_TX_BUFFER_ADDR, UART0_TX_BUFFER_SIZE);
+ 151:uart4.c       **** 	#endif
+ 152:uart4.c       **** }
+ 407               	0,152,.LM49-.LFBB6
+ 408               	.LM49:
+ 409 015a CF91      		pop r28
+ 410 015c DF91      		pop r29
+ 411 015e 0895      		ret
+ 413               	.Lscope6:
+ 415               	.global	uart1InitBuffers
+ 417               	uart1InitBuffers:
+ 153:uart4.c       **** 
+ 154:uart4.c       **** void uart1InitBuffers(void)
+ 155:uart4.c       **** {
+ 418               	0,155,.LM50-.LFBB7
+ 419               	.LM50:
+ 420               	.LFBB7:
+ 421 0160 DF93      		push r29
+ 422 0162 CF93      		push r28
+ 423 0164 CDB7      		in r28,__SP_L__
+ 424 0166 DEB7      		in r29,__SP_H__
+ 425               	/* prologue: function */
+ 426               	/* frame size = 0 */
+ 156:uart4.c       **** 	#ifndef UART_BUFFER_EXTERNAL_RAM
+ 157:uart4.c       **** 		// initialize the UART1 buffers
+ 158:uart4.c       **** 		bufferInit(&uartRxBuffer[1], (u08*) uart1RxData, UART1_RX_BUFFER_SIZE);
+ 427               	8,0,158,.LM51-.LFBB7
+ 428               	.LM51:
+ 429 0168 80E0      		ldi r24,lo8(uartRxBuffer+8)
+ 430 016a 90E0      		ldi r25,hi8(uartRxBuffer+8)
+ 431 016c 20E0      		ldi r18,lo8(uart1RxData)
+ 432 016e 30E0      		ldi r19,hi8(uart1RxData)
+ 433 0170 B901      		movw r22,r18
+ 434 0172 40E8      		ldi r20,lo8(128)
+ 435 0174 50E0      		ldi r21,hi8(128)
+ 436 0176 0E94 0000 		call bufferInit
+ 159:uart4.c       **** 		bufferInit(&uartTxBuffer[1], (u08*) uart1TxData, UART1_TX_BUFFER_SIZE);
+ 437               	,0,159,.LM52-.LFBB7
+ 438               	.LM52:
+ 439 017a 80E0      		ldi r24,lo8(uartTxBuffer+8)
+ 440 017c 90E0      		ldi r25,hi8(uartTxBuffer+8)
+ 441 017e 20E0      		ldi r18,lo8(uart1TxData)
+ 442 0180 30E0      		ldi r19,hi8(uart1TxData)
+ 443 0182 B901      		movw r22,r18
+ 444 0184 40E1      		ldi r20,lo8(16)
+ 445 0186 50E0      		ldi r21,hi8(16)
+ 446 0188 0E94 0000 		call bufferInit
+ 447               	/* epilogue start */
+ 160:uart4.c       **** 	#else
+ 161:uart4.c       **** 		// initialize the UART1 buffers
+ 162:uart4.c       **** 		bufferInit(&uartRxBuffer[1], (u08*) UART1_RX_BUFFER_ADDR, UART1_RX_BUFFER_SIZE);
+ 163:uart4.c       **** 		bufferInit(&uartTxBuffer[1], (u08*) UART1_TX_BUFFER_ADDR, UART1_TX_BUFFER_SIZE);
+ 164:uart4.c       **** 	#endif
+ 165:uart4.c       **** }
+ 448               	0,165,.LM53-.LFBB7
+ 449               	.LM53:
+ 450 018c CF91      		pop r28
+ 451 018e DF91      		pop r29
+ 452 0190 0895      		ret
+ 454               	.Lscope7:
+ 456               	.global	uart2InitBuffers
+ 458               	uart2InitBuffers:
+ 166:uart4.c       **** 
+ 167:uart4.c       **** void uart2InitBuffers(void)
+ 168:uart4.c       **** {
+ 459               	0,168,.LM54-.LFBB8
+ 460               	.LM54:
+ 461               	.LFBB8:
+ 462 0192 DF93      		push r29
+ 463 0194 CF93      		push r28
+ 464 0196 CDB7      		in r28,__SP_L__
+ 465 0198 DEB7      		in r29,__SP_H__
+ 466               	/* prologue: function */
+ 467               	/* frame size = 0 */
+ 169:uart4.c       **** 	#ifndef UART_BUFFER_EXTERNAL_RAM
+ 170:uart4.c       **** 		// initialize the UART2 buffers
+ 171:uart4.c       **** 		bufferInit(&uartRxBuffer[2], (u08*) uart2RxData, UART2_RX_BUFFER_SIZE);
+ 468               	8,0,171,.LM55-.LFBB8
+ 469               	.LM55:
+ 470 019a 80E0      		ldi r24,lo8(uartRxBuffer+16)
+ 471 019c 90E0      		ldi r25,hi8(uartRxBuffer+16)
+ 472 019e 20E0      		ldi r18,lo8(uart2RxData)
+ 473 01a0 30E0      		ldi r19,hi8(uart2RxData)
+ 474 01a2 B901      		movw r22,r18
+ 475 01a4 40E8      		ldi r20,lo8(128)
+ 476 01a6 50E0      		ldi r21,hi8(128)
+ 477 01a8 0E94 0000 		call bufferInit
+ 172:uart4.c       **** 		bufferInit(&uartTxBuffer[2], (u08*) uart2TxData, UART2_TX_BUFFER_SIZE);
+ 478               	,0,172,.LM56-.LFBB8
+ 479               	.LM56:
+ 480 01ac 80E0      		ldi r24,lo8(uartTxBuffer+16)
+ 481 01ae 90E0      		ldi r25,hi8(uartTxBuffer+16)
+ 482 01b0 20E0      		ldi r18,lo8(uart2TxData)
+ 483 01b2 30E0      		ldi r19,hi8(uart2TxData)
+ 484 01b4 B901      		movw r22,r18
+ 485 01b6 40E1      		ldi r20,lo8(16)
+ 486 01b8 50E0      		ldi r21,hi8(16)
+ 487 01ba 0E94 0000 		call bufferInit
+ 488               	/* epilogue start */
+ 173:uart4.c       **** 	#else
+ 174:uart4.c       **** 		// initialize the UART2 buffers
+ 175:uart4.c       **** 		bufferInit(&uartRxBuffer[2], (u08*) UART2_RX_BUFFER_ADDR, UART2_RX_BUFFER_SIZE);
+ 176:uart4.c       **** 		bufferInit(&uartTxBuffer[2], (u08*) UART2_TX_BUFFER_ADDR, UART2_TX_BUFFER_SIZE);
+ 177:uart4.c       **** 	#endif
+ 178:uart4.c       **** }
+ 489               	0,178,.LM57-.LFBB8
+ 490               	.LM57:
+ 491 01be CF91      		pop r28
+ 492 01c0 DF91      		pop r29
+ 493 01c2 0895      		ret
+ 495               	.Lscope8:
+ 497               	.global	uart3InitBuffers
+ 499               	uart3InitBuffers:
+ 179:uart4.c       **** 
+ 180:uart4.c       **** void uart3InitBuffers(void)
+ 181:uart4.c       **** {
+ 500               	0,181,.LM58-.LFBB9
+ 501               	.LM58:
+ 502               	.LFBB9:
+ 503 01c4 DF93      		push r29
+ 504 01c6 CF93      		push r28
+ 505 01c8 CDB7      		in r28,__SP_L__
+ 506 01ca DEB7      		in r29,__SP_H__
+ 507               	/* prologue: function */
+ 508               	/* frame size = 0 */
+ 182:uart4.c       **** 	#ifndef UART_BUFFER_EXTERNAL_RAM
+ 183:uart4.c       **** 		// initialize the UART3 buffers
+ 184:uart4.c       **** 		bufferInit(&uartRxBuffer[3], (u08*) uart3RxData, UART3_RX_BUFFER_SIZE);
+ 509               	8,0,184,.LM59-.LFBB9
+ 510               	.LM59:
+ 511 01cc 80E0      		ldi r24,lo8(uartRxBuffer+24)
+ 512 01ce 90E0      		ldi r25,hi8(uartRxBuffer+24)
+ 513 01d0 20E0      		ldi r18,lo8(uart3RxData)
+ 514 01d2 30E0      		ldi r19,hi8(uart3RxData)
+ 515 01d4 B901      		movw r22,r18
+ 516 01d6 40E8      		ldi r20,lo8(128)
+ 517 01d8 50E0      		ldi r21,hi8(128)
+ 518 01da 0E94 0000 		call bufferInit
+ 185:uart4.c       **** 		bufferInit(&uartTxBuffer[3], (u08*) uart3TxData, UART3_TX_BUFFER_SIZE);
+ 519               	,0,185,.LM60-.LFBB9
+ 520               	.LM60:
+ 521 01de 80E0      		ldi r24,lo8(uartTxBuffer+24)
+ 522 01e0 90E0      		ldi r25,hi8(uartTxBuffer+24)
+ 523 01e2 20E0      		ldi r18,lo8(uart3TxData)
+ 524 01e4 30E0      		ldi r19,hi8(uart3TxData)
+ 525 01e6 B901      		movw r22,r18
+ 526 01e8 40E1      		ldi r20,lo8(16)
+ 527 01ea 50E0      		ldi r21,hi8(16)
+ 528 01ec 0E94 0000 		call bufferInit
+ 529               	/* epilogue start */
+ 186:uart4.c       **** 	#else
+ 187:uart4.c       **** 		// initialize the UART3 buffers
+ 188:uart4.c       **** 		bufferInit(&uartRxBuffer[3], (u08*) UART3_RX_BUFFER_ADDR, UART3_RX_BUFFER_SIZE);
+ 189:uart4.c       **** 		bufferInit(&uartTxBuffer[3], (u08*) UART3_TX_BUFFER_ADDR, UART3_TX_BUFFER_SIZE);
+ 190:uart4.c       **** 	#endif
+ 191:uart4.c       **** }
+ 530               	0,191,.LM61-.LFBB9
+ 531               	.LM61:
+ 532 01f0 CF91      		pop r28
+ 533 01f2 DF91      		pop r29
+ 534 01f4 0895      		ret
+ 536               	.Lscope9:
+ 540               	.global	uartSetRxHandler
+ 542               	uartSetRxHandler:
+ 192:uart4.c       **** 
+ 193:uart4.c       **** void uartSetRxHandler(u08 nUart, void (*rx_func)(unsigned char c))
+ 194:uart4.c       **** {
+ 543               	194,.LM62-.LFBB10
+ 544               	.LM62:
+ 545               	.LFBB10:
+ 546 01f6 DF93      		push r29
+ 547 01f8 CF93      		push r28
+ 548 01fa 00D0      		rcall .
+ 549 01fc 0F92      		push __tmp_reg__
+ 550 01fe CDB7      		in r28,__SP_L__
+ 551 0200 DEB7      		in r29,__SP_H__
+ 552               	/* prologue: function */
+ 553               	/* frame size = 3 */
+ 554 0202 8983      		std Y+1,r24
+ 555 0204 7B83      		std Y+3,r23
+ 556 0206 6A83      		std Y+2,r22
+ 195:uart4.c       **** 	// make sure the uart number is within bounds
+ 196:uart4.c       **** 	if(nUart < 4)
+ 557               	96,.LM63-.LFBB10
+ 558               	.LM63:
+ 559 0208 8981      		ldd r24,Y+1
+ 560 020a 8430      		cpi r24,lo8(4)
+ 561 020c 00F4      		brsh .L21
+ 197:uart4.c       **** 	{
+ 198:uart4.c       **** 		// set the receive interrupt to run the supplied user function
+ 199:uart4.c       **** 		UartRxFunc[nUart] = rx_func;
+ 562               	bn	68,0,199,.LM64-.LFBB10
+ 563               	.LM64:
+ 564 020e 8981      		ldd r24,Y+1
+ 565 0210 882F      		mov r24,r24
+ 566 0212 90E0      		ldi r25,lo8(0)
+ 567 0214 880F      		lsl r24
+ 568 0216 991F      		rol r25
+ 569 0218 FC01      		movw r30,r24
+ 570 021a E050      		subi r30,lo8(-(UartRxFunc))
+ 571 021c F040      		sbci r31,hi8(-(UartRxFunc))
+ 572 021e 8A81      		ldd r24,Y+2
+ 573 0220 9B81      		ldd r25,Y+3
+ 574 0222 9183      		std Z+1,r25
+ 575 0224 8083      		st Z,r24
+ 576               	.L21:
+ 577               	/* epilogue start */
+ 200:uart4.c       **** 	}
+ 201:uart4.c       **** }
+ 578               	,.LM65-.LFBB10
+ 579               	.LM65:
+ 580 0226 0F90      		pop __tmp_reg__
+ 581 0228 0F90      		pop __tmp_reg__
+ 582 022a 0F90      		pop __tmp_reg__
+ 583 022c CF91      		pop r28
+ 584 022e DF91      		pop r29
+ 585 0230 0895      		ret
+ 587               	.Lscope10:
+ 591               	.global	uartSetBaudRate
+ 593               	uartSetBaudRate:
+ 202:uart4.c       **** 
+ 203:uart4.c       **** void uartSetBaudRate(u08 nUart, u32 baudrate)
+ 204:uart4.c       **** {
+ 594               	,.LM66-.LFBB11
+ 595               	.LM66:
+ 596               	.LFBB11:
+ 597 0232 EF92      		push r14
+ 598 0234 FF92      		push r15
+ 599 0236 0F93      		push r16
+ 600 0238 1F93      		push r17
+ 601 023a DF93      		push r29
+ 602 023c CF93      		push r28
+ 603 023e CDB7      		in r28,__SP_L__
+ 604 0240 DEB7      		in r29,__SP_H__
+ 605 0242 2797      		sbiw r28,7
+ 606 0244 0FB6      		in __tmp_reg__,__SREG__
+ 607 0246 F894      		cli
+ 608 0248 DEBF      		out __SP_H__,r29
+ 609 024a 0FBE      		out __SREG__,__tmp_reg__
+ 610 024c CDBF      		out __SP_L__,r28
+ 611               	/* prologue: function */
+ 612               	/* frame size = 7 */
+ 613 024e 8B83      		std Y+3,r24
+ 614 0250 4C83      		std Y+4,r20
+ 615 0252 5D83      		std Y+5,r21
+ 616 0254 6E83      		std Y+6,r22
+ 617 0256 7F83      		std Y+7,r23
+ 205:uart4.c       **** 	// calculate division factor for requested baud rate, and set it
+ 206:uart4.c       **** 	u16 bauddiv = ((F_CPU+(baudrate*8L))/(baudrate*16L)-1);
+ 618               	LFBB11
+ 619               	.LM67:
+ 620 0258 8C81      		ldd r24,Y+4
+ 621 025a 9D81      		ldd r25,Y+5
+ 622 025c AE81      		ldd r26,Y+6
+ 623 025e BF81      		ldd r27,Y+7
+ 624 0260 8058      		subi r24,lo8(-(2000000))
+ 625 0262 9B47      		sbci r25,hi8(-(2000000))
+ 626 0264 A14E      		sbci r26,hlo8(-(2000000))
+ 627 0266 BF4F      		sbci r27,hhi8(-(2000000))
+ 628 0268 880F      		add r24,r24
+ 629 026a 991F      		adc r25,r25
+ 630 026c AA1F      		adc r26,r26
+ 631 026e BB1F      		adc r27,r27
+ 632 0270 880F      		add r24,r24
+ 633 0272 991F      		adc r25,r25
+ 634 0274 AA1F      		adc r26,r26
+ 635 0276 BB1F      		adc r27,r27
+ 636 0278 880F      		add r24,r24
+ 637 027a 991F      		adc r25,r25
+ 638 027c AA1F      		adc r26,r26
+ 639 027e BB1F      		adc r27,r27
+ 640 0280 7C01      		movw r14,r24
+ 641 0282 8D01      		movw r16,r26
+ 642 0284 8C81      		ldd r24,Y+4
+ 643 0286 9D81      		ldd r25,Y+5
+ 644 0288 AE81      		ldd r26,Y+6
+ 645 028a BF81      		ldd r27,Y+7
+ 646 028c 880F      		add r24,r24
+ 647 028e 991F      		adc r25,r25
+ 648 0290 AA1F      		adc r26,r26
+ 649 0292 BB1F      		adc r27,r27
+ 650 0294 880F      		add r24,r24
+ 651 0296 991F      		adc r25,r25
+ 652 0298 AA1F      		adc r26,r26
+ 653 029a BB1F      		adc r27,r27
+ 654 029c 880F      		add r24,r24
+ 655 029e 991F      		adc r25,r25
+ 656 02a0 AA1F      		adc r26,r26
+ 657 02a2 BB1F      		adc r27,r27
+ 658 02a4 880F      		add r24,r24
+ 659 02a6 991F      		adc r25,r25
+ 660 02a8 AA1F      		adc r26,r26
+ 661 02aa BB1F      		adc r27,r27
+ 662 02ac 9C01      		movw r18,r24
+ 663 02ae AD01      		movw r20,r26
+ 664 02b0 C801      		movw r24,r16
+ 665 02b2 B701      		movw r22,r14
+ 666 02b4 0E94 0000 		call __udivmodsi4
+ 667 02b8 DA01      		movw r26,r20
+ 668 02ba C901      		movw r24,r18
+ 669 02bc 0197      		sbiw r24,1
+ 670 02be 9A83      		std Y+2,r25
+ 671 02c0 8983      		std Y+1,r24
+ 207:uart4.c       **** 	if(nUart==3)
+ 672               	i r24,lo8(3)
+ 673               		brne .L23
+ 675 02c4 8330      	.LM69:
+ 676 02c6 01F4      		ldi r30,lo8(308)
+ 208:uart4.c       **** 	{
+ 209:uart4.c       **** 		outb(UBRR3L, bauddiv);
+ 677               	r31,hi8(308)
+ 678               		ldd r24,Y+1
+ 679 02c8 E4E3      		st Z,r24
+ 681 02cc 8981      	.LM70:
+ 682 02ce 8083      		ldi r30,lo8(309)
+ 210:uart4.c       **** 		#ifdef UBRR3H
+ 211:uart4.c       **** 		outb(UBRR3H, bauddiv>>8);
+ 683               	31,hi8(309)
+ 684               		ldd r24,Y+1
+ 685 02d0 E5E3      		ldd r25,Y+2
+ 686 02d2 F1E0      		mov r24,r25
+ 687 02d4 8981      		clr r25
+ 688 02d6 9A81      		st Z,r24
+ 689 02d8 892F      		rjmp .L27
+ 690 02da 9927      	.L23:
+ 692 02de 00C0      	.LM71:
+ 693               		ldd r24,Y+3
+ 212:uart4.c       **** 		#endif
+ 213:uart4.c       **** 	}
+ 214:uart4.c       **** 	else if(nUart==2)
+ 694               	8(2)
+ 695               		brne .L25
+ 697 02e2 8230      	.LM72:
+ 698 02e4 01F4      		ldi r30,lo8(212)
+ 215:uart4.c       **** 	{
+ 216:uart4.c       **** 		outb(UBRR2L, bauddiv);
+ 699               	r31,hi8(212)
+ 700               		ldd r24,Y+1
+ 701 02e6 E4ED      		st Z,r24
+ 703 02ea 8981      	.LM73:
+ 704 02ec 8083      		ldi r30,lo8(213)
+ 217:uart4.c       **** 		#ifdef UBRR2H
+ 218:uart4.c       **** 		outb(UBRR2H, bauddiv>>8);
+ 705               	31,hi8(213)
+ 706               		ldd r24,Y+1
+ 707 02ee E5ED      		ldd r25,Y+2
+ 708 02f0 F0E0      		mov r24,r25
+ 709 02f2 8981      		clr r25
+ 710 02f4 9A81      		st Z,r24
+ 711 02f6 892F      		rjmp .L27
+ 712 02f8 9927      	.L25:
+ 714 02fc 00C0      	.LM74:
+ 715               		ldd r24,Y+3
+ 219:uart4.c       **** 		#endif
+ 220:uart4.c       **** 	}
+ 221:uart4.c       **** 	else if(nUart==1)
+ 716               	8(1)
+ 717               		brne .L26
+ 719 0300 8130      	.LM75:
+ 720 0302 01F4      		ldi r30,lo8(204)
+ 222:uart4.c       **** 	{
+ 223:uart4.c       **** 		outb(UBRR1L, bauddiv);
+ 721               	r31,hi8(204)
+ 722               		ldd r24,Y+1
+ 723 0304 ECEC      		st Z,r24
+ 725 0308 8981      	.LM76:
+ 726 030a 8083      		ldi r30,lo8(205)
+ 224:uart4.c       **** 		#ifdef UBRR1H
+ 225:uart4.c       **** 		outb(UBRR1H, bauddiv>>8);
+ 727               	31,hi8(205)
+ 728               		ldd r24,Y+1
+ 729 030c EDEC      		ldd r25,Y+2
+ 730 030e F0E0      		mov r24,r25
+ 731 0310 8981      		clr r25
+ 732 0312 9A81      		st Z,r24
+ 733 0314 892F      		rjmp .L27
+ 734 0316 9927      	.L26:
+ 736 031a 00C0      	.LM77:
+ 737               		ldi r30,lo8(196)
+ 226:uart4.c       **** 		#endif
+ 227:uart4.c       **** 	}
+ 228:uart4.c       **** 	else
+ 229:uart4.c       **** 	{
+ 230:uart4.c       **** 		outb(UBRR0L, bauddiv);
+ 738               	8(196)
+ 739               		ldd r24,Y+1
+ 740 031c E4EC      		st Z,r24
+ 742 0320 8981      	.LM78:
+ 743 0322 8083      		ldi r30,lo8(197)
+ 231:uart4.c       **** 		#ifdef UBRR0H
+ 232:uart4.c       **** 		outb(UBRR0H, bauddiv>>8);
+ 744               	31,hi8(197)
+ 745               		ldd r24,Y+1
+ 746 0324 E5EC      		ldd r25,Y+2
+ 747 0326 F0E0      		mov r24,r25
+ 748 0328 8981      		clr r25
+ 749 032a 9A81      		st Z,r24
+ 750 032c 892F      	.L27:
+ 751 032e 9927      	/* epilogue start */
+ 753               	.LM79:
+ 754               		adiw r28,7
+ 233:uart4.c       **** 		#endif
+ 234:uart4.c       **** 	}
+ 235:uart4.c       **** }
+ 755               	eg__,__SREG__
+ 756               		cli
+ 757 0332 2796      		out __SP_H__,r29
+ 758 0334 0FB6      		out __SREG__,__tmp_reg__
+ 759 0336 F894      		out __SP_L__,r28
+ 760 0338 DEBF      		pop r28
+ 761 033a 0FBE      		pop r29
+ 762 033c CDBF      		pop r17
+ 763 033e CF91      		pop r16
+ 764 0340 DF91      		pop r15
+ 765 0342 1F91      		pop r14
+ 766 0344 0F91      		ret
+ 771               	.Lscope11:
+ 774               	.global	uartGetRxBuffer
+ 776               	uartGetRxBuffer:
+ 778               	.LM80:
+ 779               	.LFBB12:
+ 236:uart4.c       **** 
+ 237:uart4.c       **** cBuffer* uartGetRxBuffer(u08 nUart)
+ 238:uart4.c       **** {
+ 780               	 __tmp_reg__
+ 781               		in r28,__SP_L__
+ 782               		in r29,__SP_H__
+ 783 034c DF93      	/* prologue: function */
+ 784 034e CF93      	/* frame size = 1 */
+ 785 0350 0F92      		std Y+1,r24
+ 787 0354 DEB7      	.LM81:
+ 788               		ldd r24,Y+1
+ 789               		mov r24,r24
+ 790 0356 8983      		ldi r25,lo8(0)
+ 239:uart4.c       **** 	// return rx buffer pointer
+ 240:uart4.c       **** 	return &uartRxBuffer[nUart];
+ 791               	ol r25
+ 792               		lsl r24
+ 793 0358 8981      		rol r25
+ 794 035a 882F      		lsl r24
+ 795 035c 90E0      		rol r25
+ 796 035e 880F      		subi r24,lo8(-(uartRxBuffer))
+ 797 0360 991F      		sbci r25,hi8(-(uartRxBuffer))
+ 798 0362 880F      	/* epilogue start */
+ 800 0366 880F      	.LM82:
+ 801 0368 991F      		pop __tmp_reg__
+ 802 036a 8050      		pop r28
+ 803 036c 9040      		pop r29
+ 804               		ret
+ 241:uart4.c       **** }
+ 805               	RxBuffer, .-uartGetRxBuffer
+ 806               	.Lscope12:
+ 809 0372 DF91      	.global	uartGetTxBuffer
+ 811               	uartGetTxBuffer:
+ 813               	.LM83:
+ 814               	.LFBB13:
+ 815               		push r29
+ 816               		push r28
+ 817               		push __tmp_reg__
+ 242:uart4.c       **** 
+ 243:uart4.c       **** cBuffer* uartGetTxBuffer(u08 nUart)
+ 244:uart4.c       **** {
+ 818               	L__
+ 819               		in r29,__SP_H__
+ 820               	/* prologue: function */
+ 821 0376 DF93      	/* frame size = 1 */
+ 822 0378 CF93      		std Y+1,r24
+ 824 037c CDB7      	.LM84:
+ 825 037e DEB7      		ldd r24,Y+1
+ 826               		mov r24,r24
+ 827               		ldi r25,lo8(0)
+ 828 0380 8983      		lsl r24
+ 245:uart4.c       **** 	// return tx buffer pointer
+ 246:uart4.c       **** 	return &uartTxBuffer[nUart];
+ 829               	sl r24
+ 830               		rol r25
+ 831 0382 8981      		lsl r24
+ 832 0384 882F      		rol r25
+ 833 0386 90E0      		subi r24,lo8(-(uartTxBuffer))
+ 834 0388 880F      		sbci r25,hi8(-(uartTxBuffer))
+ 835 038a 991F      	/* epilogue start */
+ 837 038e 991F      	.LM85:
+ 838 0390 880F      		pop __tmp_reg__
+ 839 0392 991F      		pop r28
+ 840 0394 8050      		pop r29
+ 841 0396 9040      		ret
+ 247:uart4.c       **** }
+ 843               	tabs	"uartSendByte:F(0,15)",36,0,0,uartSendByte
+ 846 039a CF91      	.global	uartSendByte
+ 848 039e 0895      	uartSendByte:
+ 850               	.LM86:
+ 851               	.LFBB14:
+ 852               		push r29
+ 853               		push r28
+ 854               		rcall .
+ 855               		in r28,__SP_L__
+ 856               		in r29,__SP_H__
+ 248:uart4.c       **** 
+ 249:uart4.c       **** void uartSendByte(u08 nUart, u08 txData)
+ 250:uart4.c       **** {
+ 857               	unction */
+ 858               	/* frame size = 2 */
+ 859               		std Y+1,r24
+ 860 03a0 DF93      		std Y+2,r22
+ 862 03a4 00D0      	.LM87:
+ 863 03a6 CDB7      		ldd r24,Y+1
+ 864 03a8 DEB7      		cpi r24,lo8(3)
+ 865               		brne .L33
+ 866               	.L34:
+ 868 03ac 6A83      	.LM88:
+ 251:uart4.c       **** 	// wait for the transmitter to be ready
+ 252:uart4.c       **** //	while(!uartReadyTx[nUart]);
+ 253:uart4.c       **** 	// send byte
+ 254:uart4.c       **** 	if(nUart==3)
+ 869               	(304)
+ 870               		ldi r31,hi8(304)
+ 871 03ae 8981      		ld r24,Z
+ 872 03b0 8330      		mov r24,r24
+ 873 03b2 01F4      		ldi r25,lo8(0)
+ 874               		andi r24,lo8(32)
+ 255:uart4.c       **** 	{
+ 256:uart4.c       **** 		while(!(UCSR3A & (1<<UDRE3)));
+ 875               	r25,hi8(32)
+ 876               		sbiw r24,0
+ 877 03b4 E0E3      		breq .L34
+ 879 03b8 8081      	.LM89:
+ 880 03ba 882F      		ldi r30,lo8(310)
+ 881 03bc 90E0      		ldi r31,hi8(310)
+ 882 03be 8072      		ldd r24,Y+2
+ 883 03c0 9070      		st Z,r24
+ 884 03c2 0097      		rjmp .L35
+ 885 03c4 01F0      	.L33:
+ 257:uart4.c       **** 		outb(UDR3, txData);
+ 886               	0,259,.LM90-.LFBB14
+ 887               	.LM90:
+ 888 03c6 E6E3      		ldd r24,Y+1
+ 889 03c8 F1E0      		cpi r24,lo8(2)
+ 890 03ca 8A81      		brne .L36
+ 891 03cc 8083      	.L37:
+ 893               	.LM91:
+ 258:uart4.c       **** 	}
+ 259:uart4.c       **** 	else if(nUart==2)
+ 894               	,lo8(208)
+ 895               		ldi r31,hi8(208)
+ 896 03d0 8981      		ld r24,Z
+ 897 03d2 8230      		mov r24,r24
+ 898 03d4 01F4      		ldi r25,lo8(0)
+ 899               		andi r24,lo8(32)
+ 260:uart4.c       **** 	{
+ 261:uart4.c       **** 		while(!(UCSR2A & (1<<UDRE2)));
+ 900               	r25,hi8(32)
+ 901               		sbiw r24,0
+ 902 03d6 E0ED      		breq .L37
+ 904 03da 8081      	.LM92:
+ 905 03dc 882F      		ldi r30,lo8(214)
+ 906 03de 90E0      		ldi r31,hi8(214)
+ 907 03e0 8072      		ldd r24,Y+2
+ 908 03e2 9070      		st Z,r24
+ 909 03e4 0097      		rjmp .L35
+ 910 03e6 01F0      	.L36:
+ 262:uart4.c       **** 		outb(UDR2, txData);
+ 911               	0,264,.LM93-.LFBB14
+ 912               	.LM93:
+ 913 03e8 E6ED      		ldd r24,Y+1
+ 914 03ea F0E0      		cpi r24,lo8(1)
+ 915 03ec 8A81      		brne .L38
+ 916 03ee 8083      	.L39:
+ 918               	.LM94:
+ 263:uart4.c       **** 	}
+ 264:uart4.c       **** 	else if(nUart==1)
+ 919               	,lo8(200)
+ 920               		ldi r31,hi8(200)
+ 921 03f2 8981      		ld r24,Z
+ 922 03f4 8130      		mov r24,r24
+ 923 03f6 01F4      		ldi r25,lo8(0)
+ 924               		andi r24,lo8(32)
+ 265:uart4.c       **** 	{
+ 266:uart4.c       **** 		while(!(UCSR1A & (1<<UDRE1)));
+ 925               	r25,hi8(32)
+ 926               		sbiw r24,0
+ 927 03f8 E8EC      		breq .L39
+ 929 03fc 8081      	.LM95:
+ 930 03fe 882F      		ldi r30,lo8(206)
+ 931 0400 90E0      		ldi r31,hi8(206)
+ 932 0402 8072      		ldd r24,Y+2
+ 933 0404 9070      		st Z,r24
+ 934 0406 0097      		rjmp .L35
+ 935 0408 01F0      	.L38:
+ 267:uart4.c       **** 		outb(UDR1, txData);
+ 936               	0,271,.LM96-.LFBB14
+ 937               	.LM96:
+ 938 040a EEEC      		ldi r30,lo8(192)
+ 939 040c F0E0      		ldi r31,hi8(192)
+ 940 040e 8A81      		ld r24,Z
+ 941 0410 8083      		mov r24,r24
+ 942 0412 00C0      		ldi r25,lo8(0)
+ 943               		andi r24,lo8(32)
+ 268:uart4.c       **** 	}
+ 269:uart4.c       **** 	else
+ 270:uart4.c       **** 	{
+ 271:uart4.c       **** 		while(!(UCSR0A & (1<<UDRE0)));
+ 944               	5,hi8(32)
+ 945               		sbiw r24,0
+ 946 0414 E0EC      		breq .L38
+ 948 0418 8081      	.LM97:
+ 949 041a 882F      		ldi r30,lo8(198)
+ 950 041c 90E0      		ldi r31,hi8(198)
+ 951 041e 8072      		ldd r24,Y+2
+ 952 0420 9070      		st Z,r24
+ 953 0422 0097      	.L35:
+ 272:uart4.c       **** 		outb(UDR0, txData);
+ 955               	 r24,Y+1
+ 956               		mov r24,r24
+ 957 0426 E6EC      		ldi r25,lo8(0)
+ 958 0428 F0E0      		movw r30,r24
+ 959 042a 8A81      		subi r30,lo8(-(uartReadyTx))
+ 960 042c 8083      		sbci r31,hi8(-(uartReadyTx))
+ 961               		st Z,__zero_reg__
+ 273:uart4.c       **** 	}
+ 274:uart4.c       **** 	// set ready state to FALSE
+ 275:uart4.c       **** 	uartReadyTx[nUart] = FALSE;
+ 962               	ogue start */
+ 964 042e 8981      	.LM99:
+ 965 0430 882F      		pop __tmp_reg__
+ 966 0432 90E0      		pop __tmp_reg__
+ 967 0434 FC01      		pop r28
+ 968 0436 E050      		pop r29
+ 969 0438 F040      		ret
+ 971               	.Lscope14:
+ 276:uart4.c       **** }
+ 972               	art0SendByte:F(0,15)",36,0,0,uart0SendByte
+ 974 043c 0F90      	.global	uart0SendByte
+ 976 0440 CF91      	uart0SendByte:
+ 978 0444 0895      	.LM100:
+ 979               	.LFBB15:
+ 980               		push r29
+ 981               		push r28
+ 982               		push __tmp_reg__
+ 983               		in r28,__SP_L__
+ 984               		in r29,__SP_H__
+ 985               	/* prologue: function */
+ 277:uart4.c       **** 
+ 278:uart4.c       **** void uart0SendByte(u08 data)
+ 279:uart4.c       **** {
+ 986               	= 1 */
+ 987               		std Y+1,r24
+ 989 0446 DF93      	.LM101:
+ 990 0448 CF93      		ldi r24,lo8(0)
+ 991 044a 0F92      		ldd r22,Y+1
+ 992 044c CDB7      		call uartSendByte
+ 993 044e DEB7      	/* epilogue start */
+ 995               	.LM102:
+ 996 0450 8983      		pop __tmp_reg__
+ 280:uart4.c       **** 	// send byte on UART0
+ 281:uart4.c       **** 	uartSendByte(0, data);
+ 997               	op r29
+ 998               		ret
+ 1000 0454 6981      	.Lscope15:
+ 282:uart4.c       **** }
+ 1003               	l	uart1SendByte
+ 1005 045a 0F90      	uart1SendByte:
+ 1007 045e DF91      	.LM103:
+ 1008 0460 0895      	.LFBB16:
+ 1009               		push r29
+ 1010               		push r28
+ 1011               		push __tmp_reg__
+ 1012               		in r28,__SP_L__
+ 1013               		in r29,__SP_H__
+ 1014               	/* prologue: function */
+ 1015               	/* frame size = 1 */
+ 283:uart4.c       **** 
+ 284:uart4.c       **** void uart1SendByte(u08 data)
+ 285:uart4.c       **** {
+ 1017               	.LM104:
+ 1018               		ldi r24,lo8(1)
+ 1019 0462 DF93      		ldd r22,Y+1
+ 1020 0464 CF93      		call uartSendByte
+ 1021 0466 0F92      	/* epilogue start */
+ 1023 046a DEB7      	.LM105:
+ 1024               		pop __tmp_reg__
+ 1025               		pop r28
+ 1026 046c 8983      		pop r29
+ 286:uart4.c       **** 	// send byte on UART1
+ 287:uart4.c       **** 	uartSendByte(1, data);
+ 1027               		uart1SendByte, .-uart1SendByte
+ 1028               	.Lscope16:
+ 1031 0472 0E94 0000 	.global	uart2SendByte
+ 288:uart4.c       **** }
+ 1033               	endByte:
+ 1035 0476 0F90      	.LM106:
+ 1036 0478 CF91      	.LFBB17:
+ 1037 047a DF91      		push r29
+ 1038 047c 0895      		push r28
+ 1039               		push __tmp_reg__
+ 1040               		in r28,__SP_L__
+ 1041               		in r29,__SP_H__
+ 1042               	/* prologue: function */
+ 1043               	/* frame size = 1 */
+ 1044               		std Y+1,r24
+ 289:uart4.c       **** 
+ 290:uart4.c       **** void uart2SendByte(u08 data)
+ 291:uart4.c       **** {
+ 1046               	r24,lo8(2)
+ 1047               		ldd r22,Y+1
+ 1048               		call uartSendByte
+ 1049 047e DF93      	/* epilogue start */
+ 1051 0482 0F92      	.LM108:
+ 1052 0484 CDB7      		pop __tmp_reg__
+ 1053 0486 DEB7      		pop r28
+ 1054               		pop r29
+ 1055               		ret
+ 292:uart4.c       **** 	// send byte on UART2
+ 293:uart4.c       **** 	uartSendByte(2, data);
+ 1059 048a 82E0      	.global	uart3SendByte
+ 1061 048e 0E94 0000 	uart3SendByte:
+ 294:uart4.c       **** }
+ 1063               	:
+ 1064               	.LFBB18:
+ 1065 0492 0F90      		push r29
+ 1066 0494 CF91      		push r28
+ 1067 0496 DF91      		push __tmp_reg__
+ 1068 0498 0895      		in r28,__SP_L__
+ 1069               		in r29,__SP_H__
+ 1070               	/* prologue: function */
+ 1071               	/* frame size = 1 */
+ 1072               		std Y+1,r24
+ 1074               	.LM110:
+ 1075               		ldi r24,lo8(3)
+ 295:uart4.c       **** 
+ 296:uart4.c       **** void uart3SendByte(u08 data)
+ 297:uart4.c       **** {
+ 1076               		call uartSendByte
+ 1077               	/* epilogue start */
+ 1079 049a DF93      	.LM111:
+ 1080 049c CF93      		pop __tmp_reg__
+ 1081 049e 0F92      		pop r28
+ 1082 04a0 CDB7      		pop r29
+ 1083 04a2 DEB7      		ret
+ 1085               	.Lscope18:
+ 298:uart4.c       **** 	// send byte on UART3
+ 299:uart4.c       **** 	uartSendByte(3, data);
+ 1087               	t0GetByte
+ 1089 04a6 83E0      	uart0GetByte:
+ 1091 04aa 0E94 0000 	.LM112:
+ 1092               	.LFBB19:
+ 300:uart4.c       **** }
+ 1093               	r29
+ 1094               		push r28
+ 1095 04ae 0F90      		rcall .
+ 1096 04b0 CF91      		push __tmp_reg__
+ 1097 04b2 DF91      		in r28,__SP_L__
+ 1098 04b4 0895      		in r29,__SP_H__
+ 1099               	/* prologue: function */
+ 1100               	/* frame size = 3 */
+ 1102               	.LM113:
+ 1103               		ldi r24,lo8(0)
+ 1104               		movw r18,r28
+ 301:uart4.c       **** 
+ 302:uart4.c       **** int uart0GetByte(void)
+ 303:uart4.c       **** {
+ 1105               	8(-(1))
+ 1106               		sbci r19,hi8(-(1))
+ 1107               		movw r22,r18
+ 1108 04b6 DF93      		call uartReceiveByte
+ 1109 04b8 CF93      		tst r24
+ 1110 04ba 00D0      		breq .L50
+ 1112 04be CDB7      	.LM114:
+ 1113 04c0 DEB7      		ldd r24,Y+1
+ 1114               		mov r18,r24
+ 1115               		ldi r19,lo8(0)
+ 304:uart4.c       **** 	// get single byte from receive buffer (if available)
+ 305:uart4.c       **** 	u08 c;
+ 306:uart4.c       **** 	if(uartReceiveByte(0,&c))
+ 1116               	9
+ 1117               		std Y+2,r18
+ 1118 04c2 80E0      		rjmp .L51
+ 1119 04c4 9E01      	.L50:
+ 1121 04c8 3F4F      	.LM115:
+ 1122 04ca B901      		ldi r24,lo8(-1)
+ 1123 04cc 0E94 0000 		ldi r25,hi8(-1)
+ 1124 04d0 8823      		std Y+3,r25
+ 1125 04d2 01F0      		std Y+2,r24
+ 307:uart4.c       **** 		return c;
+ 1126               	 r24,Y+2
+ 1127               		ldd r25,Y+3
+ 1128 04d4 8981      	/* epilogue start */
+ 1130 04d8 30E0      	.LM116:
+ 1131 04da 3B83      		pop __tmp_reg__
+ 1132 04dc 2A83      		pop __tmp_reg__
+ 1133 04de 00C0      		pop __tmp_reg__
+ 1134               		pop r28
+ 308:uart4.c       **** 	else
+ 309:uart4.c       **** 		return -1;
+ 1135               		ret
+ 1140 04e6 8A83      	.Lscope19:
+ 1142 04e8 8A81      	.global	uart1GetByte
+ 1144               	uart1GetByte:
+ 310:uart4.c       **** }
+ 1145               	,0,313,.LM117-.LFBB20
+ 1146               	.LM117:
+ 1147 04ec 0F90      	.LFBB20:
+ 1148 04ee 0F90      		push r29
+ 1149 04f0 0F90      		push r28
+ 1150 04f2 CF91      		rcall .
+ 1151 04f4 DF91      		push __tmp_reg__
+ 1152 04f6 0895      		in r28,__SP_L__
+ 1153               		in r29,__SP_H__
+ 1154               	/* prologue: function */
+ 1155               	/* frame size = 3 */
+ 1157               	.LM118:
+ 1158               		ldi r24,lo8(1)
+ 1159               		movw r18,r28
+ 1160               		subi r18,lo8(-(1))
+ 1161               		sbci r19,hi8(-(1))
+ 311:uart4.c       **** 
+ 312:uart4.c       **** int uart1GetByte(void)
+ 313:uart4.c       **** {
+ 1162               	ll uartReceiveByte
+ 1163               		tst r24
+ 1164               		breq .L54
+ 1166 04fa CF93      	.LM119:
+ 1167 04fc 00D0      		ldd r24,Y+1
+ 1168 04fe 0F92      		mov r18,r24
+ 1169 0500 CDB7      		ldi r19,lo8(0)
+ 1170 0502 DEB7      		std Y+3,r19
+ 1171               		std Y+2,r18
+ 1172               		rjmp .L55
+ 314:uart4.c       **** 	// get single byte from receive buffer (if available)
+ 315:uart4.c       **** 	u08 c;
+ 316:uart4.c       **** 	if(uartReceiveByte(1,&c))
+ 1173               	bn	68,0,319,.LM120-.LFBB20
+ 1174               	.LM120:
+ 1175 0504 81E0      		ldi r24,lo8(-1)
+ 1176 0506 9E01      		ldi r25,hi8(-1)
+ 1177 0508 2F5F      		std Y+3,r25
+ 1178 050a 3F4F      		std Y+2,r24
+ 1179 050c B901      	.L55:
+ 1180 050e 0E94 0000 		ldd r24,Y+2
+ 1181 0512 8823      		ldd r25,Y+3
+ 1182 0514 01F0      	/* epilogue start */
+ 317:uart4.c       **** 		return c;
+ 1183               	,0,320,.LM121-.LFBB20
+ 1184               	.LM121:
+ 1185 0516 8981      		pop __tmp_reg__
+ 1186 0518 282F      		pop __tmp_reg__
+ 1187 051a 30E0      		pop __tmp_reg__
+ 1188 051c 3B83      		pop r28
+ 1189 051e 2A83      		pop r29
+ 1190 0520 00C0      		ret
+ 318:uart4.c       **** 	else
+ 319:uart4.c       **** 		return -1;
+ 1192               	c:(9,1)",128,0,0,1
+ 1195 0524 9FEF      	.Lscope20:
+ 1197 0528 8A83      	.global	uart2GetByte
+ 1199 052a 8A81      	uart2GetByte:
+ 1201               	.LM122:
+ 320:uart4.c       **** }
+ 1202               	push r29
+ 1203               		push r28
+ 1204 052e 0F90      		rcall .
+ 1205 0530 0F90      		push __tmp_reg__
+ 1206 0532 0F90      		in r28,__SP_L__
+ 1207 0534 CF91      		in r29,__SP_H__
+ 1208 0536 DF91      	/* prologue: function */
+ 1209 0538 0895      	/* frame size = 3 */
+ 1211               	.LM123:
+ 1212               		ldi r24,lo8(2)
+ 1213               		movw r18,r28
+ 1214               		subi r18,lo8(-(1))
+ 1215               		sbci r19,hi8(-(1))
+ 1216               		movw r22,r18
+ 1217               		call uartReceiveByte
+ 1218               		tst r24
+ 321:uart4.c       **** 
+ 322:uart4.c       **** int uart2GetByte(void)
+ 323:uart4.c       **** {
+ 1219               	n	68,0,327,.LM124-.LFBB21
+ 1220               	.LM124:
+ 1221               		ldd r24,Y+1
+ 1222 053a DF93      		mov r18,r24
+ 1223 053c CF93      		ldi r19,lo8(0)
+ 1224 053e 00D0      		std Y+3,r19
+ 1225 0540 0F92      		std Y+2,r18
+ 1226 0542 CDB7      		rjmp .L59
+ 1227 0544 DEB7      	.L58:
+ 1229               	.LM125:
+ 324:uart4.c       **** 	// get single byte from receive buffer (if available)
+ 325:uart4.c       **** 	u08 c;
+ 326:uart4.c       **** 	if(uartReceiveByte(2,&c))
+ 1230               	8(-1)
+ 1231               		ldi r25,hi8(-1)
+ 1232 0546 82E0      		std Y+3,r25
+ 1233 0548 9E01      		std Y+2,r24
+ 1234 054a 2F5F      	.L59:
+ 1235 054c 3F4F      		ldd r24,Y+2
+ 1236 054e B901      		ldd r25,Y+3
+ 1237 0550 0E94 0000 	/* epilogue start */
+ 1239 0556 01F0      	.LM126:
+ 327:uart4.c       **** 		return c;
+ 1240               	_reg__
+ 1241               		pop __tmp_reg__
+ 1242 0558 8981      		pop __tmp_reg__
+ 1243 055a 282F      		pop r28
+ 1244 055c 30E0      		pop r29
+ 1245 055e 3B83      		ret
+ 328:uart4.c       **** 	else
+ 329:uart4.c       **** 		return -1;
+ 1249               	24,0,0,.Lscope21-.LFBB21
+ 1250               	.Lscope21:
+ 1252 0566 9FEF      	.global	uart3GetByte
+ 1254 056a 8A83      	uart3GetByte:
+ 1256 056c 8A81      	.LM127:
+ 1257 056e 9B81      	.LFBB22:
+ 1258               		push r29
+ 330:uart4.c       **** }
+ 1259               		rcall .
+ 1260               		push __tmp_reg__
+ 1261 0570 0F90      		in r28,__SP_L__
+ 1262 0572 0F90      		in r29,__SP_H__
+ 1263 0574 0F90      	/* prologue: function */
+ 1264 0576 CF91      	/* frame size = 3 */
+ 1266 057a 0895      	.LM128:
+ 1267               		ldi r24,lo8(3)
+ 1268               		movw r18,r28
+ 1269               		subi r18,lo8(-(1))
+ 1270               		sbci r19,hi8(-(1))
+ 1271               		movw r22,r18
+ 1272               		call uartReceiveByte
+ 1273               		tst r24
+ 1274               		breq .L62
+ 331:uart4.c       **** 
+ 332:uart4.c       **** int uart3GetByte(void)
+ 333:uart4.c       **** {
+ 1276               	Y+1
+ 1277               		mov r18,r24
+ 1278               		ldi r19,lo8(0)
+ 1279 057c DF93      		std Y+3,r19
+ 1280 057e CF93      		std Y+2,r18
+ 1281 0580 00D0      		rjmp .L63
+ 1282 0582 0F92      	.L62:
+ 1284 0586 DEB7      	.LM130:
+ 1285               		ldi r24,lo8(-1)
+ 1286               		ldi r25,hi8(-1)
+ 334:uart4.c       **** 	// get single byte from receive buffer (if available)
+ 335:uart4.c       **** 	u08 c;
+ 336:uart4.c       **** 	if(uartReceiveByte(3,&c))
+ 1287               	5
+ 1288               		std Y+2,r24
+ 1289 0588 83E0      	.L63:
+ 1290 058a 9E01      		ldd r24,Y+2
+ 1291 058c 2F5F      		ldd r25,Y+3
+ 1292 058e 3F4F      	/* epilogue start */
+ 1294 0592 0E94 0000 	.LM131:
+ 1295 0596 8823      		pop __tmp_reg__
+ 1296 0598 01F0      		pop __tmp_reg__
+ 337:uart4.c       **** 		return c;
+ 1297               	_reg__
+ 1298               		pop r28
+ 1299 059a 8981      		pop r29
+ 1300 059c 282F      		ret
+ 1305               	.Lscope22:
+ 338:uart4.c       **** 	else
+ 339:uart4.c       **** 		return -1;
+ 1306               	uartReceiveByte:F(9,1)",36,0,0,uartReceiveByte
+ 1309 05a8 9FEF      	.global	uartReceiveByte
+ 1311 05ac 8A83      	uartReceiveByte:
+ 1313 05ae 8A81      	.LM132:
+ 1314 05b0 9B81      	.LFBB23:
+ 1315               		push r29
+ 340:uart4.c       **** }
+ 1316               		rcall .
+ 1317               		rcall .
+ 1318 05b2 0F90      		in r28,__SP_L__
+ 1319 05b4 0F90      		in r29,__SP_H__
+ 1320 05b6 0F90      	/* prologue: function */
+ 1321 05b8 CF91      	/* frame size = 4 */
+ 1322 05ba DF91      		std Y+1,r24
+ 1323 05bc 0895      		std Y+3,r23
+ 1324               		std Y+2,r22
+ 1326               	.LM133:
+ 1327               		ldd r24,Y+1
+ 1328               		mov r24,r24
+ 1329               		ldi r25,lo8(0)
+ 1330               		lsl r24
+ 1331               		rol r25
+ 1332               		lsl r24
+ 1333               		rol r25
+ 1334               		adiw r24,1
+ 341:uart4.c       **** 
+ 342:uart4.c       **** 
+ 343:uart4.c       **** u08 uartReceiveByte(u08 nUart, u08* rxData)
+ 344:uart4.c       **** {
+ 1335               	movw r30,r24
+ 1336               		subi r30,lo8(-(uartRxBuffer))
+ 1337               		sbci r31,hi8(-(uartRxBuffer))
+ 1338 05be DF93      		ld r24,Z
+ 1339 05c0 CF93      		ldd r25,Z+1
+ 1340 05c2 00D0      		sbiw r24,0
+ 1341 05c4 00D0      		breq .L66
+ 1343 05c8 DEB7      	.LM134:
+ 1344               		ldd r24,Y+1
+ 1345               		mov r24,r24
+ 1346 05ca 8983      		ldi r25,lo8(0)
+ 1347 05cc 7B83      		lsl r24
+ 1348 05ce 6A83      		rol r25
+ 345:uart4.c       **** 	// make sure we have a receive buffer
+ 346:uart4.c       **** 	if(uartRxBuffer[nUart].size)
+ 1349               	sl r24
+ 1350               		rol r25
+ 1351 05d0 8981      		lsl r24
+ 1352 05d2 882F      		rol r25
+ 1353 05d4 90E0      		movw r30,r24
+ 1354 05d6 880F      		subi r30,lo8(-(uartRxBuffer))
+ 1355 05d8 991F      		sbci r31,hi8(-(uartRxBuffer))
+ 1356 05da 880F      		ld r24,Z
+ 1357 05dc 991F      		ldd r25,Z+1
+ 1358 05de 0196      		sbiw r24,0
+ 1359 05e0 880F      		breq .L67
+ 1361 05e4 FC01      	.LM135:
+ 1362 05e6 E050      		ldd r24,Y+1
+ 1363 05e8 F040      		mov r24,r24
+ 1364 05ea 8081      		ldi r25,lo8(0)
+ 1365 05ec 9181      		lsl r24
+ 1366 05ee 0097      		rol r25
+ 1367 05f0 01F0      		lsl r24
+ 347:uart4.c       **** 	{
+ 348:uart4.c       **** 		// make sure we have data
+ 349:uart4.c       **** 		if(uartRxBuffer[nUart].datalength)
+ 1368               	rol r25
+ 1369               		subi r24,lo8(-(uartRxBuffer))
+ 1370 05f2 8981      		sbci r25,hi8(-(uartRxBuffer))
+ 1371 05f4 882F      		call bufferGetFromFront
+ 1372 05f6 90E0      		ldd r30,Y+2
+ 1373 05f8 880F      		ldd r31,Y+3
+ 1374 05fa 991F      		st Z,r24
+ 1376 05fe 880F      	.LM136:
+ 1377 0600 991F      		ldi r24,lo8(-1)
+ 1378 0602 880F      		std Y+4,r24
+ 1379 0604 991F      		rjmp .L68
+ 1380 0606 FC01      	.L67:
+ 1382 060a F040      	.LM137:
+ 1383 060c 8081      		std Y+4,__zero_reg__
+ 1384 060e 9181      		rjmp .L68
+ 1385 0610 0097      	.L66:
+ 350:uart4.c       **** 		{
+ 351:uart4.c       **** 			// get byte from beginning of buffer
+ 352:uart4.c       **** 			*rxData = bufferGetFromFront(&uartRxBuffer[nUart]);
+ 1387               	zero_reg__
+ 1388               	.L68:
+ 1389 0614 8981      		ldd r24,Y+4
+ 1390 0616 882F      	/* epilogue start */
+ 1392 061a 880F      	.LM139:
+ 1393 061c 991F      		pop __tmp_reg__
+ 1394 061e 880F      		pop __tmp_reg__
+ 1395 0620 991F      		pop __tmp_reg__
+ 1396 0622 880F      		pop __tmp_reg__
+ 1397 0624 991F      		pop r28
+ 1398 0626 8050      		pop r29
+ 1399 0628 9040      		ret
+ 1401 062e EA81      	.Lscope23:
+ 353:uart4.c       **** 			return TRUE;
+ 1404               	ReceiveBuffer
+ 1406 0634 8FEF      	uartFlushReceiveBuffer:
+ 1408 0638 00C0      	.LM140:
+ 1409               	.LFBB24:
+ 354:uart4.c       **** 		}
+ 355:uart4.c       **** 		else
+ 356:uart4.c       **** 			return FALSE;			// no data
+ 1410               	r29
+ 1411               		push r28
+ 1412 063a 1C82      		push __tmp_reg__
+ 1413 063c 00C0      		in r28,__SP_L__
+ 1414               		in r29,__SP_H__
+ 357:uart4.c       **** 	}
+ 358:uart4.c       **** 	else
+ 359:uart4.c       **** 		return FALSE;				// no buffer
+ 1415               	ologue: function */
+ 1416               	/* frame size = 1 */
+ 1417 063e 1C82      		std Y+1,r24
+ 1419 0640 8C81      	.LM141:
+ 1420               		ldd r24,Y+1
+ 360:uart4.c       **** }
+ 1421               	24,r24
+ 1422               		ldi r25,lo8(0)
+ 1423 0642 0F90      		lsl r24
+ 1424 0644 0F90      		rol r25
+ 1425 0646 0F90      		lsl r24
+ 1426 0648 0F90      		rol r25
+ 1427 064a CF91      		lsl r24
+ 1428 064c DF91      		rol r25
+ 1429 064e 0895      		subi r24,lo8(-(uartRxBuffer))
+ 1430               		sbci r25,hi8(-(uartRxBuffer))
+ 1431               		call bufferFlush
+ 1432               	/* epilogue start */
+ 1434               	.LM142:
+ 1435               		pop __tmp_reg__
+ 1436               		pop r28
+ 361:uart4.c       **** 
+ 362:uart4.c       **** void uartFlushReceiveBuffer(u08 nUart)
+ 363:uart4.c       **** {
+ 1437               	size	uartFlushReceiveBuffer, .-uartFlushReceiveBuffer
+ 1438               	.Lscope24:
+ 1441 0652 CF93      	.global	uartReceiveBufferIsEmpty
+ 1443 0656 CDB7      	uartReceiveBufferIsEmpty:
+ 1445               	.LM143:
+ 1446               	.LFBB25:
+ 1447 065a 8983      		push r29
+ 364:uart4.c       **** 	// flush all data from receive buffer
+ 365:uart4.c       **** 	bufferFlush(&uartRxBuffer[nUart]);
+ 1448               	rcall .
+ 1449               		in r28,__SP_L__
+ 1450 065c 8981      		in r29,__SP_H__
+ 1451 065e 882F      	/* prologue: function */
+ 1452 0660 90E0      	/* frame size = 2 */
+ 1453 0662 880F      		std Y+1,r24
+ 1455 0666 880F      	.LM144:
+ 1456 0668 991F      		ldd r24,Y+1
+ 1457 066a 880F      		mov r24,r24
+ 1458 066c 991F      		ldi r25,lo8(0)
+ 1459 066e 8050      		lsl r24
+ 1460 0670 9040      		rol r25
+ 1461 0672 0E94 0000 		adiw r24,1
+ 1462               		lsl r24
+ 366:uart4.c       **** }
+ 1463               	24
+ 1464               		rol r25
+ 1465 0676 0F90      		movw r30,r24
+ 1466 0678 CF91      		subi r30,lo8(-(uartRxBuffer))
+ 1467 067a DF91      		sbci r31,hi8(-(uartRxBuffer))
+ 1468 067c 0895      		ld r24,Z
+ 1469               		ldd r25,Z+1
+ 1470               		std Y+2,__zero_reg__
+ 1471               		sbiw r24,0
+ 1472               		brne .L73
+ 1473               		ldi r24,lo8(1)
+ 1474               		std Y+2,r24
+ 1475               	.L73:
+ 367:uart4.c       **** 
+ 368:uart4.c       **** u08 uartReceiveBufferIsEmpty(u08 nUart)
+ 369:uart4.c       **** {
+ 1476               	/* epilogue start */
+ 1478               	.LM145:
+ 1479 067e DF93      		pop __tmp_reg__
+ 1480 0680 CF93      		pop __tmp_reg__
+ 1481 0682 00D0      		pop r28
+ 1482 0684 CDB7      		pop r29
+ 1483 0686 DEB7      		ret
+ 1485               	.Lscope25:
+ 370:uart4.c       **** 	return (uartRxBuffer[nUart].datalength == 0);
+ 1487               	art:p(9,1)",160,0,0,1
+ 1489 068a 8981      	.global	uartAddToTxBuffer
+ 1491 068e 90E0      	uartAddToTxBuffer:
+ 1493 0692 991F      	.LM146:
+ 1494 0694 0196      	.LFBB26:
+ 1495 0696 880F      		push r29
+ 1496 0698 991F      		push r28
+ 1497 069a 880F      		rcall .
+ 1498 069c 991F      		in r28,__SP_L__
+ 1499 069e FC01      		in r29,__SP_H__
+ 1500 06a0 E050      	/* prologue: function */
+ 1501 06a2 F040      	/* frame size = 2 */
+ 1502 06a4 8081      		std Y+1,r24
+ 1503 06a6 9181      		std Y+2,r22
+ 1505 06aa 0097      	.LM147:
+ 1506 06ac 01F4      		ldd r24,Y+1
+ 1507 06ae 81E0      		mov r24,r24
+ 1508 06b0 8A83      		ldi r25,lo8(0)
+ 1509               		lsl r24
+ 1510 06b2 8A81      		rol r25
+ 1511               		lsl r24
+ 371:uart4.c       **** }
+ 1512               	5
+ 1513               		subi r24,lo8(-(uartTxBuffer))
+ 1514 06b4 0F90      		sbci r25,hi8(-(uartTxBuffer))
+ 1515 06b6 0F90      		ldd r22,Y+2
+ 1516 06b8 CF91      		call bufferAddToEnd
+ 1517 06ba DF91      	/* epilogue start */
+ 1519               	.LM148:
+ 1520               		pop __tmp_reg__
+ 1521               		pop __tmp_reg__
+ 1522               		pop r28
+ 1523               		pop r29
+ 1524               		ret
+ 1526               	.Lscope26:
+ 372:uart4.c       **** 
+ 373:uart4.c       **** void uartAddToTxBuffer(u08 nUart, u08 data)
+ 374:uart4.c       **** {
+ 1527               	ddToTxBuffer:F(0,15)",36,0,0,uart0AddToTxBuffer
+ 1529               	.global	uart0AddToTxBuffer
+ 1531 06c0 CF93      	uart0AddToTxBuffer:
+ 1533 06c4 CDB7      	.LM149:
+ 1534 06c6 DEB7      	.LFBB27:
+ 1535               		push r29
+ 1536               		push r28
+ 1537 06c8 8983      		push __tmp_reg__
+ 1538 06ca 6A83      		in r28,__SP_L__
+ 375:uart4.c       **** 	// add data byte to the end of the tx buffer
+ 376:uart4.c       **** 	bufferAddToEnd(&uartTxBuffer[nUart], data);
+ 1539               	_H__
+ 1540               	/* prologue: function */
+ 1541 06cc 8981      	/* frame size = 1 */
+ 1542 06ce 882F      		std Y+1,r24
+ 1544 06d2 880F      	.LM150:
+ 1545 06d4 991F      		ldi r24,lo8(0)
+ 1546 06d6 880F      		ldd r22,Y+1
+ 1547 06d8 991F      		call uartAddToTxBuffer
+ 1548 06da 880F      	/* epilogue start */
+ 1550 06de 8050      	.LM151:
+ 1551 06e0 9040      		pop __tmp_reg__
+ 1552 06e2 6A81      		pop r28
+ 1553 06e4 0E94 0000 		pop r29
+ 1554               		ret
+ 377:uart4.c       **** }
+ 1555               	oTxBuffer, .-uart0AddToTxBuffer
+ 1556               	.Lscope27:
+ 1559 06ec CF91      	.global	uart1AddToTxBuffer
+ 1561 06f0 0895      	uart1AddToTxBuffer:
+ 1563               	.LM152:
+ 1564               	.LFBB28:
+ 1565               		push r29
+ 1566               		push r28
+ 1567               		push __tmp_reg__
+ 1568               		in r28,__SP_L__
+ 378:uart4.c       **** 
+ 379:uart4.c       **** void uart0AddToTxBuffer(u08 data)
+ 380:uart4.c       **** {
+ 1569               	__
+ 1570               	/* prologue: function */
+ 1571               	/* frame size = 1 */
+ 1572 06f2 DF93      		std Y+1,r24
+ 1574 06f6 0F92      	.LM153:
+ 1575 06f8 CDB7      		ldi r24,lo8(1)
+ 1576 06fa DEB7      		ldd r22,Y+1
+ 1577               		call uartAddToTxBuffer
+ 1578               	/* epilogue start */
+ 381:uart4.c       **** 	uartAddToTxBuffer(0,data);
+ 1580               	p __tmp_reg__
+ 1581               		pop r28
+ 1582 06fe 80E0      		pop r29
+ 1583 0700 6981      		ret
+ 1585               	.Lscope28:
+ 382:uart4.c       **** }
+ 1586               	s	"uart2AddToTxBuffer:F(0,15)",36,0,0,uart2AddToTxBuffer
+ 1588 0706 0F90      	.global	uart2AddToTxBuffer
+ 1590 070a DF91      	uart2AddToTxBuffer:
+ 1592               	.LM155:
+ 1593               	.LFBB29:
+ 1594               		push r29
+ 1595               		push r28
+ 1596               		push __tmp_reg__
+ 1597               		in r28,__SP_L__
+ 1598               		in r29,__SP_H__
+ 383:uart4.c       **** 
+ 384:uart4.c       **** void uart1AddToTxBuffer(u08 data)
+ 385:uart4.c       **** {
+ 1599               	function */
+ 1600               	/* frame size = 1 */
+ 1601               		std Y+1,r24
+ 1603 0710 CF93      	.LM156:
+ 1604 0712 0F92      		ldi r24,lo8(2)
+ 1605 0714 CDB7      		ldd r22,Y+1
+ 1606 0716 DEB7      		call uartAddToTxBuffer
+ 1607               	/* epilogue start */
+ 1609 0718 8983      	.LM157:
+ 386:uart4.c       **** 	uartAddToTxBuffer(1,data);
+ 1610               	reg__
+ 1611               		pop r28
+ 1612 071a 81E0      		pop r29
+ 1613 071c 6981      		ret
+ 1615               	.Lscope29:
+ 387:uart4.c       **** }
+ 1616               	s	"uart3AddToTxBuffer:F(0,15)",36,0,0,uart3AddToTxBuffer
+ 1618 0722 0F90      	.global	uart3AddToTxBuffer
+ 1620 0726 DF91      	uart3AddToTxBuffer:
+ 1622               	.LM158:
+ 1623               	.LFBB30:
+ 1624               		push r29
+ 1625               		push r28
+ 1626               		push __tmp_reg__
+ 1627               		in r28,__SP_L__
+ 1628               		in r29,__SP_H__
+ 388:uart4.c       **** 
+ 389:uart4.c       **** void uart2AddToTxBuffer(u08 data)
+ 390:uart4.c       **** {
+ 1629               	function */
+ 1630               	/* frame size = 1 */
+ 1631               		std Y+1,r24
+ 1633 072c CF93      	.LM159:
+ 1634 072e 0F92      		ldi r24,lo8(3)
+ 1635 0730 CDB7      		ldd r22,Y+1
+ 1636 0732 DEB7      		call uartAddToTxBuffer
+ 1637               	/* epilogue start */
+ 1639 0734 8983      	.LM160:
+ 391:uart4.c       **** 	uartAddToTxBuffer(2,data);
+ 1640               	reg__
+ 1641               		pop r28
+ 1642 0736 82E0      		pop r29
+ 1643 0738 6981      		ret
+ 1645               	.Lscope30:
+ 392:uart4.c       **** }
+ 1646               	s	"uartSendTxBuffer:F(0,15)",36,0,0,uartSendTxBuffer
+ 1648 073e 0F90      	.global	uartSendTxBuffer
+ 1650 0742 DF91      	uartSendTxBuffer:
+ 1652               	.LM161:
+ 1653               	.LFBB31:
+ 1654               		push r29
+ 1655               		push r28
+ 1656               		push __tmp_reg__
+ 1657               		in r28,__SP_L__
+ 1658               		in r29,__SP_H__
+ 393:uart4.c       **** 
+ 394:uart4.c       **** void uart3AddToTxBuffer(u08 data)
+ 395:uart4.c       **** {
+ 1659               	function */
+ 1660               	/* frame size = 1 */
+ 1661               		std Y+1,r24
+ 1663 0748 CF93      	.LM162:
+ 1664 074a 0F92      		ldd r24,Y+1
+ 1665 074c CDB7      		mov r24,r24
+ 1666 074e DEB7      		ldi r25,lo8(0)
+ 1667               		movw r30,r24
+ 1668               		subi r30,lo8(-(uartBufferedTx))
+ 1669 0750 8983      		sbci r31,hi8(-(uartBufferedTx))
+ 396:uart4.c       **** 	uartAddToTxBuffer(3,data);
+ 1670               	8(-1)
+ 1671               		st Z,r24
+ 1673 0754 6981      	.LM163:
+ 1674 0756 0E94 0000 		ldd r24,Y+1
+ 1675               		mov r24,r24
+ 397:uart4.c       **** }
+ 1676               	25,lo8(0)
+ 1677               		lsl r24
+ 1678 075a 0F90      		rol r25
+ 1679 075c CF91      		lsl r24
+ 1680 075e DF91      		rol r25
+ 1681 0760 0895      		lsl r24
+ 1682               		rol r25
+ 1683               		subi r24,lo8(-(uartTxBuffer))
+ 1684               		sbci r25,hi8(-(uartTxBuffer))
+ 1685               		call bufferGetFromFront
+ 1686               		mov r25,r24
+ 1687               		ldd r24,Y+1
+ 1688               		mov r22,r25
+ 398:uart4.c       **** 
+ 399:uart4.c       **** void uartSendTxBuffer(u08 nUart)
+ 400:uart4.c       **** {
+ 1689               	dByte
+ 1690               	/* epilogue start */
+ 1692 0762 DF93      	.LM164:
+ 1693 0764 CF93      		pop __tmp_reg__
+ 1694 0766 0F92      		pop r28
+ 1695 0768 CDB7      		pop r29
+ 1696 076a DEB7      		ret
+ 1698               	.Lscope31:
+ 401:uart4.c       **** 	// turn on buffered transmit
+ 402:uart4.c       **** 	uartBufferedTx[nUart] = TRUE;
+ 1700               	art:p(9,1)",160,0,0,1
+ 1703 0770 882F      	.global	uartSendBuffer
+ 1705 0774 FC01      	uartSendBuffer:
+ 1707 0778 F040      	.LM165:
+ 1708 077a 8FEF      	.LFBB32:
+ 1709 077c 8083      		push r29
+ 403:uart4.c       **** 	// send the first byte to get things going by interrupts
+ 404:uart4.c       **** 	uartSendByte(nUart, bufferGetFromFront(&uartTxBuffer[nUart]));
+ 1710               		in r28,__SP_L__
+ 1711               		in r29,__SP_H__
+ 1712 077e 8981      		sbiw r28,9
+ 1713 0780 882F      		in __tmp_reg__,__SREG__
+ 1714 0782 90E0      		cli
+ 1715 0784 880F      		out __SP_H__,r29
+ 1716 0786 991F      		out __SREG__,__tmp_reg__
+ 1717 0788 880F      		out __SP_L__,r28
+ 1718 078a 991F      	/* prologue: function */
+ 1719 078c 880F      	/* frame size = 9 */
+ 1720 078e 991F      		std Y+1,r24
+ 1721 0790 8050      		std Y+3,r23
+ 1722 0792 9040      		std Y+2,r22
+ 1723 0794 0E94 0000 		std Y+5,r21
+ 1724 0798 982F      		std Y+4,r20
+ 1726 079c 692F      	.LM166:
+ 1727 079e 0E94 0000 		ldd r24,Y+1
+ 1728               		mov r24,r24
+ 405:uart4.c       **** }
+ 1729               	l r24
+ 1730               		rol r25
+ 1731 07a2 0F90      		adiw r24,1
+ 1732 07a4 CF91      		lsl r24
+ 1733 07a6 DF91      		rol r25
+ 1734 07a8 0895      		lsl r24
+ 1735               		rol r25
+ 1736               		movw r30,r24
+ 1737               		subi r30,lo8(-(uartTxBuffer))
+ 1738               		sbci r31,hi8(-(uartTxBuffer))
+ 1739               		ld r18,Z
+ 1740               		ldd r19,Z+1
+ 1741               		ldd r24,Y+4
+ 1742               		ldd r25,Y+5
+ 1743               		add r18,r24
+ 406:uart4.c       **** 
+ 407:uart4.c       **** u08 uartSendBuffer(u08 nUart, char *buffer, u16 nBytes)
+ 408:uart4.c       **** {
+ 1744               	dd r24,Y+1
+ 1745               		mov r24,r24
+ 1746               		ldi r25,lo8(0)
+ 1747 07aa DF93      		lsl r24
+ 1748 07ac CF93      		rol r25
+ 1749 07ae CDB7      		lsl r24
+ 1750 07b0 DEB7      		rol r25
+ 1751 07b2 2997      		adiw r24,1
+ 1752 07b4 0FB6      		lsl r24
+ 1753 07b6 F894      		rol r25
+ 1754 07b8 DEBF      		movw r30,r24
+ 1755 07ba 0FBE      		subi r30,lo8(-(uartTxBuffer))
+ 1756 07bc CDBF      		sbci r31,hi8(-(uartTxBuffer))
+ 1757               		ld r24,Z
+ 1758               		ldd r25,Z+1
+ 1759 07be 8983      		cp r18,r24
+ 1760 07c0 7B83      		cpc r19,r25
+ 1761 07c2 6A83      		brlo .+2
+ 1762 07c4 5D83      		rjmp .L88
+ 1763 07c6 4C83      		ldd r24,Y+4
+ 409:uart4.c       **** 	register u08 first;
+ 410:uart4.c       **** 	register u16 i;
+ 411:uart4.c       **** 
+ 412:uart4.c       **** 	// check if there's space (and that we have any bytes to send at all)
+ 413:uart4.c       **** 	if((uartTxBuffer[nUart].datalength + nBytes < uartTxBuffer[nUart].size) && nBytes)
+ 1764               	24,0
+ 1765               		brne .+2
+ 1766 07c8 8981      		rjmp .L88
+ 1768 07cc 90E0      	.LM167:
+ 1769 07ce 880F      		ldd r30,Y+2
+ 1770 07d0 991F      		ldd r31,Y+3
+ 1771 07d2 0196      		ld r18,Z
+ 1772 07d4 880F      		std Y+8,r18
+ 1773 07d6 991F      		ldd r24,Y+2
+ 1774 07d8 880F      		ldd r25,Y+3
+ 1775 07da 991F      		adiw r24,1
+ 1776 07dc FC01      		std Y+3,r25
+ 1777 07de E050      		std Y+2,r24
+ 1779 07e2 2081      	.LM168:
+ 1780 07e4 3181      		std Y+7,__zero_reg__
+ 1781 07e6 8C81      		std Y+6,__zero_reg__
+ 1782 07e8 9D81      		rjmp .L89
+ 1783 07ea 280F      	.L90:
+ 1785 07ee 8981      	.LM169:
+ 1786 07f0 882F      		ldd r24,Y+1
+ 1787 07f2 90E0      		mov r24,r24
+ 1788 07f4 880F      		ldi r25,lo8(0)
+ 1789 07f6 991F      		lsl r24
+ 1790 07f8 880F      		rol r25
+ 1791 07fa 991F      		lsl r24
+ 1792 07fc 0196      		rol r25
+ 1793 07fe 880F      		lsl r24
+ 1794 0800 991F      		rol r25
+ 1795 0802 FC01      		movw r18,r24
+ 1796 0804 E050      		subi r18,lo8(-(uartTxBuffer))
+ 1797 0806 F040      		sbci r19,hi8(-(uartTxBuffer))
+ 1798 0808 8081      		ldd r30,Y+2
+ 1799 080a 9181      		ldd r31,Y+3
+ 1800 080c 2817      		ld r20,Z
+ 1801 080e 3907      		ldd r24,Y+2
+ 1802 0810 00F0      		ldd r25,Y+3
+ 1803 0812 00C0      		adiw r24,1
+ 1804 0814 8C81      		std Y+3,r25
+ 1805 0816 9D81      		std Y+2,r24
+ 1806 0818 0097      		movw r24,r18
+ 1807 081a 01F4      		mov r22,r20
+ 1808 081c 00C0      		call bufferAddToEnd
+ 414:uart4.c       **** 	{
+ 415:uart4.c       **** 		// grab first character
+ 416:uart4.c       **** 		first = *buffer++;
+ 1809               	r24,Y+6
+ 1810               		ldd r25,Y+7
+ 1811 081e EA81      		adiw r24,1
+ 1812 0820 FB81      		std Y+7,r25
+ 1813 0822 2081      		std Y+6,r24
+ 1814 0824 2887      	.L89:
+ 1815 0826 8A81      		ldd r24,Y+4
+ 1816 0828 9B81      		ldd r25,Y+5
+ 1817 082a 0196      		sbiw r24,1
+ 1818 082c 9B83      		ldd r18,Y+6
+ 1819 082e 8A83      		ldd r19,Y+7
+ 417:uart4.c       **** 		// copy user buffer to uart transmit buffer
+ 418:uart4.c       **** 		for(i = 0; i < nBytes-1; i++)
+ 1820               	
+ 1821               		cpc r19,r25
+ 1822 0830 1F82      		brlo .L90
+ 1824 0834 00C0      	.LM171:
+ 1825               		ldd r24,Y+1
+ 419:uart4.c       **** 		{
+ 420:uart4.c       **** 			// put data bytes at end of buffer
+ 421:uart4.c       **** 			bufferAddToEnd(&uartTxBuffer[nUart], *buffer++);
+ 1826               	r24,r24
+ 1827               		ldi r25,lo8(0)
+ 1828 0836 8981      		movw r30,r24
+ 1829 0838 882F      		subi r30,lo8(-(uartBufferedTx))
+ 1830 083a 90E0      		sbci r31,hi8(-(uartBufferedTx))
+ 1831 083c 880F      		ldi r24,lo8(-1)
+ 1832 083e 991F      		st Z,r24
+ 1834 0842 991F      	.LM172:
+ 1835 0844 880F      		ldd r24,Y+1
+ 1836 0846 991F      		ldd r22,Y+8
+ 1837 0848 9C01      		call uartSendByte
+ 1839 084c 3040      	.LM173:
+ 1840 084e EA81      		ldi r19,lo8(-1)
+ 1841 0850 FB81      		std Y+9,r19
+ 1842 0852 4081      		rjmp .L91
+ 1843 0854 8A81      	.L88:
+ 1845 0858 0196      	.LM174:
+ 1846 085a 9B83      		std Y+9,__zero_reg__
+ 1847 085c 8A83      	.L91:
+ 1848 085e C901      		ldd r24,Y+9
+ 1849 0860 642F      	/* epilogue start */
+ 1851               	.LM175:
+ 1852               		adiw r28,9
+ 1853 0866 8E81      		in __tmp_reg__,__SREG__
+ 1854 0868 9F81      		cli
+ 1855 086a 0196      		out __SP_H__,r29
+ 1856 086c 9F83      		out __SREG__,__tmp_reg__
+ 1857 086e 8E83      		out __SP_L__,r28
+ 1858               		pop r28
+ 1859 0870 8C81      		pop r29
+ 1860 0872 9D81      		ret
+ 1866 087e 00F0      	.Lscope32:
+ 422:uart4.c       **** 		}
+ 423:uart4.c       **** 
+ 424:uart4.c       **** 		// send the first byte to get things going by interrupts
+ 425:uart4.c       **** 		uartBufferedTx[nUart] = TRUE;
+ 1867               	0,0,uartTransmitService
+ 1869 0880 8981      	.global	uartTransmitService
+ 1871 0884 90E0      	uartTransmitService:
+ 1873 0888 E050      	.LM176:
+ 1874 088a F040      	.LFBB33:
+ 1875 088c 8FEF      		push r16
+ 1876 088e 8083      		push r17
+ 426:uart4.c       **** 		uartSendByte(nUart, first);
+ 1877               		push r28
+ 1878               		push __tmp_reg__
+ 1879 0890 8981      		in r28,__SP_L__
+ 1880 0892 6885      		in r29,__SP_H__
+ 1881 0894 0E94 0000 	/* prologue: function */
+ 427:uart4.c       **** 		// return success
+ 428:uart4.c       **** 		return TRUE;
+ 1882               	ame size = 1 */
+ 1883               		std Y+1,r24
+ 1885 089a 3987      	.LM177:
+ 1886 089c 00C0      		ldd r24,Y+1
+ 1887               		mov r24,r24
+ 429:uart4.c       **** 	}
+ 430:uart4.c       **** 	else
+ 431:uart4.c       **** 	{
+ 432:uart4.c       **** 		// return failure
+ 433:uart4.c       **** 		return FALSE;
+ 1888               	25,lo8(0)
+ 1889               		movw r30,r24
+ 1890 089e 1986      		subi r30,lo8(-(uartBufferedTx))
+ 1891               		sbci r31,hi8(-(uartBufferedTx))
+ 1892 08a0 8985      		ld r24,Z
+ 1893               		tst r24
+ 434:uart4.c       **** 	}
+ 435:uart4.c       **** }
+ 1894               	.+2
+ 1895               		rjmp .L94
+ 1897 08a4 0FB6      	.LM178:
+ 1898 08a6 F894      		ldd r24,Y+1
+ 1899 08a8 DEBF      		mov r24,r24
+ 1900 08aa 0FBE      		ldi r25,lo8(0)
+ 1901 08ac CDBF      		lsl r24
+ 1902 08ae CF91      		rol r25
+ 1903 08b0 DF91      		adiw r24,1
+ 1904 08b2 0895      		lsl r24
+ 1905               		rol r25
+ 1906               		lsl r24
+ 1907               		rol r25
+ 1908               		movw r30,r24
+ 1909               		subi r30,lo8(-(uartTxBuffer))
+ 1910               		sbci r31,hi8(-(uartTxBuffer))
+ 1911               		ld r24,Z
+ 1912               		ldd r25,Z+1
+ 1913               		sbiw r24,0
+ 1914               		breq .L95
+ 436:uart4.c       **** 
+ 437:uart4.c       **** // UART Transmit Complete Interrupt Function
+ 438:uart4.c       **** void uartTransmitService(u08 nUart)
+ 439:uart4.c       **** {
+ 1916               	cpi r24,lo8(3)
+ 1917               		brne .L96
+ 1919 08b4 0F93      	.LM180:
+ 1920 08b6 1F93      		ldi r16,lo8(310)
+ 1921 08b8 DF93      		ldi r17,hi8(310)
+ 1922 08ba CF93      		ldi r24,lo8(uartTxBuffer+24)
+ 1923 08bc 0F92      		ldi r25,hi8(uartTxBuffer+24)
+ 1924 08be CDB7      		call bufferGetFromFront
+ 1925 08c0 DEB7      		movw r30,r16
+ 1926               		st Z,r24
+ 1927               		rjmp .L102
+ 1928 08c2 8983      	.L96:
+ 440:uart4.c       **** 	// check if buffered tx is enabled
+ 441:uart4.c       **** 	if(uartBufferedTx[nUart])
+ 1929               	449,.LM181-.LFBB33
+ 1930               	.LM181:
+ 1931 08c4 8981      		ldd r24,Y+1
+ 1932 08c6 882F      		cpi r24,lo8(2)
+ 1933 08c8 90E0      		brne .L98
+ 1935 08cc E050      	.LM182:
+ 1936 08ce F040      		ldi r16,lo8(214)
+ 1937 08d0 8081      		ldi r17,hi8(214)
+ 1938 08d2 8823      		ldi r24,lo8(uartTxBuffer+16)
+ 1939 08d4 01F4      		ldi r25,hi8(uartTxBuffer+16)
+ 1940 08d6 00C0      		call bufferGetFromFront
+ 442:uart4.c       **** 	{
+ 443:uart4.c       **** 		// check if there's data left in the buffer
+ 444:uart4.c       **** 		if(uartTxBuffer[nUart].datalength)
+ 1941               	6
+ 1942               		st Z,r24
+ 1943 08d8 8981      		rjmp .L102
+ 1944 08da 882F      	.L98:
+ 1946 08de 880F      	.LM183:
+ 1947 08e0 991F      		ldd r24,Y+1
+ 1948 08e2 0196      		cpi r24,lo8(1)
+ 1949 08e4 880F      		brne .L99
+ 1951 08e8 880F      	.LM184:
+ 1952 08ea 991F      		ldi r16,lo8(206)
+ 1953 08ec FC01      		ldi r17,hi8(206)
+ 1954 08ee E050      		ldi r24,lo8(uartTxBuffer+8)
+ 1955 08f0 F040      		ldi r25,hi8(uartTxBuffer+8)
+ 1956 08f2 8081      		call bufferGetFromFront
+ 1957 08f4 9181      		movw r30,r16
+ 1958 08f6 0097      		st Z,r24
+ 1959 08f8 01F0      		rjmp .L102
+ 445:uart4.c       **** 		{
+ 446:uart4.c       **** 			// send byte from top of buffer
+ 447:uart4.c       **** 			if(nUart==3)
+ 1960               	454,.LM185-.LFBB33
+ 1961               	.LM185:
+ 1962 08fa 8981      		ldi r16,lo8(198)
+ 1963 08fc 8330      		ldi r17,hi8(198)
+ 1964 08fe 01F4      		ldi r24,lo8(uartTxBuffer)
+ 448:uart4.c       **** 				outb(UDR3,  bufferGetFromFront(&uartTxBuffer[3]) );
+ 1965               	r25,hi8(uartTxBuffer)
+ 1966               		call bufferGetFromFront
+ 1967 0900 06E3      		movw r30,r16
+ 1968 0902 11E0      		st Z,r24
+ 1969 0904 80E0      		rjmp .L102
+ 1970 0906 90E0      	.L95:
+ 1972 090c F801      	.LM186:
+ 1973 090e 8083      		ldd r24,Y+1
+ 1974 0910 00C0      		mov r24,r24
+ 1975               		ldi r25,lo8(0)
+ 449:uart4.c       **** 			else if(nUart==2)
+ 1976               	24
+ 1977               		subi r30,lo8(-(uartBufferedTx))
+ 1978 0912 8981      		sbci r31,hi8(-(uartBufferedTx))
+ 1979 0914 8230      		st Z,__zero_reg__
+ 450:uart4.c       **** 				outb(UDR2,  bufferGetFromFront(&uartTxBuffer[2]) );
+ 1981               	7:
+ 1982               		ldd r24,Y+1
+ 1983 0918 06ED      		mov r24,r24
+ 1984 091a 10E0      		ldi r25,lo8(0)
+ 1985 091c 80E0      		movw r30,r24
+ 1986 091e 90E0      		subi r30,lo8(-(uartReadyTx))
+ 1987 0920 0E94 0000 		sbci r31,hi8(-(uartReadyTx))
+ 1988 0924 F801      		ldi r24,lo8(-1)
+ 1989 0926 8083      		st Z,r24
+ 1990 0928 00C0      		rjmp .L102
+ 1991               	.L94:
+ 451:uart4.c       **** 			else if(nUart==1)
+ 1992               	0,468,.LM188-.LFBB33
+ 1993               	.LM188:
+ 1994 092a 8981      		ldd r24,Y+1
+ 1995 092c 8130      		mov r24,r24
+ 1996 092e 01F4      		ldi r25,lo8(0)
+ 452:uart4.c       **** 				outb(UDR1,  bufferGetFromFront(&uartTxBuffer[1]) );
+ 1997               	 r30,r24
+ 1998               		subi r30,lo8(-(uartReadyTx))
+ 1999 0930 0EEC      		sbci r31,hi8(-(uartReadyTx))
+ 2000 0932 10E0      		ldi r24,lo8(-1)
+ 2001 0934 80E0      		st Z,r24
+ 2002 0936 90E0      	.L102:
+ 2003 0938 0E94 0000 	/* epilogue start */
+ 2005 093e 8083      	.LM189:
+ 2006 0940 00C0      		pop __tmp_reg__
+ 2007               		pop r28
+ 453:uart4.c       **** 			else
+ 454:uart4.c       **** 				outb(UDR0,  bufferGetFromFront(&uartTxBuffer[0]) );
+ 2008               	op r17
+ 2009               		pop r16
+ 2010 0942 06EC      		ret
+ 2012 0946 80E0      	.Lscope33:
+ 2015 094e F801      	.global	uartReceiveService
+ 2017 0952 00C0      	uartReceiveService:
+ 455:uart4.c       **** 		}
+ 456:uart4.c       **** 		else
+ 457:uart4.c       **** 		{
+ 458:uart4.c       **** 			// no data left
+ 459:uart4.c       **** 			uartBufferedTx[nUart] = FALSE;
+ 2019               	BB34:
+ 2020               		push r29
+ 2021 0954 8981      		push r28
+ 2022 0956 882F      		rcall .
+ 2023 0958 90E0      		in r28,__SP_L__
+ 2024 095a FC01      		in r29,__SP_H__
+ 2025 095c E050      	/* prologue: function */
+ 2026 095e F040      	/* frame size = 2 */
+ 2027 0960 1082      		std Y+2,r24
+ 460:uart4.c       **** 			// return to ready state
+ 461:uart4.c       **** 			uartReadyTx[nUart] = TRUE;
+ 2028               	8,0,477,.LM191-.LFBB34
+ 2029               	.LM191:
+ 2030 0962 8981      		ldd r24,Y+2
+ 2031 0964 882F      		cpi r24,lo8(3)
+ 2032 0966 90E0      		brne .L104
+ 2034 096a E050      	.LM192:
+ 2035 096c F040      		ldi r30,lo8(310)
+ 2036 096e 8FEF      		ldi r31,hi8(310)
+ 2037 0970 8083      		ld r24,Z
+ 2038 0972 00C0      		std Y+1,r24
+ 2039               		rjmp .L105
+ 462:uart4.c       **** 		}
+ 463:uart4.c       **** 	}
+ 464:uart4.c       **** 	else
+ 465:uart4.c       **** 	{
+ 466:uart4.c       **** 		// we're using single-byte tx mode
+ 467:uart4.c       **** 		// indicate transmit complete, back to ready
+ 468:uart4.c       **** 		uartReadyTx[nUart] = TRUE;
+ 2040               	bn	68,0,479,.LM193-.LFBB34
+ 2041               	.LM193:
+ 2042 0974 8981      		ldd r24,Y+2
+ 2043 0976 882F      		cpi r24,lo8(2)
+ 2044 0978 90E0      		brne .L106
+ 2046 097c E050      	.LM194:
+ 2047 097e F040      		ldi r30,lo8(214)
+ 2048 0980 8FEF      		ldi r31,hi8(214)
+ 2049 0982 8083      		ld r24,Z
+ 2050               		std Y+1,r24
+ 2051               		rjmp .L105
+ 469:uart4.c       **** 	}
+ 470:uart4.c       **** }
+ 2052               	bn	68,0,481,.LM195-.LFBB34
+ 2053               	.LM195:
+ 2054 0984 0F90      		ldd r24,Y+2
+ 2055 0986 CF91      		cpi r24,lo8(1)
+ 2056 0988 DF91      		brne .L107
+ 2058 098c 0F91      	.LM196:
+ 2059 098e 0895      		ldi r30,lo8(206)
+ 2060               		ldi r31,hi8(206)
+ 2061               		ld r24,Z
+ 2062               		std Y+1,r24
+ 2063               		rjmp .L105
+ 2064               	.L107:
+ 2066               	.LM197:
+ 471:uart4.c       **** 
+ 472:uart4.c       **** // UART Receive Complete Interrupt Function
+ 473:uart4.c       **** void uartReceiveService(u08 nUart)
+ 474:uart4.c       **** {
+ 2067               	8)
+ 2068               		ldi r31,hi8(198)
+ 2069               		ld r24,Z
+ 2070 0990 DF93      		std Y+1,r24
+ 2071 0992 CF93      	.L105:
+ 2073 0996 CDB7      	.LM198:
+ 2074 0998 DEB7      		ldd r24,Y+2
+ 2075               		mov r24,r24
+ 2076               		ldi r25,lo8(0)
+ 2077 099a 8A83      		lsl r24
+ 475:uart4.c       **** 	u08 c;
+ 476:uart4.c       **** 	// get received char
+ 477:uart4.c       **** 	if(nUart==3)
+ 2078               	ovw r30,r24
+ 2079               		subi r30,lo8(-(UartRxFunc))
+ 2080 099c 8A81      		sbci r31,hi8(-(UartRxFunc))
+ 2081 099e 8330      		ld r24,Z
+ 2082 09a0 01F4      		ldd r25,Z+1
+ 478:uart4.c       **** 		c = inb(UDR3);
+ 2083               	 r24,0
+ 2084               		breq .L108
+ 2086 09a4 F1E0      	.LM199:
+ 2087 09a6 8081      		ldd r24,Y+2
+ 2088 09a8 8983      		mov r24,r24
+ 2089 09aa 00C0      		ldi r25,lo8(0)
+ 2090               		lsl r24
+ 479:uart4.c       **** 	else if(nUart==2)
+ 2091               	
+ 2092               		movw r30,r24
+ 2093 09ac 8A81      		subi r30,lo8(-(UartRxFunc))
+ 2094 09ae 8230      		sbci r31,hi8(-(UartRxFunc))
+ 2095 09b0 01F4      		ld __tmp_reg__,Z+
+ 480:uart4.c       **** 		c = inb(UDR2);
+ 2096               	r31,Z
+ 2097               		mov r30,__tmp_reg__
+ 2098 09b2 E6ED      		ldd r24,Y+1
+ 2099 09b4 F0E0      		icall
+ 2100 09b6 8081      		rjmp .L110
+ 2101 09b8 8983      	.L108:
+ 2103               	.LM200:
+ 481:uart4.c       **** 	else if(nUart==1)
+ 2104               	,Y+2
+ 2105               		mov r24,r24
+ 2106 09bc 8A81      		ldi r25,lo8(0)
+ 2107 09be 8130      		lsl r24
+ 2108 09c0 01F4      		rol r25
+ 482:uart4.c       **** 		c = inb(UDR1);
+ 2109               	r24
+ 2110               		rol r25
+ 2111 09c2 EEEC      		lsl r24
+ 2112 09c4 F0E0      		rol r25
+ 2113 09c6 8081      		subi r24,lo8(-(uartRxBuffer))
+ 2114 09c8 8983      		sbci r25,hi8(-(uartRxBuffer))
+ 2115 09ca 00C0      		ldd r22,Y+1
+ 2116               		call bufferAddToEnd
+ 483:uart4.c       **** 	else
+ 484:uart4.c       **** 		c = inb(UDR0);
+ 2117               	
+ 2118               		brne .L110
+ 2120 09ce F0E0      	.LM201:
+ 2121 09d0 8081      		ldd r24,Y+2
+ 2122 09d2 8983      		mov r18,r24
+ 2123               		ldi r19,lo8(0)
+ 485:uart4.c       **** 
+ 486:uart4.c       **** 	// if there's a user function to handle this receive event
+ 487:uart4.c       **** 	if(UartRxFunc[nUart])
+ 2124               	r24,r18
+ 2125               		lsl r24
+ 2126 09d4 8A81      		rol r25
+ 2127 09d6 882F      		movw r30,r24
+ 2128 09d8 90E0      		subi r30,lo8(-(uartRxOverflow))
+ 2129 09da 880F      		sbci r31,hi8(-(uartRxOverflow))
+ 2130 09dc 991F      		ld r24,Z
+ 2131 09de FC01      		ldd r25,Z+1
+ 2132 09e0 E050      		movw r20,r24
+ 2133 09e2 F040      		subi r20,lo8(-(1))
+ 2134 09e4 8081      		sbci r21,hi8(-(1))
+ 2135 09e6 9181      		movw r24,r18
+ 2136 09e8 0097      		lsl r24
+ 2137 09ea 01F0      		rol r25
+ 488:uart4.c       **** 	{
+ 489:uart4.c       **** 		// call it and pass the received data
+ 490:uart4.c       **** 		UartRxFunc[nUart](c);
+ 2138               		subi r30,lo8(-(uartRxOverflow))
+ 2139               		sbci r31,hi8(-(uartRxOverflow))
+ 2140 09ec 8A81      		std Z+1,r21
+ 2141 09ee 882F      		st Z,r20
+ 2142 09f0 90E0      	.L110:
+ 2143 09f2 880F      	/* epilogue start */
+ 2145 09f6 FC01      	.LM202:
+ 2146 09f8 E050      		pop __tmp_reg__
+ 2147 09fa F040      		pop __tmp_reg__
+ 2148 09fc 0190      		pop r28
+ 2149 09fe F081      		pop r29
+ 2150 0a00 E02D      		ret
+ 491:uart4.c       **** 	}
+ 492:uart4.c       **** 	else
+ 493:uart4.c       **** 	{
+ 494:uart4.c       **** 		// otherwise do default processing
+ 495:uart4.c       **** 		// put received char in buffer
+ 496:uart4.c       **** 		// check if there's space
+ 497:uart4.c       **** 		if( !bufferAddToEnd(&uartRxBuffer[nUart], c) )
+ 2155               	s	"__vector_27:F(0,15)",36,0,0,__vector_27
+ 2156               	.global	__vector_27
+ 2158 0a0a 882F      	__vector_27:
+ 2160 0a0e 880F      	.LM203:
+ 2161 0a10 991F      	.LFBB35:
+ 2162 0a12 880F      		push __zero_reg__
+ 2163 0a14 991F      		push r0
+ 2164 0a16 880F      		in r0,__SREG__
+ 2165 0a18 991F      		push r0
+ 2166 0a1a 8050      		clr __zero_reg__
+ 2167 0a1c 9040      		push r18
+ 2168 0a1e 6981      		push r19
+ 2169 0a20 0E94 0000 		push r20
+ 2170 0a24 8823      		push r21
+ 2171 0a26 01F4      		push r22
+ 498:uart4.c       **** 		{
+ 499:uart4.c       **** 			// no space in buffer
+ 500:uart4.c       **** 			// count overflow
+ 501:uart4.c       **** 			uartRxOverflow[nUart]++;
+ 2172               	24
+ 2173               		push r25
+ 2174 0a28 8A81      		push r26
+ 2175 0a2a 282F      		push r27
+ 2176 0a2c 30E0      		push r30
+ 2177 0a2e C901      		push r31
+ 2178 0a30 880F      		push r29
+ 2179 0a32 991F      		push r28
+ 2180 0a34 FC01      		in r28,__SP_L__
+ 2181 0a36 E050      		in r29,__SP_H__
+ 2182 0a38 F040      	/* prologue: Signal */
+ 2183 0a3a 8081      	/* frame size = 0 */
+ 2185 0a3e AC01      	.LM204:
+ 2186 0a40 4F5F      		ldi r24,lo8(0)
+ 2187 0a42 5F4F      		call uartTransmitService
+ 2188 0a44 C901      	/* epilogue start */
+ 2190 0a48 991F      	.LM205:
+ 2191 0a4a FC01      		pop r28
+ 2192 0a4c E050      		pop r29
+ 2193 0a4e F040      		pop r31
+ 2194 0a50 5183      		pop r30
+ 2195 0a52 4083      		pop r27
+ 2196               		pop r26
+ 2197               		pop r25
+ 502:uart4.c       **** 		}
+ 503:uart4.c       **** 	}
+ 504:uart4.c       **** }
+ 2198               	
+ 2199               		pop r21
+ 2200 0a54 0F90      		pop r20
+ 2201 0a56 0F90      		pop r19
+ 2202 0a58 CF91      		pop r18
+ 2203 0a5a DF91      		pop r0
+ 2204 0a5c 0895      		out __SREG__,r0
+ 2205               		pop r0
+ 2206               		pop __zero_reg__
+ 2207               		reti
+ 2209               	.Lscope35:
+ 2211               	.global	__vector_38
+ 2213               	__vector_38:
+ 505:uart4.c       **** 
+ 506:uart4.c       **** 	// service UART transmit interrupt
+ 507:uart4.c       **** UART_INTERRUPT_HANDLER(SIG_USART0_TRANS)      
+ 508:uart4.c       **** {
+ 2214               	3,.LM206-.LFBB36
+ 2215               	.LM206:
+ 2216               	.LFBB36:
+ 2217 0a5e 1F92      		push __zero_reg__
+ 2218 0a60 0F92      		push r0
+ 2219 0a62 0FB6      		in r0,__SREG__
+ 2220 0a64 0F92      		push r0
+ 2221 0a66 1124      		clr __zero_reg__
+ 2222 0a68 2F93      		push r18
+ 2223 0a6a 3F93      		push r19
+ 2224 0a6c 4F93      		push r20
+ 2225 0a6e 5F93      		push r21
+ 2226 0a70 6F93      		push r22
+ 2227 0a72 7F93      		push r23
+ 2228 0a74 8F93      		push r24
+ 2229 0a76 9F93      		push r25
+ 2230 0a78 AF93      		push r26
+ 2231 0a7a BF93      		push r27
+ 2232 0a7c EF93      		push r30
+ 2233 0a7e FF93      		push r31
+ 2234 0a80 DF93      		push r29
+ 2235 0a82 CF93      		push r28
+ 2236 0a84 CDB7      		in r28,__SP_L__
+ 2237 0a86 DEB7      		in r29,__SP_H__
+ 2238               	/* prologue: Signal */
+ 2239               	/* frame size = 0 */
+ 509:uart4.c       **** 	uartTransmitService(0);
+ 2240               	FBB36
+ 2241               	.LM207:
+ 2242 0a88 80E0      		ldi r24,lo8(1)
+ 2243 0a8a 0E94 0000 		call uartTransmitService
+ 2244               	/* epilogue start */
+ 510:uart4.c       **** }
+ 2245               	bn	68,0,515,.LM208-.LFBB36
+ 2246               	.LM208:
+ 2247 0a8e CF91      		pop r28
+ 2248 0a90 DF91      		pop r29
+ 2249 0a92 FF91      		pop r31
+ 2250 0a94 EF91      		pop r30
+ 2251 0a96 BF91      		pop r27
+ 2252 0a98 AF91      		pop r26
+ 2253 0a9a 9F91      		pop r25
+ 2254 0a9c 8F91      		pop r24
+ 2255 0a9e 7F91      		pop r23
+ 2256 0aa0 6F91      		pop r22
+ 2257 0aa2 5F91      		pop r21
+ 2258 0aa4 4F91      		pop r20
+ 2259 0aa6 3F91      		pop r19
+ 2260 0aa8 2F91      		pop r18
+ 2261 0aaa 0F90      		pop r0
+ 2262 0aac 0FBE      		out __SREG__,r0
+ 2263 0aae 0F90      		pop r0
+ 2264 0ab0 1F90      		pop __zero_reg__
+ 2265 0ab2 1895      		reti
+ 2267               	.Lscope36:
+ 2269               	.global	__vector_53
+ 2271               	__vector_53:
+ 511:uart4.c       **** 
+ 512:uart4.c       **** UART_INTERRUPT_HANDLER(SIG_USART1_TRANS)      
+ 513:uart4.c       **** {
+ 2272               	BB37
+ 2273               	.LM209:
+ 2274               	.LFBB37:
+ 2275 0ab4 1F92      		push __zero_reg__
+ 2276 0ab6 0F92      		push r0
+ 2277 0ab8 0FB6      		in r0,__SREG__
+ 2278 0aba 0F92      		push r0
+ 2279 0abc 1124      		clr __zero_reg__
+ 2280 0abe 2F93      		push r18
+ 2281 0ac0 3F93      		push r19
+ 2282 0ac2 4F93      		push r20
+ 2283 0ac4 5F93      		push r21
+ 2284 0ac6 6F93      		push r22
+ 2285 0ac8 7F93      		push r23
+ 2286 0aca 8F93      		push r24
+ 2287 0acc 9F93      		push r25
+ 2288 0ace AF93      		push r26
+ 2289 0ad0 BF93      		push r27
+ 2290 0ad2 EF93      		push r30
+ 2291 0ad4 FF93      		push r31
+ 2292 0ad6 DF93      		push r29
+ 2293 0ad8 CF93      		push r28
+ 2294 0ada CDB7      		in r28,__SP_L__
+ 2295 0adc DEB7      		in r29,__SP_H__
+ 2296               	/* prologue: Signal */
+ 2297               	/* frame size = 0 */
+ 514:uart4.c       **** 	uartTransmitService(1);
+ 2298               	FBB37
+ 2299               	.LM210:
+ 2300 0ade 81E0      		ldi r24,lo8(2)
+ 2301 0ae0 0E94 0000 		call uartTransmitService
+ 2302               	/* epilogue start */
+ 515:uart4.c       **** }
+ 2303               	bn	68,0,520,.LM211-.LFBB37
+ 2304               	.LM211:
+ 2305 0ae4 CF91      		pop r28
+ 2306 0ae6 DF91      		pop r29
+ 2307 0ae8 FF91      		pop r31
+ 2308 0aea EF91      		pop r30
+ 2309 0aec BF91      		pop r27
+ 2310 0aee AF91      		pop r26
+ 2311 0af0 9F91      		pop r25
+ 2312 0af2 8F91      		pop r24
+ 2313 0af4 7F91      		pop r23
+ 2314 0af6 6F91      		pop r22
+ 2315 0af8 5F91      		pop r21
+ 2316 0afa 4F91      		pop r20
+ 2317 0afc 3F91      		pop r19
+ 2318 0afe 2F91      		pop r18
+ 2319 0b00 0F90      		pop r0
+ 2320 0b02 0FBE      		out __SREG__,r0
+ 2321 0b04 0F90      		pop r0
+ 2322 0b06 1F90      		pop __zero_reg__
+ 2323 0b08 1895      		reti
+ 2325               	.Lscope37:
+ 2327               	.global	__vector_56
+ 2329               	__vector_56:
+ 516:uart4.c       **** 
+ 517:uart4.c       **** UART_INTERRUPT_HANDLER(SIG_USART2_TRANS)      
+ 518:uart4.c       **** {
+ 2330               	BB38
+ 2331               	.LM212:
+ 2332               	.LFBB38:
+ 2333 0b0a 1F92      		push __zero_reg__
+ 2334 0b0c 0F92      		push r0
+ 2335 0b0e 0FB6      		in r0,__SREG__
+ 2336 0b10 0F92      		push r0
+ 2337 0b12 1124      		clr __zero_reg__
+ 2338 0b14 2F93      		push r18
+ 2339 0b16 3F93      		push r19
+ 2340 0b18 4F93      		push r20
+ 2341 0b1a 5F93      		push r21
+ 2342 0b1c 6F93      		push r22
+ 2343 0b1e 7F93      		push r23
+ 2344 0b20 8F93      		push r24
+ 2345 0b22 9F93      		push r25
+ 2346 0b24 AF93      		push r26
+ 2347 0b26 BF93      		push r27
+ 2348 0b28 EF93      		push r30
+ 2349 0b2a FF93      		push r31
+ 2350 0b2c DF93      		push r29
+ 2351 0b2e CF93      		push r28
+ 2352 0b30 CDB7      		in r28,__SP_L__
+ 2353 0b32 DEB7      		in r29,__SP_H__
+ 2354               	/* prologue: Signal */
+ 2355               	/* frame size = 0 */
+ 519:uart4.c       **** 	uartTransmitService(2);
+ 2356               	FBB38
+ 2357               	.LM213:
+ 2358 0b34 82E0      		ldi r24,lo8(3)
+ 2359 0b36 0E94 0000 		call uartTransmitService
+ 2360               	/* epilogue start */
+ 520:uart4.c       **** }
+ 2361               	bn	68,0,525,.LM214-.LFBB38
+ 2362               	.LM214:
+ 2363 0b3a CF91      		pop r28
+ 2364 0b3c DF91      		pop r29
+ 2365 0b3e FF91      		pop r31
+ 2366 0b40 EF91      		pop r30
+ 2367 0b42 BF91      		pop r27
+ 2368 0b44 AF91      		pop r26
+ 2369 0b46 9F91      		pop r25
+ 2370 0b48 8F91      		pop r24
+ 2371 0b4a 7F91      		pop r23
+ 2372 0b4c 6F91      		pop r22
+ 2373 0b4e 5F91      		pop r21
+ 2374 0b50 4F91      		pop r20
+ 2375 0b52 3F91      		pop r19
+ 2376 0b54 2F91      		pop r18
+ 2377 0b56 0F90      		pop r0
+ 2378 0b58 0FBE      		out __SREG__,r0
+ 2379 0b5a 0F90      		pop r0
+ 2380 0b5c 1F90      		pop __zero_reg__
+ 2381 0b5e 1895      		reti
+ 2383               	.Lscope38:
+ 2385               	.global	__vector_25
+ 2387               	__vector_25:
+ 521:uart4.c       **** 
+ 522:uart4.c       **** UART_INTERRUPT_HANDLER(SIG_USART3_TRANS)      
+ 523:uart4.c       **** {
+ 2388               	BB39
+ 2389               	.LM215:
+ 2390               	.LFBB39:
+ 2391 0b60 1F92      		push __zero_reg__
+ 2392 0b62 0F92      		push r0
+ 2393 0b64 0FB6      		in r0,__SREG__
+ 2394 0b66 0F92      		push r0
+ 2395 0b68 1124      		clr __zero_reg__
+ 2396 0b6a 2F93      		push r18
+ 2397 0b6c 3F93      		push r19
+ 2398 0b6e 4F93      		push r20
+ 2399 0b70 5F93      		push r21
+ 2400 0b72 6F93      		push r22
+ 2401 0b74 7F93      		push r23
+ 2402 0b76 8F93      		push r24
+ 2403 0b78 9F93      		push r25
+ 2404 0b7a AF93      		push r26
+ 2405 0b7c BF93      		push r27
+ 2406 0b7e EF93      		push r30
+ 2407 0b80 FF93      		push r31
+ 2408 0b82 DF93      		push r29
+ 2409 0b84 CF93      		push r28
+ 2410 0b86 CDB7      		in r28,__SP_L__
+ 2411 0b88 DEB7      		in r29,__SP_H__
+ 2412               	/* prologue: Signal */
+ 2413               	/* frame size = 0 */
+ 524:uart4.c       **** 	uartTransmitService(3);
+ 2414               	FBB39
+ 2415               	.LM216:
+ 2416 0b8a 83E0      		ldi r24,lo8(0)
+ 2417 0b8c 0E94 0000 		call uartReceiveService
+ 2418               	/* epilogue start */
+ 525:uart4.c       **** }
+ 2419               	sh r27
+ 2420               		push r30
+ 2421 0b90 CF91      		push r31
+ 2422 0b92 DF91      		push r29
+ 2423 0b94 FF91      		push r28
+ 2424 0b96 EF91      		in r28,__SP_L__
+ 2425 0b98 BF91      		in r29,__SP_H__
+ 2426 0b9a AF91      	/* prologue: Signal */
+ 2427 0b9c 9F91      	/* frame size = 0 */
+ 2429 0ba0 7F91      	.LM216:
+ 2430 0ba2 6F91      		ldi r24,lo8(0)
+ 2431 0ba4 5F91      		call uartReceiveService
+ 2432 0ba6 4F91      	/* epilogue start */
+ 2434 0baa 2F91      	.LM217:
+ 2435 0bac 0F90      		pop r28
+ 2436 0bae 0FBE      		pop r29
+ 2437 0bb0 0F90      		pop r31
+ 2438 0bb2 1F90      		pop r30
+ 2439 0bb4 1895      		pop r27
+ 2440               		pop r26
+ 2441               		pop r25
+ 2442               		pop r24
+ 2443               		pop r23
+ 2444               		pop r22
+ 2445               		pop r21
+ 526:uart4.c       **** 
+ 527:uart4.c       **** 	// service UART receive interrupt
+ 528:uart4.c       **** UART_INTERRUPT_HANDLER(SIG_USART0_RECV)      
+ 529:uart4.c       **** {
+ 2446               		pop r0
+ 2447               		out __SREG__,r0
+ 2448               		pop r0
+ 2449 0bb6 1F92      		pop __zero_reg__
+ 2450 0bb8 0F92      		reti
+ 2452 0bbc 0F92      	.Lscope39:
+ 2454 0bc0 2F93      	.global	__vector_36
+ 2456 0bc4 4F93      	__vector_36:
+ 2458 0bc8 6F93      	.LM218:
+ 2459 0bca 7F93      	.LFBB40:
+ 2460 0bcc 8F93      		push __zero_reg__
+ 2461 0bce 9F93      		push r0
+ 2462 0bd0 AF93      		in r0,__SREG__
+ 2463 0bd2 BF93      		push r0
+ 2464 0bd4 EF93      		clr __zero_reg__
+ 2465 0bd6 FF93      		push r18
+ 2466 0bd8 DF93      		push r19
+ 2467 0bda CF93      		push r20
+ 2468 0bdc CDB7      		push r21
+ 2469 0bde DEB7      		push r22
+ 2470               		push r23
+ 2471               		push r24
+ 530:uart4.c       **** 	uartReceiveService(0);
+ 2472               	bn	68,0,534,.LM218-.LFBB40
+ 2473               	.LM218:
+ 2474 0be0 80E0      	.LFBB40:
+ 2475 0be2 0E94 0000 		push __zero_reg__
+ 2476               		push r0
+ 531:uart4.c       **** }
+ 2477               	pe39:
+ 2479 0be6 CF91      	.global	__vector_36
+ 2481 0bea FF91      	__vector_36:
+ 2483 0bee BF91      	.LM218:
+ 2484 0bf0 AF91      	.LFBB40:
+ 2485 0bf2 9F91      		push __zero_reg__
+ 2486 0bf4 8F91      		push r0
+ 2487 0bf6 7F91      		in r0,__SREG__
+ 2488 0bf8 6F91      		push r0
+ 2489 0bfa 5F91      		clr __zero_reg__
+ 2490 0bfc 4F91      		push r18
+ 2491 0bfe 3F91      		push r19
+ 2492 0c00 2F91      		push r20
+ 2493 0c02 0F90      		push r21
+ 2494 0c04 0FBE      		push r22
+ 2495 0c06 0F90      		push r23
+ 2496 0c08 1F90      		push r24
+ 2497 0c0a 1895      		push r25
+ 2498               		push r26
+ 2499               		push r27
+ 2500               		push r30
+ 2501               		push r31
+ 2502               		push r29
+ 2503               		push r28
+ 532:uart4.c       **** 
+ 533:uart4.c       **** UART_INTERRUPT_HANDLER(SIG_USART1_RECV)      
+ 534:uart4.c       **** {
+ 2504               	0,__SREG__
+ 2505               		push r0
+ 2506               		clr __zero_reg__
+ 2507 0c0c 1F92      		push r18
+ 2508 0c0e 0F92      		push r19
+ 2509 0c10 0FB6      		push r20
+ 2510 0c12 0F92      		push r21
+ 2511 0c14 1124      		push r22
+ 2512 0c16 2F93      		push r23
+ 2513 0c18 3F93      		push r24
+ 2514 0c1a 4F93      		push r25
+ 2515 0c1c 5F93      		push r26
+ 2516 0c1e 6F93      		push r27
+ 2517 0c20 7F93      		push r30
+ 2518 0c22 8F93      		push r31
+ 2519 0c24 9F93      		push r29
+ 2520 0c26 AF93      		push r28
+ 2521 0c28 BF93      		in r28,__SP_L__
+ 2522 0c2a EF93      		in r29,__SP_H__
+ 2523 0c2c FF93      	/* prologue: Signal */
+ 2524 0c2e DF93      	/* frame size = 0 */
+ 2526 0c32 CDB7      	.LM219:
+ 2527 0c34 DEB7      		ldi r24,lo8(1)
+ 2528               		call uartReceiveService
+ 2529               	/* epilogue start */
+ 535:uart4.c       **** 	uartReceiveService(1);
+ 2530               	P_L__
+ 2531               		in r29,__SP_H__
+ 2532 0c36 81E0      	/* prologue: Signal */
+ 2533 0c38 0E94 0000 	/* frame size = 0 */
+ 536:uart4.c       **** }
+ 2535               	25
+ 2536               		push r26
+ 2537 0c3c CF91      		push r27
+ 2538 0c3e DF91      		push r30
+ 2539 0c40 FF91      		push r31
+ 2540 0c42 EF91      		push r29
+ 2541 0c44 BF91      		push r28
+ 2542 0c46 AF91      		in r28,__SP_L__
+ 2543 0c48 9F91      		in r29,__SP_H__
+ 2544 0c4a 8F91      	/* prologue: Signal */
+ 2545 0c4c 7F91      	/* frame size = 0 */
+ 2547 0c50 5F91      	.LM219:
+ 2548 0c52 4F91      		ldi r24,lo8(1)
+ 2549 0c54 3F91      		call uartReceiveService
+ 2550 0c56 2F91      	/* epilogue start */
+ 2552 0c5a 0FBE      	.LM220:
+ 2553 0c5c 0F90      		pop r28
+ 2554 0c5e 1F90      		pop r29
+ 2555 0c60 1895      		pop r31
+ 2556               		pop r30
+ 2557               		pop r27
+ 2558               		pop r26
+ 2559               		pop r25
+ 2560               		pop r24
+ 2561               		pop r23
+ 537:uart4.c       **** 
+ 538:uart4.c       **** UART_INTERRUPT_HANDLER(SIG_USART2_RECV)      
+ 539:uart4.c       **** {
+ 2562               	tReceiveService
+ 2563               	/* epilogue start */
+ 2565 0c62 1F92      	.LM220:
+ 2566 0c64 0F92      		pop r28
+ 2567 0c66 0FB6      		pop r29
+ 2568 0c68 0F92      		pop r31
+ 2569 0c6a 1124      		pop r30
+ 2570 0c6c 2F93      		pop r27
+ 2571 0c6e 3F93      		pop r26
+ 2572 0c70 4F93      		pop r25
+ 2573 0c72 5F93      		pop r24
+ 2574 0c74 6F93      		pop r23
+ 2575 0c76 7F93      		pop r22
+ 2576 0c78 8F93      		pop r21
+ 2577 0c7a 9F93      		pop r20
+ 2578 0c7c AF93      		pop r19
+ 2579 0c7e BF93      		pop r18
+ 2580 0c80 EF93      		pop r0
+ 2581 0c82 FF93      		out __SREG__,r0
+ 2582 0c84 DF93      		pop r0
+ 2583 0c86 CF93      		pop __zero_reg__
+ 2584 0c88 CDB7      		reti
+ 2586               	.Lscope40:
+ 540:uart4.c       **** 	uartReceiveService(2);
+ 2588               	0
+ 2589               		out __SREG__,r0
+ 2590 0c8c 82E0      		pop r0
+ 2591 0c8e 0E94 0000 		pop __zero_reg__
+ 2592               		reti
+ 541:uart4.c       **** }
+ 2593               	
+ 2594               		pop r27
+ 2595 0c92 CF91      		pop r26
+ 2596 0c94 DF91      		pop r25
+ 2597 0c96 FF91      		pop r24
+ 2598 0c98 EF91      		pop r23
+ 2599 0c9a BF91      		pop r22
+ 2600 0c9c AF91      		pop r21
+ 2601 0c9e 9F91      		pop r20
+ 2602 0ca0 8F91      		pop r19
+ 2603 0ca2 7F91      		pop r18
+ 2604 0ca4 6F91      		pop r0
+ 2605 0ca6 5F91      		out __SREG__,r0
+ 2606 0ca8 4F91      		pop r0
+ 2607 0caa 3F91      		pop __zero_reg__
+ 2608 0cac 2F91      		reti
+ 2610 0cb0 0FBE      	.Lscope40:
+ 2612 0cb4 1F90      	.global	__vector_51
+ 2614               	__vector_51:
+ 2616               	.LM221:
+ 2617               	.LFBB41:
+ 2618               		push __zero_reg__
+ 2619               		push r0
+ 542:uart4.c       **** 
+ 543:uart4.c       **** UART_INTERRUPT_HANDLER(SIG_USART3_RECV)      
+ 544:uart4.c       **** {
+ 2620               	obal	__vector_51
+ 2622               	__vector_51:
+ 2624 0cba 0F92      	.LM221:
+ 2625 0cbc 0FB6      	.LFBB41:
+ 2626 0cbe 0F92      		push __zero_reg__
+ 2627 0cc0 1124      		push r0
+ 2628 0cc2 2F93      		in r0,__SREG__
+ 2629 0cc4 3F93      		push r0
+ 2630 0cc6 4F93      		clr __zero_reg__
+ 2631 0cc8 5F93      		push r18
+ 2632 0cca 6F93      		push r19
+ 2633 0ccc 7F93      		push r20
+ 2634 0cce 8F93      		push r21
+ 2635 0cd0 9F93      		push r22
+ 2636 0cd2 AF93      		push r23
+ 2637 0cd4 BF93      		push r24
+ 2638 0cd6 EF93      		push r25
+ 2639 0cd8 FF93      		push r26
+ 2640 0cda DF93      		push r27
+ 2641 0cdc CF93      		push r30
+ 2642 0cde CDB7      		push r31
+ 2643 0ce0 DEB7      		push r29
+ 2644               		push r28
+ 2645               		in r28,__SP_L__
+ 545:uart4.c       **** 	uartReceiveService(3);
+ 2646               	1
+ 2647               		push r22
+ 2648 0ce2 83E0      		push r23
+ 2649 0ce4 0E94 0000 		push r24
+ 2650               		push r25
+ 546:uart4.c       **** }
+ 2651               	r0
+ 2652               		in r0,__SREG__
+ 2653 0ce8 CF91      		push r0
+ 2654 0cea DF91      		clr __zero_reg__
+ 2655 0cec FF91      		push r18
+ 2656 0cee EF91      		push r19
+ 2657 0cf0 BF91      		push r20
+ 2658 0cf2 AF91      		push r21
+ 2659 0cf4 9F91      		push r22
+ 2660 0cf6 8F91      		push r23
+ 2661 0cf8 7F91      		push r24
+ 2662 0cfa 6F91      		push r25
+ 2663 0cfc 5F91      		push r26
+ 2664 0cfe 4F91      		push r27
+ 2665 0d00 3F91      		push r30
+ 2666 0d02 2F91      		push r31
+ 2667 0d04 0F90      		push r29
+ 2668 0d06 0FBE      		push r28
+ 2669 0d08 0F90      		in r28,__SP_L__
+ 2670 0d0a 1F90      		in r29,__SP_H__
+ 2671 0d0c 1895      	/* prologue: Signal */
+ 2672               	/* frame size = 0 */
+ 2674               	.LM222:
+ 2675               		ldi r24,lo8(2)
+ 2676               		call uartReceiveService
+ 2677               	/* epilogue start */
+ 2679               	.LM223:
+ 2680               		pop r28
+ 2681               		pop r29
+ 2682               		pop r31
+ 2683               		pop r30
+ 2684               		pop r27
+ 2685               		pop r26
+ 2686               		pop r25
+ 2687               		pop r24
+ 2688               		pop r23
+ 2689               		pop r22
+ 2690               		pop r21
+ 2691               		pop r20
+ 2692               		pop r19
+ 2693               		pop r18
+ 2694               		pop r0
+ 2695               		out __SREG__,r0
+ 2696               		pop r0
+ 2697               		pop __zero_reg__
+ 2698               		reti
+ 2700               	.Lscope41:
+ 2702               	.global	__vector_54
+DEFINED SYMBOLS
+                            *ABS*:00000000 uart4.c
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2      *ABS*:0000003f __SREG__
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:3      *ABS*:0000003e __SP_H__
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:4      *ABS*:0000003d __SP_L__
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:5      *ABS*:00000034 __CCP__
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:6      *ABS*:00000000 __tmp_reg__
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:7      *ABS*:00000001 __zero_reg__
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:103    .text:00000000 uartInit
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:136    .text:0000001e uart0Init
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:196    .text:00000062 uart1Init
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:256    .text:000000a6 uart2Init
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:316    .text:000000ea uart3Init
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:376    .text:0000012e uart0InitBuffers
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2681   .bss:00000240 UartRxFunc
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:593    .text:00000232 uartSetBaudRate
+                            *COM*:00000004 uartReadyTx
+                            *COM*:00000004 uartBufferedTx
+                            *COM*:00000008 uartRxOverflow
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:417    .text:00000160 uart1InitBuffers
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:458    .text:00000192 uart2InitBuffers
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:499    .text:000001c4 uart3InitBuffers
+                            *COM*:00000020 uartRxBuffer
+                             .bss:00000000 uart0RxData
+                            *COM*:00000020 uartTxBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2674   .bss:00000080 uart0TxData
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2675   .bss:00000090 uart1RxData
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2676   .bss:00000110 uart1TxData
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2677   .bss:00000120 uart2RxData
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2678   .bss:000001a0 uart2TxData
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2679   .bss:000001b0 uart3RxData
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2680   .bss:00000230 uart3TxData
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:542    .text:000001f6 uartSetRxHandler
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:779    .text:0000034c uartGetRxBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:817    .text:00000376 uartGetTxBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:856    .text:000003a0 uartSendByte
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:985    .text:00000446 uart0SendByte
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1015   .text:00000462 uart1SendByte
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1045   .text:0000047e uart2SendByte
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1075   .text:0000049a uart3SendByte
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1104   .text:000004b6 uart0GetByte
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1334   .text:000005be uartReceiveByte
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1161   .text:000004f8 uart1GetByte
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1218   .text:0000053a uart2GetByte
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1275   .text:0000057c uart3GetByte
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1436   .text:00000650 uartFlushReceiveBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1475   .text:0000067e uartReceiveBufferIsEmpty
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1526   .text:000006be uartAddToTxBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1568   .text:000006f2 uart0AddToTxBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1598   .text:0000070e uart1AddToTxBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1628   .text:0000072a uart2AddToTxBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1658   .text:00000746 uart3AddToTxBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1688   .text:00000762 uartSendTxBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1743   .text:000007aa uartSendBuffer
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:1915   .text:000008b4 uartTransmitService
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2066   .text:00000990 uartReceiveService
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2213   .text:00000a5e __vector_27
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2271   .text:00000ab4 __vector_38
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2329   .text:00000b0a __vector_53
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2387   .text:00000b60 __vector_56
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2445   .text:00000bb6 __vector_25
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2503   .text:00000c0c __vector_36
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2561   .text:00000c62 __vector_51
+C:\Users\Owner\AppData\Local\Temp/ccWEGk03.s:2619   .text:00000cb8 __vector_54
+
+UNDEFINED SYMBOLS
+__do_copy_data
+__do_clear_bss
+bufferInit
+__udivmodsi4
+bufferGetFromFront
+bufferFlush
+bufferAddToEnd
