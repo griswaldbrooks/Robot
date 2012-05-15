@@ -11,7 +11,7 @@ ylabel('Y axis, m')
 zlabel('Z axis, m')
 
 % Initial Conditions, radians
-q  = [pi/1.5,0.6,0]';
+q  = [pi,0.6,-pi/2]';
 dq = [0,0,0]';
 
 % Parameters
@@ -23,10 +23,23 @@ L = 0.6;      % meters
 h1 = 1;       % meters
 h2 = 0.2;     % meters
 
-wK = 6000;     % Wall stiffness
+Fd = 40;                            % N, Desired Force
+wK = 6000;                          % Wall stiffness
+%wK = 60000;                          % Wall stiffness
+wall_offset = 1.2*0.0067;           % Inner wall depth
+%wall_offset = 6.6667e-004;
 
 % Accumulated Error
 acc_error = [0,0,0]';
+
+% Accumulated Force Error
+acc_Fe = 0;
+
+% Maximum Applied Force
+max_F = 0;
+
+% Force error vector
+e_F = [];
 
 % Error vector
 e = [];
@@ -38,7 +51,7 @@ x = [];
 dt = 0.01; 
 T = 10;
 
-
+pause(3)
 for t = 0:dt:T
     % Joint Angle Commands
 %     th_ref = [sin(4*t),cos(4*t)]';
@@ -49,7 +62,8 @@ for t = 0:dt:T
     %dq_ref = [1,cos(t),-1]';
     %ddq_ref = [0,-sin(t),0]';
     
-    dx = 0.6 + 0.0067;
+    dx = (0.2 + wall_offset)*(1 - exp(-20*t)) + 0.4005;
+    %dx = (0.6 + wall_offset);
     dy = 0.4*sin(t) + 0.6;
     or = 0;
     
@@ -58,8 +72,10 @@ for t = 0:dt:T
             0,                  0,      1,      0;
             0,                  0,      0,      1]; 
     
-    v = [0,0.4*cos(t),0,0,0,0]';
-    a = [0,-0.4*sin(t),0,0,0,0]';
+%     v = [0,0.4*cos(t),0,0,0,0]';
+%     a = [0,-0.4*sin(t),0,0,0,0]';
+    v = [(0.2 + wall_offset)*(20*exp(-20*t)),0.4*cos(t),0,0,0,0]';
+    a = [(0.2 + wall_offset)*(-400*exp(-20*t)),-0.4*sin(t),0,0,0,0]';
         
     q_ref = arm_ik(H,a3);
     dq_ref = arm_invj(v,q_ref,a3);
@@ -69,10 +85,10 @@ for t = 0:dt:T
     acc_error = acc_error + dt*(q - q_ref);
     
     %%% Calculate Dynamic Response %%%
-    k1 = dt*calc_x_dot(q,dq,q_ref,dq_ref,ddq_ref,acc_error);
-    k2 = dt*calc_x_dot(q + 0.5*k1(1:3),dq + 0.5*k1(4:6),q_ref,dq_ref,ddq_ref,acc_error);
-    k3 = dt*calc_x_dot(q + 0.5*k2(1:3),dq + 0.5*k2(4:6),q_ref,dq_ref,ddq_ref,acc_error);
-    k4 = dt*calc_x_dot(q + k3(1:3),dq + k3(4:6),q_ref,dq_ref,ddq_ref,acc_error);
+    k1 = dt*calc_x_dot(q,dq,q_ref,dq_ref,ddq_ref,acc_error,acc_Fe);
+    k2 = dt*calc_x_dot(q + 0.5*k1(1:3),dq + 0.5*k1(4:6),q_ref,dq_ref,ddq_ref,acc_error,acc_Fe);
+    k3 = dt*calc_x_dot(q + 0.5*k2(1:3),dq + 0.5*k2(4:6),q_ref,dq_ref,ddq_ref,acc_error,acc_Fe);
+    k4 = dt*calc_x_dot(q + k3(1:3),dq + k3(4:6),q_ref,dq_ref,ddq_ref,acc_error,acc_Fe);
     
     k = (1/6)*(k1 + 2*k2 + 2*k3 + k4);
     
@@ -119,7 +135,17 @@ for t = 0:dt:T
     A1A2A3_r = A1A2_r*A3_r;
     %%%%%%
     
-
+    Force = -((wK)*(L - A1A2A3(1,4)));
+    acc_Fe = acc_Fe + (Fd - Force);
+    if(Force > max_F)
+        max_F = Force;
+    end
+    % Anti-windup
+    if(Force < 0)
+        Force = 0;
+        acc_Fe = 0;
+    end
+    e_F = [e_F,(Fd - Force)];
     
     x = [x;q(1),dq(1),q(2),dq(2),q(3),dq(3)];
     
@@ -127,6 +153,8 @@ for t = 0:dt:T
     cla
     % Draw wall
     line([L,L],[0,h1+1],'Color','k','LineWidth',2);
+    % Draw inner wall
+    line([L+wall_offset,L+wall_offset],[0,h1+1],'Color','m','LineWidth',2,'LineStyle','--');
     % Draw floor
     line([-L,L],[0,0],'Color','k','LineWidth',2);
     % Plot target endpoints
@@ -144,8 +172,21 @@ for t = 0:dt:T
     line([A1A2(1,4), A1A2A3(1,4)],[A1A2(2,4), A1A2A3(2,4)],[A1A2(3,4), A1A2A3(3,4)],'Color','k','LineWidth',3);
     
     % Plot applied force
+    text(-0.6,-0.2,'Applied Force: ');
+    text(0.3125 - 0.6,-0.2,num2str(Force,5));
+    text(0.5 - 0.6,-0.2,'N');
+    line([0 - 0.6,Force/100 - 0.6],[-0.25,-0.25],'Color','r','LineWidth',5);
     
-    line([0,-((wK/100)*(L - A1A2A3(1,4)))],[-0.25,-0.25],'Color','r','LineWidth',5);
+    text(-0.6,-0.31,'Max Applied Force: ');
+    text(0.425 - 0.6,-0.31,num2str(max_F,5));
+    text(0.6 - 0.6,-0.31,'N');
+    plot(max_F/100 - 0.6, -0.25,'b+');
+    
+    text(0.4,-0.2, 'Wall Stiffness: ');
+    text(0.7,-0.2, num2str(wK,6));
+    
+%     text(0,-0.4,'Accumulated Force Error: ');
+%     text(0.6,-0.4,num2str(acc_Fe,5));
     
     % Plot frames
     
@@ -229,7 +270,7 @@ end
   xlabel('Time, seconds');
   ylabel('Error, degrees');
   title('Feedback Linearizing Controller')
-  legend1 = legend('Joint 1','Joint 2');
+  legend1 = legend('Joint 1','Joint 2','Joint 3');
   set(legend1,'Location','SouthEast');
 
 % Graph phase plot
@@ -237,6 +278,20 @@ figure(3);
 cla
 axis([0,dt*length(x),min(min(x)),max(max(x))])
 plot(x(:,1),x(:,2),x(:,3),x(:,4))
+
+% Plot Force error
+  figure(4);
+  cla
+  axis([0,dt*length(e_F),min(min(e_F)),max(max(e_F))])
+  t = 0:dt:T;
+  plot(t,e_F);
+  line([0,dt*length(e_F)],[0,0],'Color','k','LineStyle','--')
+  xlabel('Time, seconds');
+  ylabel('Force Error, N');
+  title('Feedback Linearizing Controller')
+  legend1 = legend('Force Error');
+  set(legend1,'Location','SouthEast');
+
 
 
 
