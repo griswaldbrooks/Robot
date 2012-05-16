@@ -9,8 +9,8 @@ g = 9.81;     % m/s^2
 b1 = 0.1;     % dampening 1
 b2 = 0.1;     % dampening 2
 b3 = 0.1;     % dampening 3
-k = 6000;     % Wall stiffness
-%k = 60000;     % Wall stiffness
+%k = 6000;     % Wall stiffness
+k = 60000;     % Wall stiffness
 c = 0.5;      % Wall drag
 wall_x = 0.6; % Wall x location
 

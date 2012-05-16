@@ -24,10 +24,10 @@ h1 = 1;       % meters
 h2 = 0.2;     % meters
 
 Fd = 40;                            % N, Desired Force
-wK = 6000;                          % Wall stiffness
-%wK = 60000;                          % Wall stiffness
-wall_offset = 1.2*0.0067;           % Inner wall depth
-%wall_offset = 6.6667e-004;
+%wK = 6000;                          % Wall stiffness
+wK = 60000;                          % Wall stiffness
+%wall_offset = 1.2*0.0067;           % Inner wall depth
+wall_offset = 6.6667e-004;
 
 % Accumulated Error
 acc_error = [0,0,0]';
@@ -182,9 +182,9 @@ for t = 0:dt:T
     text(0.6 - 0.6,-0.31,'N');
     plot(max_F/100 - 0.6, -0.25,'b+');
     
-    text(0.4,-0.2, 'Wall Stiffness: ');
-    text(0.7,-0.2, num2str(wK,6));
-    
+    text(0.3,-0.2, 'Wall Stiffness: ');
+    text(0.6,-0.2, num2str(wK,6));
+    text(0.75,-0.2,'N/m');
 %     text(0,-0.4,'Accumulated Force Error: ');
 %     text(0.6,-0.4,num2str(acc_Fe,5));
     
