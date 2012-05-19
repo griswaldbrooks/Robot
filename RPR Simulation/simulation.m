@@ -24,8 +24,8 @@ h1 = 1;       % meters
 h2 = 0.2;     % meters
 
 Fd = 40;                            % N, Desired Force
-%wK = 6000;                          % Wall stiffness
-wK = 60000;                          % Wall stiffness
+wK = 6000 + (60000 - 6000)*rand(1);                          % Wall stiffness
+%wK = 60000;                          % Wall stiffness
 %wall_offset = 1.2*0.0067;           % Inner wall depth
 wall_offset = 6.6667e-004;
 
@@ -62,8 +62,8 @@ for t = 0:dt:T
     %dq_ref = [1,cos(t),-1]';
     %ddq_ref = [0,-sin(t),0]';
     
-    dx = (0.2 + wall_offset)*(1 - exp(-20*t)) + 0.4005;
-    %dx = (0.6 + wall_offset);
+    dx = (0.2 + wall_offset)*(1 - exp(-10*t)) + 0.4005;
+    %dx = (0 + wall_offset);
     dy = 0.4*sin(t) + 0.6;
     or = 0;
     
@@ -74,8 +74,9 @@ for t = 0:dt:T
     
 %     v = [0,0.4*cos(t),0,0,0,0]';
 %     a = [0,-0.4*sin(t),0,0,0,0]';
-    v = [(0.2 + wall_offset)*(20*exp(-20*t)),0.4*cos(t),0,0,0,0]';
-    a = [(0.2 + wall_offset)*(-400*exp(-20*t)),-0.4*sin(t),0,0,0,0]';
+    v = [(0.2 + wall_offset)*(10*exp(-10*t)),0.4*cos(t),0,0,0,0]';
+    a = [(0.2 + wall_offset)*(-100*exp(-10*t)),-0.4*sin(t),0,0,0,0]';
+    
         
     q_ref = arm_ik(H,a3);
     dq_ref = arm_invj(v,q_ref,a3);
@@ -84,11 +85,13 @@ for t = 0:dt:T
     e = [e,(q-q_ref)]; 
     acc_error = acc_error + dt*(q - q_ref);
     
+    noise = 1000*rand(1);
+    
     %%% Calculate Dynamic Response %%%
-    k1 = dt*calc_x_dot(q,dq,q_ref,dq_ref,ddq_ref,acc_error,acc_Fe);
-    k2 = dt*calc_x_dot(q + 0.5*k1(1:3),dq + 0.5*k1(4:6),q_ref,dq_ref,ddq_ref,acc_error,acc_Fe);
-    k3 = dt*calc_x_dot(q + 0.5*k2(1:3),dq + 0.5*k2(4:6),q_ref,dq_ref,ddq_ref,acc_error,acc_Fe);
-    k4 = dt*calc_x_dot(q + k3(1:3),dq + k3(4:6),q_ref,dq_ref,ddq_ref,acc_error,acc_Fe);
+    k1 = dt*calc_x_dot(q,dq,q_ref,dq_ref,ddq_ref,acc_error,acc_Fe,wK+noise);
+    k2 = dt*calc_x_dot(q + 0.5*k1(1:3),dq + 0.5*k1(4:6),q_ref,dq_ref,ddq_ref,acc_error,acc_Fe,wK+noise);
+    k3 = dt*calc_x_dot(q + 0.5*k2(1:3),dq + 0.5*k2(4:6),q_ref,dq_ref,ddq_ref,acc_error,acc_Fe,wK+noise);
+    k4 = dt*calc_x_dot(q + k3(1:3),dq + k3(4:6),q_ref,dq_ref,ddq_ref,acc_error,acc_Fe,wK+noise);
     
     k = (1/6)*(k1 + 2*k2 + 2*k3 + k4);
     
@@ -184,7 +187,7 @@ for t = 0:dt:T
     
     text(0.3,-0.2, 'Wall Stiffness: ');
     text(0.6,-0.2, num2str(wK,6));
-    text(0.75,-0.2,'N/m');
+    text(0.8,-0.2,'N/m');
 %     text(0,-0.4,'Accumulated Force Error: ');
 %     text(0.6,-0.4,num2str(acc_Fe,5));
     
@@ -269,7 +272,7 @@ end
   line([0,dt*length(e)],[0,0],'Color','k','LineStyle','--')
   xlabel('Time, seconds');
   ylabel('Error, degrees');
-  title('Feedback Linearizing Controller')
+  title(['Joint Error, Wall Stiffness: ',num2str(wK),' N/m'])
   legend1 = legend('Joint 1','Joint 2','Joint 3');
   set(legend1,'Location','SouthEast');
 
@@ -284,12 +287,12 @@ plot(x(:,1),x(:,2),x(:,3),x(:,4))
   cla
   axis([0,dt*length(e_F),min(min(e_F)),max(max(e_F))])
   t = 0:dt:T;
-  plot(t,e_F);
+  plot(t,e_F,'b-');
   line([0,dt*length(e_F)],[0,0],'Color','k','LineStyle','--')
   xlabel('Time, seconds');
   ylabel('Force Error, N');
-  title('Feedback Linearizing Controller')
-  legend1 = legend('Force Error');
+  title(['Applied Force Error, Wall Stiffness: ',num2str(wK),' N/m'])
+  %legend1 = legend('Applied Force Error');
   set(legend1,'Location','SouthEast');
 
 

@@ -1,4 +1,4 @@
-function x_dot = calc_x_dot(q,dq,q_ref,dq_ref,ddq_ref,acc_error,acc_Fe)
+function x_dot = calc_x_dot(q,dq,q_ref,dq_ref,ddq_ref,acc_error,acc_Fe,wK)
 m1 = 4.5;     % kg
 m2 = 2;       % kg
 m3 = 1;       % kg
@@ -9,8 +9,6 @@ g = 9.81;     % m/s^2
 b1 = 0.1;     % dampening 1
 b2 = 0.1;     % dampening 2
 b3 = 0.1;     % dampening 3
-%k = 6000;     % Wall stiffness
-k = 60000;     % Wall stiffness
 c = 0.5;      % Wall drag
 wall_x = 0.6; % Wall x location
 
@@ -49,7 +47,7 @@ v = J*dq;
       dx = 0;
       c = 0;
   end
-  F = [k*dx,c*v(2),0,0,0,0]';
+  F = [wK*dx,c*v(2),0,0,0,0]';
 
 
 

@@ -18,10 +18,11 @@ Kd = -2*wn;
 Ki = 100;
 
 
+
 Kp_f = -3.5;
 Kd_f = -10;
 Ki_f = 1;
- 
+
 % Jacobian
   J = [   -a3*sin(q(1)+q(3)) + q(2)*cos(q(1)),    sin(q(1)),  -a3*sin(q(1)+q(3));
          a3*cos(q(1)+q(3)) + q(2)*sin(q(1)),   -cos(q(1)),  a3*cos(q(1)+q(3));

@@ -12,9 +12,13 @@ T = [0,0]';
 MAX_TORQUE = 1000;
 ZERO_TORQUE = 0;
 
-Kp = -40;
-Ki = -5;
-Kd = -10;
+% Kp = -40;
+% Ki = -5;
+% Kd = -10;
+wn = 10;
+Kp = -wn^2;
+Kd = -2*wn;
+Ki = 10;
 
 % Inertia
   J = [(a1^2)*(m1 + m2) + m2*a2^2 + 2*m2*a1*a2*cos(theta_ss(2)), m2*a2^2 + m2*a1*a2*cos(theta_ss(2));
