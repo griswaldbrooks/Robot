@@ -10,8 +10,16 @@ b2 = -0.01;     % dampening 2
 b3 = -0.01;     % dampening 3
 floor_z = 0;    % floor location
 ceil_z = 5;    % ceiling location
-floor_stiffness = 6000;
-ceil_stiffness = 6000;
+rw_z = -5;    % right wall location
+lw_z = 5;    % 
+fw_z = -5;    % front wall location
+bw_z = 5;    % 
+floor_stiffness = 600;
+ceil_stiffness = 600;
+rw_stiffness = 600; % Right wall
+lw_stiffness = 600;
+fw_stiffness = 600; % Front wall
+bw_stiffness = 600;
 c = -2.0;      % Floor drag
 ddq = zeros(6,1);
 
@@ -31,6 +39,16 @@ ddq = zeros(6,1);
   dz_f = A1(3,4) - floor_z;
   dz_c = ceil_z - A1(3,4);
   
+  c_rw = c;
+  c_lw = c;
+  dz_lw = A1(1,4) - lw_z
+  dz_rw = A1(1,4) - rw_z
+  
+  c_fw = c;
+  c_bw = c;
+  dz_fw = A1(2,4) - fw_z;
+  dz_bw = A1(2,4) - bw_z;
+  
   if(dz_f > 0)
       dz_f = 0;
       c_f = 0;
@@ -39,8 +57,27 @@ ddq = zeros(6,1);
       dz_c = 0;
       c_c = 0;
   end
+  if(dz_rw > 0)
+      dz_rw = 0;
+      c_rw = 0;
+  end
+  if(dz_lw < 0)
+      dz_lw = 0;
+      c_lw = 0;
+  end
+  if(dz_fw > 0)
+      dz_fw = 0;
+      c_fw = 0;
+  end
+  if(dz_bw < 0)
+      dz_bw = 0;
+      c_bw = 0;
+  end
   
-  F = [0,0,ceil_stiffness*dz_c - c_c*v(3) - floor_stiffness*dz_f + c_f*v(3),0,0,0]';
+  F = [-rw_stiffness*dz_rw - c_rw*v(1) - lw_stiffness*dz_lw + c_lw*v(1);
+      -bw_stiffness*dz_bw - c_bw*v(2) - fw_stiffness*dz_fw + c_fw*v(2);
+       ceil_stiffness*dz_c - c_c*v(3) - floor_stiffness*dz_f + c_f*v(3);
+       0;0;0];
 
 % Inertia
   M = m1*eye(3);

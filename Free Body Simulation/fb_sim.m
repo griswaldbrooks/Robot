@@ -1,5 +1,6 @@
 cla,clc,clear
 hold all
+grid on
 
 axis([-5 5 -5 5 -0.1 5])
 xlabel('X axis, m')
@@ -9,8 +10,8 @@ axis square
 
 % Initial Conditions, radians, meters
 % [th_x, th_y, th_z, dx, dy, dz]
-q  = [0,0,0,0,0,2.5]';
-dq = [0,0,0,0,0,-20]';
+q  = [0,0,0,0.1,0.1,2.5]';
+dq = [0,0,0,50,50,-20]';
 
 % Parameters
 m1 = 0.10;     % kg
