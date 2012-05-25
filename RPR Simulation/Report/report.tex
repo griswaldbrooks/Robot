@@ -1,5 +1,10 @@
 \documentclass[letterpaper,12pt]{report}
+\usepackage{pstricks}
+\usepackage{amsmath}
+\usepackage{wrapfig}
+
 \begin{document}
+
 
 % Title
 \title{ Force Control of an RPR manipulator\\EL 522 Final Project}
@@ -14,11 +19,219 @@ This paper describes a basic hybrid force control technique and presents simulat
 \tableofcontents
 
 \chapter{Introduction}
+
 \section{Concept and Motivation}
+Many manipulator applications require specific amounts of force to be applied to the environment. 
+Tasks include machining, object manipulation, and part assembly. 
+Without force control, the robot would apply an arbitrary amount of force as a function 
+of its joint error and interaction with the environment. This would lead to unpredictable
+results and possible manipulator instability, e.g. causing the end effector to bounce.
+
+One method of force control is a feed forward method called impedance control. In this method 
+the environment is modeled as a mass-spring or a mass-spring-dampened system 
+and the required displacement needed for a desired force is calculated \eqref{eq:displacementeq1}. 
+The manipulator is then commanded to its intended tracking plus this displacement. This can be though of
+as the manipulator tracking an inner virtual wall.
+
+
+\begin{equation} \label{eq:displacementeq1}
+\delta x = {F_d \over k}
+\end{equation}
+
+\begin{figure}
+\centering
+% Spring
+\def\zigzag{\psline(0,0)(0.5,0.5)(1.5,-0.5)(2,0)}
+\psset{unit=0.25,linewidth=1.5pt}
+\multips(-1,0)(2,0){4}{\zigzag}
+\psline[linewidth=1.5pt](-2,0)(-1,0)
+\psline[linewidth=1.5pt](8,0)(7,0)
+% Spring label
+\rput(4.5,2.5){$k$}
+% Virtual Wall
+\psline[linewidth=1.5pt,linestyle=dashed, dash=3pt 3pt](1,-3)(1,3)
+% Ground
+\pspolygon[linecolor=white,fillstyle=hlines](8,-3)(8,3)(8.9,3)(8.9,-3)
+\psline[linewidth=1.5pt](8,-3)(8,3)
+% Wall
+\psline[linewidth=1.5pt](-2,3)(-2,-3)
+% Force arrow
+\psline[linewidth=3pt]{->}(-5,2)(1,2)
+% Force label
+\rput(-7,2){$F_d$}
+% dx arrow
+\psline[linewidth=1pt]{<->}(-2,-1.75)(1,-1.75)
+
+% dx label
+\rput(-.5,-1){$\delta x$}
+
+\caption{Mass-spring wall model with virtual wall.}
+\end{figure}
+
+
+Where $F_d$ is the desired force, $k$ is the modeled wall spring constant, and $\delta x$ is the wall displacement necessary to produce $F_d$.
+One drawback of this method is that it assumes perfect knowledge of the environment. If the wall stiffness varies the applied force will vary.
+To supplement this, a force/torque sensor can be added to the end effector which provides feedback to the controller allowing the applied force
+to be modulated. This method is known as Hybrid Force Control and is the technique used in this report.
+
+\section{Manipulator Model}
+
+The manipulator considered in this project is the RPR manipulator. It has a revolute joint at its base and wrist which are coplanar, 
+and a prismatic joint in between, Figure \ref{fig:RPRfig}. 
+
+\begin{figure}[t]
+\centering
+% link 1&2
+\pspolygon[linewidth=1.5pt](-2.0884,0.3384)(-1.9116,0.1616)(0.2097,2.2829)(0.0329,2.4597)
+% link 3
+\pspolygon[linewidth=1.5pt](0.1213,2.4963)(0.1213,2.2463)(3,2.2463)(3,2.4963)
+% base block
+\pspolygon[linewidth=1.5pt](-1.75,-0.25)(-2.25,-0.25)(-2.25,0.25)(-1.75,0.25)
+% joint 2
+\pspolygon[linewidth=1.5pt,fillstyle=solid](-0.5858,2.0178)(-0.2322,1.6642)(-1.8232,0.0732)(-2.1768,0.4268)
+\pspolygon[linewidth=1.5pt,fillstyle=solid](-0.8156,1.6112)(-0.6388,1.4344)(-1.0631,1.0101)(-1.2399,1.1869)
+\pspolygon[linewidth=1.5pt,fillstyle=solid,fillcolor=black](-1.2399,1.1869)(-1.0631,1.0101)(-1.2752,0.7980)(-1.4520,0.9748)
+% joint 1
+\pscircle[linewidth=1.5pt,fillstyle=solid](-2,0.25){0.25}
+\pscircle[linewidth=1.5pt,fillstyle=solid,fillcolor=black](-2,0.25){0.1}
+% joint 3
+\pscircle[linewidth=1.5pt,fillstyle=solid](0.1213,2.3713){0.25}
+\pscircle[linewidth=1.5pt,fillstyle=solid,fillcolor=black](0.1213,2.3713){0.1}
+% manipulator
+\pspolygon[linewidth=1.5pt](3,2.7463)(3,1.9963)(3.5,1.9963)(3.5,2.2463)(3.25,2.2463)(3.25,2.4963)(3.5,2.4963)(3.5,2.7463)
+\caption{Schematic diagram of RPR manipulator}
+\label{fig:RPRfig}
+\end{figure}
+
+\subsection{Kinematics}
+The kinematic model of the manipulator is given by the transformation matrices
+\eqref{eq:Amatrices}, resulting in an end effector transformation of \eqref{eq:A1A2A3}. The DH parameters for the 
+manipulator are given in Table \ref{tab:DHtable}.
+
+\begin{subequations}
+		\begin{equation}
+		A_1 = 
+		\begin{bmatrix}
+			cos\theta_1&0&sin\theta_1&0\\
+			sin\theta_1&0&-cos\theta_1&0\\
+			0&1&0&0\\
+			0&0&0&1\\
+		\end{bmatrix}
+		\end{equation}
+		\begin{equation}
+		A_2 = 
+		\begin{bmatrix}
+			1&0&0&0\\
+			0&0&1&0\\
+			0&-1&0&d_2\\
+			0&0&0&1\\
+		\end{bmatrix}
+		\end{equation}
+		\begin{equation}
+		A_3 = 
+		\begin{bmatrix}
+			cos\theta_3&-sin\theta_3&0&a_3cos\theta_3\\
+			sin\theta_3&cos\theta_3&0&a_3sin\theta_3\\
+			0&0&1&0\\
+			0&0&0&1
+		\end{bmatrix}
+		\end{equation}
+\label{eq:Amatrices}
+\end{subequations}
+\begin{equation}
+A_1A_2A_3 = 
+		\begin{bmatrix}
+			c_{13}&-s_{13}&0&a_3c_{13}+d_2s_1\\
+			s_{13}&c_{13}&0&a_3s_{13}-d_2c_1\\
+			0&0&1&0\\
+			0&0&0&1
+		\end{bmatrix}
+\label{eq:A1A2A3}
+\end{equation}
+\begin{table}
+\centering
+	\begin{tabular}{r|c c c c}
+		Joint&$\alpha_i$&$a_i$&$d_i$&$\theta_i$\\
+		\hline
+		1&0&$90^\circ$&0&$\theta_1$\\
+		2&0&$-90^\circ$&$d_2$&0\\
+		3&$a_3$&0&0&$\theta_3$
+	\end{tabular}
+\caption{DH parameters for RPR manipulator.}
+\label{tab:DHtable}
+\end{table}
+
+Using the standard input tranformation matrix seen in \eqref{eq:Hin},the inverse kinematics
+of the manipulator are given by \eqref{eq:IK}. These were used to calculate the desired joint positions,
+given an end effector reference trajectory.
+\begin{equation}
+H_{in} = 
+	\begin{bmatrix}
+		r_{11}&r_{12}&r_{13}&d_x\\
+		r_{21}&r_{22}&r_{23}&d_y\\
+		r_{31}&r_{32}&r_{33}&d_z\\
+		0&0&0&1
+	\end{bmatrix}
+\label{eq:Hin}
+\end{equation}
+\begin{subequations}
+	\begin{align}
+		\theta_1 + \theta_3 &= atan2(r_{21},r_{11})\\
+		\theta_1 &= atan2(d_x-a_3c_{13},a_3s_{13}-d_y)\\
+		d_2 &= \sqrt{(d_x-a_3c_{13})^2+(d_y-a_3s_{13})^2}\\
+		\theta_3 &= atan2(r_{21},r_{11}) - \theta_1
+	\end{align}
+\label{eq:IK}
+\end{subequations}
+The desired joint velocities $\dot q$ were given using the inverse Jacobian, \eqref{eq:IJ}.
+This involved first calculating the Jacobian, \eqref{eq:Jacob}, and numerically calculating
+the Moore-Penrose pseudoinverse.
+\begin{equation}
+\dot q = J^\#v
+\label{eq:IJ}
+\end{equation}
+Where $v$ is a $6\times1$ column vector containing the three end effector translational velocities and three angular
+velocities.
+\begin{equation} \label{eq:Jacob}
+J = 
+	\begin{bmatrix}
+		-a_3s_{13}+d_2c_1&s_1&-a_3s_{13}\\
+		a_3c_{13}+d_2s_1&-c_1&a_3c_{13}\\
+		0&0&0\\
+		0&0&0\\
+		0&0&0\\
+		1&0&1
+	\end{bmatrix}
+\end{equation}
+
+Following this, the desired joint accelerations $\ddot q$ were given by \eqref{eq:IA} and calculated
+using the aforementioned inverse Jacobian and the element-wise time derivative
+of the Jacobian \eqref{eq:Jdot}.
+\begin{equation} \label{eq:Jdot}
+\dot J = 
+	\begin{bmatrix}
+		-a_3c_{13}(\dot\theta_1+\dot\theta_3)+\dot d_2c_1-d_2s_1\dot\theta_1&c_1\dot\theta_1&-a_3c_{13}(\dot\theta_1+\dot\theta_3)\\
+		-a_3s_{13}(\dot\theta_1+\dot\theta_3)+\dot d_2s_1+d_2c_1\dot\theta_1&s_1\dot\theta_1&-a_3s_{13}(\dot\theta_1+\dot\theta_3)\\
+		0&0&0\\
+		0&0&0\\
+		0&0&0\\
+		0&0&0
+	\end{bmatrix}
+\end{equation}
+\begin{equation} \label{eq:IA}
+\ddot q = J^\#(\dot v - \dot J \dot q)
+\end{equation}
+
+\subsection{Dynamics}
+Modeling the manipulator as a collection of point masses located at the revolute joints and end effector,
+the dynamics of the manipulator were given by \eqref{eq:dyn}.
+\begin{equation} \label{eq:dyn}
+D(q)\ddot q + C(q,\dot q) + G(q) = U + B(q) + J(q)^TF
+\end{equation}
+
+\section{Environmental Model}
 \section{Feedback Linearization}
 \section{Hybrid Force Control}
-\section{Manipulator Model}
-\section{Environmental Model}
 
 \chapter{Results}
 \section{Position Error}
