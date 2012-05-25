@@ -1,7 +1,7 @@
-This is XeTeX, Version 3.1415926-2.3-0.9997.5 (MiKTeX 2.9) (preloaded format=xelatex 2012.5.24)  25 MAY 2012 00:21
+This is XeTeX, Version 3.1415926-2.3-0.9997.5 (MiKTeX 2.9) (preloaded format=xelatex 2012.5.25)  25 MAY 2012 03:42
 entering extended mode
-**report.tex
-("C:\Robot\RPR Simulation\Report\report.tex"
+**S:/Robot*Research/Robot/RPR*Simulation/Report/report.tex
+("S:/Robot Research/Robot/RPR Simulation/Report/report.tex"
 LaTeX2e <2011/06/27>
 Babel <v3.8m> and hyphenation patterns for english, afrikaans, ancientgreek, ar
 abic, armenian, assamese, basque, bengali, bokmal, bulgarian, catalan, coptic, 
@@ -64,7 +64,7 @@ File: xkeyval.tex 2008/08/13 v2.6a key=value parser (HA)
 )
 \psLoopIndex=\count99
 
-`PSTricks' v2.23  <2011/09/04> (tvz)
+`PSTricks' v2.27  <2012/03/11> (tvz)
 \pst@dima=\dimen103
 \pst@dimb=\dimen104
 \pst@dimc=\dimen105
@@ -103,19 +103,20 @@ File: xkeyval.tex 2008/08/13 v2.6a key=value parser (HA)
 \pslinearc=\dimen119
 \pst@symbolStep=\dimen120
 \pst@symbolWidth=\dimen121
+\pst@symbolLinewidth=\dimen122
 \everypsbox=\toks18
-\psframesep=\dimen122
-\pslabelsep=\dimen123
-\pst@shift=\dimen124
+\psframesep=\dimen123
+\pslabelsep=\dimen124
+\pst@shift=\dimen125
 \theoverlaybox=\box29
 
 ("C:\Program Files\MiKTeX 2.9\tex\xelatex\xetex-pstricks\pstricks.con"
 ("C:\Program Files\MiKTeX 2.9\tex\generic\pstricks\config\xdvipdfmx.cfg"
 Using PSTricks configuration for XeTeX+xdvipdfmx
 )))
-File: pstricks.tex 2011/09/04 v2.23 `PSTricks' (tvz,hv)
+File: pstricks.tex 2012/03/11 v2.27 `PSTricks' (tvz,hv)
  ("C:\Program Files\MiKTeX 2.9\tex\generic\pstricks\base\pst-fp.tex")
-File: pst-fp.tex 2011/09/04 v2.23 `PST-fp' (hv)
+File: pst-fp.tex 2012/03/11 v2.27 `PST-fp' (hv)
 
 ("C:\Program Files\MiKTeX 2.9\tex\latex\xcolor\xcolor.sty"
 Package: xcolor 2007/01/21 v2.11 LaTeX color extensions (UK)
@@ -149,11 +150,11 @@ Package: amstext 2000/06/29 v2.01
 ("C:\Program Files\MiKTeX 2.9\tex\latex\ams\math\amsgen.sty"
 File: amsgen.sty 1999/11/30 v2.0
 \@emptytoks=\toks19
-\ex@=\dimen125
+\ex@=\dimen126
 ))
 ("C:\Program Files\MiKTeX 2.9\tex\latex\ams\math\amsbsy.sty"
 Package: amsbsy 1999/11/29 v1.2d
-\pmbraise@=\dimen126
+\pmbraise@=\dimen127
 )
 ("C:\Program Files\MiKTeX 2.9\tex\latex\ams\math\amsopn.sty"
 Package: amsopn 1999/12/14 v2.01 operator names
@@ -170,7 +171,7 @@ LaTeX Info: Redefining \dots on input line 382.
 LaTeX Info: Redefining \cdots on input line 467.
 \Mathstrutbox@=\box30
 \strutbox@=\box31
-\big@size=\dimen127
+\big@size=\dimen128
 LaTeX Font Info:    Redeclaring font encoding OML on input line 567.
 LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
 \macc@depth=\count117
@@ -183,12 +184,12 @@ LaTeX Font Info:    Redeclaring font encoding OMS on input line 568.
 \column@=\count122
 \maxfields@=\count123
 \andhelp@=\toks21
-\eqnshift@=\dimen128
-\alignsep@=\dimen129
-\tagshift@=\dimen130
-\tagwidth@=\dimen131
-\totwidth@=\dimen132
-\lineht@=\dimen133
+\eqnshift@=\dimen129
+\alignsep@=\dimen130
+\tagshift@=\dimen131
+\tagwidth@=\dimen132
+\totwidth@=\dimen133
+\lineht@=\dimen134
 \@envbody=\toks22
 \multlinegap=\skip44
 \multlinetaggap=\skip45
@@ -197,14 +198,14 @@ LaTeX Info: Redefining \[ on input line 2666.
 LaTeX Info: Redefining \] on input line 2667.
 )
 ("C:\Program Files\MiKTeX 2.9\tex\latex\wrapfig\wrapfig.sty"
-\wrapoverhang=\dimen134
-\WF@size=\dimen135
+\wrapoverhang=\dimen135
+\WF@size=\dimen136
 \c@WF@wrappedlines=\count124
 \WF@box=\box32
 \WF@everypar=\toks24
 Package: wrapfig 2003/01/31  v 3.6
 )
-("C:\Robot\RPR Simulation\Report\report.aux")
+("S:\Robot Research\Robot\RPR Simulation\Report\report.aux")
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 6.
 LaTeX Font Info:    ... okay on input line 6.
 LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 6.
@@ -240,7 +241,7 @@ Requested font "cmr17" at 24.88pt
 Requested font "cmbx12" at 24.88pt
  -> cmbx12
 
-("C:\Robot\RPR Simulation\Report\report.toc"
+("S:\Robot Research\Robot\RPR Simulation\Report\report.toc"
 Requested font "cmr8" at 8.0pt
  -> cmr8
 Requested font "cmr6" at 6.0pt
@@ -276,29 +277,29 @@ Requested font "cmbx12" at 17.28pt
 
 Package amsmath Warning: Foreign command \over;
 (amsmath)                \frac or \genfrac should be used instead
-(amsmath)                 on input line 38.
+(amsmath)                 on input line 39.
 
 [2
 
 ]
 Requested font "cmbx12" at 14.4pt
  -> cmbx12
- [3] [4] [5]
+ [3] [4] [5] [6] [7]
 Chapter 2.
-[6
+[8
 
 ]
 Chapter 3.
-[7
+[9
 
-] ("C:\Robot\RPR Simulation\Report\report.aux") ) 
+] ("S:\Robot Research\Robot\RPR Simulation\Report\report.aux") ) 
 Here is how much of TeX's memory you used:
- 3081 strings out of 429156
- 38028 string characters out of 3168943
- 120732 words of memory out of 3000000
- 6342 multiletter control sequences out of 15000+200000
+ 3104 strings out of 429156
+ 38576 string characters out of 3168943
+ 120972 words of memory out of 3000000
+ 6364 multiletter control sequences out of 15000+200000
  10539 words of font info for 38 fonts, out of 3000000 for 9000
  786 hyphenation exceptions out of 8191
- 32i,10n,38p,234b,255s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 32i,10n,38p,280b,255s stack positions out of 5000i,500n,10000p,200000b,50000s
 
-Output written on report.pdf (9 pages).
+Output written on report.pdf (11 pages).

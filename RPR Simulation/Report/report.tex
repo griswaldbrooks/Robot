@@ -20,12 +20,13 @@ This paper describes a basic hybrid force control technique and presents simulat
 
 \chapter{Introduction}
 
-\section{Concept and Motivation}
+\section{Concept and Motivation} \label{sec:concept}
 Many manipulator applications require specific amounts of force to be applied to the environment. 
 Tasks include machining, object manipulation, and part assembly. 
 Without force control, the robot would apply an arbitrary amount of force as a function 
 of its joint error and interaction with the environment. This would lead to unpredictable
-results and possible manipulator instability, e.g. causing the end effector to bounce.
+results and possible manipulator instability, e.g. causing the end effector to bounce or damage
+the object or environment with which it's interacting.
 
 One method of force control is a feed forward method called impedance control. In this method 
 the environment is modeled as a mass-spring or a mass-spring-dampened system 
@@ -226,10 +227,107 @@ of the Jacobian \eqref{eq:Jdot}.
 Modeling the manipulator as a collection of point masses located at the revolute joints and end effector,
 the dynamics of the manipulator were given by \eqref{eq:dyn}.
 \begin{equation} \label{eq:dyn}
-D(q)\ddot q + C(q,\dot q) + G(q) = U + B(q) + J(q)^TF
+D(q)\ddot q + C(q,\dot q) + G(q) = U + B(\dot q) + J(q)^TF
 \end{equation}
+Where $D(q)$ is the inertia matrix \eqref{eq:Mass}, $C(q,\dot q)$ is the centripetal vector \eqref{eq:Centrip}, $G(q)$ are all the gravity terms 
+\eqref{eq:Grav}, $U$ is the control input, $B(\dot q)$ are the dampening terms due to viscous joint friction \eqref{eq:Damp}, and $F$ is the generalized force vector of 
+forces/torques applied to the end effector \eqref{eq:Force}.
+\begin{equation} \label{eq:Mass}
+D(q) = 
+	\begin{bmatrix}
+		(m_2+m_3)d_2^2+m_3a_3(1-2d_2s_3)&-m_3a_3c_3&m_3a_3(1-d_2s_3)\\
+		-m_3a_3c_3&m_2+m_3&-m_3a_3c_3\\
+		m_3a_3(1-d_2s_3)&-m_3a_3c_3&m_3a_3
+	\end{bmatrix}
+\end{equation}
+\begin{equation} \label{eq:Centrip}
+C(q,\dot q) = 
+	\begin{bmatrix}
+		2d_2\dot d_2 \dot\theta_1(m_2+m_3) + m_3a_3(\dot d_2s_3-(\dot d_2s_3+d_2c_3\dot\theta_3)(2\dot\theta_1+\dot\theta_3))\\
+		m_3a_3s_3(\dot\theta_1+\dot\theta_3)^2 - (m_2+m_3)d_2\dot\theta_1^2\\
+		m_3a_3(d_2\dot\theta_1\dot\theta_3c_3 - 2s_3\dot d_2\dot\theta_1)
+	\end{bmatrix}
+\end{equation}
+\begin{equation} \label{eq:Grav}
+G(q) = g
+	\begin{bmatrix}
+		(m_2+m_3)d_2s_1 + m_3a_3c_{13}\\
+		-(m_2+m_3)c_1\\
+		m_3a_3c_{13}
+	\end{bmatrix}
+\end{equation}
+Where $m_2$ and $m_3$ are the masses at the elbow (joint 3) and the end effector respectively and $g$ is the acceleration due to gravity in $m\over s^2$.
+\begin{equation} \label{eq:Damp}
+B(\dot q) = 
+	\begin{bmatrix}
+		-b_1\dot\theta_1\\
+		-b_2\dot d_2\\
+		-b_3\dot\theta_3
+	\end{bmatrix}
+\end{equation}
+For this simulation, the viscous dampening coefficients were $b_1=b_2=b_3=0.1 {Ns\over m}$.
+\begin{equation} \label{eq:Force}
+F = 
+	\begin{bmatrix}
+		f_x,f_y,f_z,\tau_x,\tau_y,\tau_z
+	\end{bmatrix}
+	^T
+\end{equation}
+Where $f_n$ represents a force in the $n$ direction and $\tau_n$ represents a torque along the $n$ axis. The details about the elements used
+for this simulation are discussed in Section~\ref{sec:envmodel}.
 
-\section{Environmental Model}
+\section{Environmental Model}\label{sec:envmodel}
+As mentioned in Section~\ref{sec:concept}, hybrid force control is being simulated and as such, the environment with which the manipulator
+is going to interact, i.e. a wall, is modeled as a mass-spring system. In addition to a reactive force in the direction normal to the wall,
+a term for viscous friction $c$ is added for when the manipulator is 'dragging' against the wall. This results in a force vector applied to 
+the end effector when contacting the wall of \eqref{eq:WallForce}.
+
+\begin{equation} \label{eq:WallForce}
+F_w = 
+	\begin{bmatrix}
+		k\delta x,-cv_y,0,0,0,0
+	\end{bmatrix}
+	^T
+\end{equation}		
+Where $\delta x$ in this case is always taken to be negative when the end effector is 'indenting' the wall.
+According to specification, $k$ can take on any value from $6000 {N\over m}$ to $60000{N\over m}$, so in simulation
+the wall stiffness $k$ is taken as a random number within this range.
+
+\begin{figure}[t]
+\centering
+% Spring
+\def\zigzag{\psline(0,0)(0.5,0.5)(1.5,-0.5)(2,0)}
+\psset{unit=0.25,linewidth=1.5pt}
+\multips(2.5,0)(2,0){2}{\zigzag}
+\psline[linewidth=1.5pt](1,0)(2.5,0)
+\psline[linewidth=1.5pt](8,0)(6.5,0)
+% Spring label
+\rput(3.5,2.5){$k\delta x$}
+% Wall
+\psline[linewidth=1.5pt,](1,-2)(1,3)
+% Ground
+\pspolygon[linecolor=white,fillstyle=hlines](8,-2)(8,3)(8.9,3)(8.9,-2)
+\psline[linewidth=1.5pt](8,-2)(8,3)
+% Force arrow
+\psline[linewidth=3pt]{<-}(1,1)(5,1)
+% End effector
+\pspolygon[linewidth=1.5pt](0,-0.5)(1,-0.5)(1,-1)(-0.5,-1)(-0.5,-0.5)(-0.5,2)(1,2)(1,1.5)(0,1.5)
+% Link
+\pspolygon[linewidth=1.5pt](-0.5,0)(-0.5,1)(-6.5,1)(-6.5,0)
+% Link motion
+\psline[linewidth=3pt]{<-}(-3,0.5)(-3,-2)
+% Link motion label
+\rput(-5,-1.5){$v_y$}
+% Friction
+\psline[linewidth=2.5pt]{<-}(-3,0.5)(-3,3)
+% Friction label
+\rput(-5,2.5){$cv_y$}
+% Joint
+\pscircle[linewidth=1.5pt,fillstyle=solid](-6.5,0.5){1}
+
+\caption{Wall modeled as a mass-spring system with viscous friction.}
+\end{figure}
+
 \section{Feedback Linearization}
 \section{Hybrid Force Control}
 

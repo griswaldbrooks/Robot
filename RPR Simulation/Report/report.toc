@@ -3,10 +3,10 @@
 \contentsline {section}{\numberline {1.2}Manipulator Model}{3}
 \contentsline {subsection}{\numberline {1.2.1}Kinematics}{3}
 \contentsline {subsection}{\numberline {1.2.2}Dynamics}{5}
-\contentsline {section}{\numberline {1.3}Environmental Model}{5}
-\contentsline {section}{\numberline {1.4}Feedback Linearization}{5}
-\contentsline {section}{\numberline {1.5}Hybrid Force Control}{5}
-\contentsline {chapter}{\numberline {2}Results}{6}
-\contentsline {section}{\numberline {2.1}Position Error}{6}
-\contentsline {section}{\numberline {2.2}Force Error}{6}
-\contentsline {chapter}{\numberline {3}Conclusion}{7}
+\contentsline {section}{\numberline {1.3}Environmental Model}{6}
+\contentsline {section}{\numberline {1.4}Feedback Linearization}{7}
+\contentsline {section}{\numberline {1.5}Hybrid Force Control}{7}
+\contentsline {chapter}{\numberline {2}Results}{8}
+\contentsline {section}{\numberline {2.1}Position Error}{8}
+\contentsline {section}{\numberline {2.2}Force Error}{8}
+\contentsline {chapter}{\numberline {3}Conclusion}{9}
