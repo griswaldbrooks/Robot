@@ -31,12 +31,12 @@ the object or environment with which it's interacting.
 One method of force control is a feed forward method called impedance control. In this method 
 the environment is modeled as a mass-spring or a mass-spring-dampened system 
 and the required displacement needed for a desired force is calculated \eqref{eq:displacementeq1}. 
-The manipulator is then commanded to its intended tracking plus this displacement. This can be though of
+The manipulator is then commanded to its intended tracking plus this displacement. This can be thought of
 as the manipulator tracking an inner virtual wall.
 
 
 \begin{equation} \label{eq:displacementeq1}
-\delta x = {F_d \over k}
+\delta x = \frac{F_d}{k}
 \end{equation}
 
 \begin{figure}
@@ -256,7 +256,7 @@ G(q) = g
 		m_3a_3c_{13}
 	\end{bmatrix}
 \end{equation}
-Where $m_2$ and $m_3$ are the masses at the elbow (joint 3) and the end effector respectively and $g$ is the acceleration due to gravity in $m\over s^2$.
+Where $m_2$ and $m_3$ are the masses at the elbow (joint 3) and the end effector respectively and $g$ is the acceleration due to gravity in $\frac m{s^2}$.
 \begin{equation} \label{eq:Damp}
 B(\dot q) = 
 	\begin{bmatrix}
@@ -265,7 +265,7 @@ B(\dot q) =
 		-b_3\dot\theta_3
 	\end{bmatrix}
 \end{equation}
-For this simulation, the viscous dampening coefficients were $b_1=b_2=b_3=0.1 {Ns\over m}$.
+For this simulation, the viscous dampening coefficients were $b_1=b_2=b_3=0.1 \frac{Ns}{m}$.
 \begin{equation} \label{eq:Force}
 F = 
 	\begin{bmatrix}
@@ -290,7 +290,7 @@ F_w =
 	^T
 \end{equation}		
 Where $\delta x$ in this case is always taken to be negative when the end effector is 'indenting' the wall.
-According to specification, $k$ can take on any value from $6000 {N\over m}$ to $60000{N\over m}$, so in simulation
+According to specification, $k$ can take on any value from $6000 \frac Nm$ to $60000\frac Nm$, so in simulation
 the wall stiffness $k$ is taken as a random number within this range.
 
 \begin{figure}[t]
@@ -329,8 +329,102 @@ the wall stiffness $k$ is taken as a random number within this range.
 \end{figure}
 
 \section{Feedback Linearization}
+
+For position control, a Feedback Linearizing control was employed. Feedback linearization is the concept of developing
+a control law that yields a linear input-output relationship within a non-linear system. In the context of the manipulator
+equation this can be seen under the following control law, \eqref{eq:Ufeed}.
+\begin{equation} \label{eq:Ufeed}
+U = D(q)V + C(q,\dot q) + G(q)
+\end{equation}
+Where $q$ and $\dot q$ are the joint positions and velocities currently read by the joint encoders, and $V$ is a vector
+of inputs to the control input $U$. When applied to the manipulator equation (and ignoring friction and external force 
+inputs for this example) yields \eqref{eq:FeedCancel}.
+\begin{subequations} \label{eq:FeedCancel}
+\begin{align}
+	D(q)\ddot q + C(q,\dot q) + G(q) &= U\\
+	D(q)\ddot q + C(q,\dot q) + G(q) &= D(q)V + C(q,\dot q) + G(q)\\
+	D(q)\ddot q &= D(q)V\\
+	D(q)^{-1}D(q)\ddot q &= D(q)^{-1}D(q)V\\
+	\ddot q &= V \label{eq:LinearFeed}
+\end{align}
+\end{subequations}
+The terms $C(q,\dot q)$ and $G(q)$ are added in an attempt to cancel the torques on the manipulator due to the centripetal and gravity terms.
+$D(q)$ is a positive definite matrix and hence is always invertible, allowing us to accommodate for the inertia terms. Equation \eqref{eq:LinearFeed} 
+shows a linear relationship between joint accelerations $\ddot q$ and the new control input $V$. In this way we can now design a controller 
+using linear feedback techniques.
+
+A PD controller was designed for \eqref{eq:LinearFeed}. As this is a second order system, we can pick a dampening and natural frequency
+to accommodate our needs. Let us pick a dampening $\zeta=1$ and a natural frequency of $\omega_n = 50 \frac{rad}{sec}$. This yields the
+gain terms seen in \eqref{eq:Gains}. In order to make our equations linear in joint error, an additional $\ddot q_{ref}$ term must be added
+to our control law, \eqref{eq:PDinE}, where $e = q - q_{ref}$ and $q_{ref}$ is the vector of joint positions we wish to track.
+\begin{subequations} \label{eq:PDinE}
+\begin{align}
+	&\ddot q = K_pe + K_d\dot e + \ddot q_{ref}\\
+	&\ddot e - K_d\dot e - K_p e = 0
+\end{align}
+\end{subequations}
+\begin{subequations} \label{eq:Gains}
+\begin{align}
+	&K_p = -\omega_n^2 = -2500\\
+	&K_d = -2\omega_n = -100
+\end{align}
+\end{subequations}
+
+The final control law for position control is \eqref{eq:ControlLaw}.
+\begin{equation} \label{eq:ControlLaw}
+U = D(q)(K_pe + K_d\dot e + \ddot q_{ref}) + C(q,\dot q) + G(q)
+\end{equation}
+
 \section{Hybrid Force Control}
 
+The hybrid force controller has two parts, impedance control and force feedback. The impedance controller brings the end effector
+into the range of where the manipulator would have to be to apply a desired force and the feedback controller adjusts the joints as
+needed in accordance with measurements from a force/torque sensor.
+
+\subsection{Impedance Control}
+As in Section~\ref{sec:envmodel}, the environment is modeled as a mass-spring system, in which case the depth needed for the end effector
+to produce the desired force $f_d$, is given by $\delta x = \frac {f_d}k$. In the context of the Hybrid Force Controller, the environmental
+stiffness $k$ need not be known exactly as the feedback controller will make the necessary adjustments to bring the applied force to the 
+desired force. 
+\subsection{Force Feedback Control}
+Once the end effector is in contact with the wall, force/torque measurements of the end effector's interaction with the wall are taken. They
+effect the manipulator according to \eqref{eq:dyn} through the vector $F$. In this manipulator, forces perpendicular to the wall are read
+along the end effector's x-axis, and drag from moving along the wall is read as force in the y direction \eqref{eq:WallForce}. 
+This manifests itself as \eqref{eq:Fvect}.
+\begin{equation} \label{eq:Fvect}
+F_w = [f_{w_x},f_{w_y},0,0,0,0]^T
+\end{equation}
+In order to construct a linear controller the transpose of the Jacobian $J^T$ will be applied to the control input of the force controller.
+This will feedback linearize the force relationship to be $F_w = F_u$, where $F_u$ is the output by the force controller.
+As $f_{w_x}$ will be negative when contacting the wall, force error takes the following form $e_{f_x}= f_{w_x} + f_{ref}$.
+While the drag force of the wall has an effect on the manipulator it is not significant, therefore the controller will attempt
+to directly compensate for it by applying the opposite force. The control law for the perpendicular force is given by \eqref{eq:ForceControlLaw}.
+\begin{equation} \label{eq:ForceControlLaw}
+F_{u_x} = f_{w_x} + K_{w_p}e_{f_x} + K_{w_d}\dot e_{f_x} + K_{w_i}\int e_{f_x}
+\end{equation}
+The $f_{w_x}$ term acts to cancel the reaction force from the wall while the PID controller then attempts to minimize the force error.
+As force in this case is modeled as proportional wall displacement by the end effector, the derivative of the force error term $\dot e_{f_x}$
+is proportional the the end effector velocity. This term is then implemented as $\dot e_{f_x} = v_x$ as the reference velocity is zero.
+
+Being a second order equation, the gains can be chosen according to \eqref{eq:forceGainsDeriv}. While setting $\zeta$ to one seems like the obvious
+choice, in practice this controller does not perform well. A better choice is to set $2\zeta\omega_n = \omega_n^2$. This brings the system under
+the tuning of $\omega_n$ and $K_{w_d}$. The derivative term acts to dampen end effector jitter, while $\omega_n$ reduces the systems sensitivity to 
+noise manifested as variability in wall stiffness.
+\begin{subequations} \label{eq:forceGainsDeriv}
+\begin{align}
+	K_{w_d}s^2 + K_{w_p}s + K_{w_i} &= s^2 + \frac {K_{w_p}}{K_{w_d}} s + \frac {K_{w_i}}{K_{w_d}}
+	&= s^2 + 2\zeta\omega_ns + \omega_n^2\\
+	K_{w_p} &= 2\zeta\omega_nK_{w_d}\\
+	K_{w_i} &= \omega_n^2K_{w_d}
+\end{align}
+\end{subequations}
+A natural frequency of $\omega_n = 0.1 \frac{rad}{sec}$ and a $K_{w_d} = 50$ were chosen yielding the final gain terms in \eqref{eq:forceGains}.
+\begin{subequations} \label{eq:forceGains}
+\begin{align}
+	K_{w_d} &= 50\\
+	K_{w_p} &= K_{w_i} = \omega_n^2K_{w_d} = 0.5
+\end{align}
+\end{subequations}
 \chapter{Results}
 \section{Position Error}
 \section{Force Error}

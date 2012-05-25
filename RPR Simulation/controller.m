@@ -16,12 +16,21 @@ wn = 50;
 Kp = -wn^2;
 Kd = -2*wn;
 Ki = 100;
+Ki=0;
 
 
 
 Kp_f = -3.5;
-Kd_f = -10;
-Ki_f = 1;
+Kd_f = -20;
+Ki_f = -1;
+
+wn_f = 0.1;
+Kd_f = 50;
+Ki_f = (wn_f^2)*Kd_f;
+Kp_f = (wn_f^2)*Kd_f;
+%Kp_f = 2*wn_f*Kd_f;
+
+
 
 % Jacobian
   J = [   -a3*sin(q(1)+q(3)) + q(2)*cos(q(1)),    sin(q(1)),  -a3*sin(q(1)+q(3));
@@ -48,12 +57,12 @@ Ki_f = 1;
         
 v = J*dq;
 
-%F_e = [Kp_f*(F(1) + F_ref) + Kd_f*(v(1)),0,0,0,0,0]';
-F_e = -F;
-Kp_f*(-F(1) - F_ref);
-Ki_f*acc_Fe;
-F_e(1) = -F(1) + Kp_f*(-F(1) - F_ref) + Kd_f*(v(1)) + Ki_f*acc_Fe;
-%F_e(1) = Kp_f*(-F(1) - F_ref);
+F_e = zeros(6,1);
+%Kp_f*(-F(1) - F_ref);
+%Ki_f*acc_Fe;
+F_e(1) = F(1) + Kp_f*(F(1) + F_ref) + Kd_f*(v(1)) + Ki_f*acc_Fe;
+F_e(2) = -F(2);
+
 U = M*(Kp*(q - q_ref) + Ki*acc_error + Kd*(dq-dq_ref) + ddq_ref) + C + G + J'*F_e;
 
 if(U(1) > MAX_TORQUE)

@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.1415926-2.3-0.9997.5 (MiKTeX 2.9) (preloaded format=xelatex 2012.5.25)  25 MAY 2012 03:42
+This is XeTeX, Version 3.1415926-2.3-0.9997.5 (MiKTeX 2.9) (preloaded format=xelatex 2012.5.25)  25 MAY 2012 19:23
 entering extended mode
 **S:/Robot*Research/Robot/RPR*Simulation/Report/report.tex
 ("S:/Robot Research/Robot/RPR Simulation/Report/report.tex"
@@ -274,32 +274,27 @@ Requested font "cmr17" at 17.28pt
  -> cmr17
 Requested font "cmbx12" at 17.28pt
  -> cmbx12
-
-Package amsmath Warning: Foreign command \over;
-(amsmath)                \frac or \genfrac should be used instead
-(amsmath)                 on input line 39.
-
 [2
 
 ]
 Requested font "cmbx12" at 14.4pt
  -> cmbx12
- [3] [4] [5] [6] [7]
+ [3] [4] [5] [6] [7] [8] [9]
 Chapter 2.
-[8
+[10
 
 ]
 Chapter 3.
-[9
+[11
 
 ] ("S:\Robot Research\Robot\RPR Simulation\Report\report.aux") ) 
 Here is how much of TeX's memory you used:
- 3104 strings out of 429156
- 38576 string characters out of 3168943
+ 3114 strings out of 429156
+ 38716 string characters out of 3168943
  120972 words of memory out of 3000000
- 6364 multiletter control sequences out of 15000+200000
+ 6374 multiletter control sequences out of 15000+200000
  10539 words of font info for 38 fonts, out of 3000000 for 9000
  786 hyphenation exceptions out of 8191
  32i,10n,38p,280b,255s stack positions out of 5000i,500n,10000p,200000b,50000s
 
-Output written on report.pdf (11 pages).
+Output written on report.pdf (13 pages).

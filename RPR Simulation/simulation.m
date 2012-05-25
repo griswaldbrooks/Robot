@@ -4,7 +4,7 @@
 cla,clc,clear
 hold all
 
-axis([-1 1 -0.5 2 -2 2])
+axis([-0.8 1 -0.5 1.2 -2 2])
 axis square
 xlabel('X axis, m')
 ylabel('Y axis, m')
@@ -25,6 +25,7 @@ h2 = 0.2;     % meters
 
 Fd = 40;                            % N, Desired Force
 wK = 6000 + (60000 - 6000)*rand(1);                          % Wall stiffness
+wK = 56769.7894;
 %wK = 60000;                          % Wall stiffness
 %wall_offset = 1.2*0.0067;           % Inner wall depth
 wall_offset = 6.6667e-004;
@@ -138,17 +139,18 @@ for t = 0:dt:T
     A1A2A3_r = A1A2_r*A3_r;
     %%%%%%
     
-    Force = -((wK)*(L - A1A2A3(1,4)));
-    acc_Fe = acc_Fe + (Fd - Force);
-    if(Force > max_F)
+    Force = ((wK)*(L - A1A2A3(1,4)));
+    %acc_Fe = acc_Fe + (Fd - Force);
+    acc_Fe = acc_Fe + (Force + Fd);
+    if(Force < max_F)
         max_F = Force;
     end
     % Anti-windup
-    if(Force < 0)
+    if(Force > 0)
         Force = 0;
         acc_Fe = 0;
     end
-    e_F = [e_F,(Fd - Force)];
+    e_F = [e_F,(Force + Fd)];
     
     x = [x;q(1),dq(1),q(2),dq(2),q(3),dq(3)];
     
@@ -178,12 +180,12 @@ for t = 0:dt:T
     text(-0.6,-0.2,'Applied Force: ');
     text(0.3125 - 0.6,-0.2,num2str(Force,5));
     text(0.5 - 0.6,-0.2,'N');
-    line([0 - 0.6,Force/100 - 0.6],[-0.25,-0.25],'Color','r','LineWidth',5);
+    line([0 - 0.6,-Force/100 - 0.6],[-0.25,-0.25],'Color','r','LineWidth',5);
     
     text(-0.6,-0.31,'Max Applied Force: ');
     text(0.425 - 0.6,-0.31,num2str(max_F,5));
     text(0.6 - 0.6,-0.31,'N');
-    plot(max_F/100 - 0.6, -0.25,'b+');
+    plot(-max_F/100 - 0.6, -0.25,'b+');
     
     text(0.3,-0.2, 'Wall Stiffness: ');
     text(0.6,-0.2, num2str(wK,6));
@@ -267,6 +269,7 @@ end
   cla
   e = e*(180/pi);
   axis([0,dt*length(e),min(min(e)),max(max(e))])
+  axis([0 10 -2 2])
   t = 0:dt:T;
   plot(t,e);
   line([0,dt*length(e)],[0,0],'Color','k','LineStyle','--')
@@ -286,6 +289,7 @@ plot(x(:,1),x(:,2),x(:,3),x(:,4))
   figure(4);
   cla
   axis([0,dt*length(e_F),min(min(e_F)),max(max(e_F))])
+  axis([0 10 -1 1])
   t = 0:dt:T;
   plot(t,e_F,'b-');
   line([0,dt*length(e_F)],[0,0],'Color','k','LineStyle','--')
