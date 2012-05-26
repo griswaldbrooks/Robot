@@ -145,6 +145,7 @@ for t = 0:dt:T
     if(Force < max_F)
         max_F = Force;
     end
+    
     % Anti-windup
     if(Force > 0)
         Force = 0;

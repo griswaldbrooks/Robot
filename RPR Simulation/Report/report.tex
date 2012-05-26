@@ -2,6 +2,7 @@
 \usepackage{pstricks}
 \usepackage{amsmath}
 \usepackage{wrapfig}
+\usepackage{graphicx}
 
 \begin{document}
 
@@ -104,7 +105,7 @@ and a prismatic joint in between, Figure \ref{fig:RPRfig}.
 \label{fig:RPRfig}
 \end{figure}
 
-\subsection{Kinematics}
+\subsection{Kinematics} \label{sec:Kinematics}
 The kinematic model of the manipulator is given by the transformation matrices
 \eqref{eq:Amatrices}, resulting in an end effector transformation of \eqref{eq:A1A2A3}. The DH parameters for the 
 manipulator are given in Table \ref{tab:DHtable}.
@@ -290,7 +291,7 @@ F_w =
 	^T
 \end{equation}		
 Where $\delta x$ in this case is always taken to be negative when the end effector is 'indenting' the wall.
-According to specification, $k$ can take on any value from $6000 \frac Nm$ to $60000\frac Nm$, so in simulation
+According to specification, $k$ can take on any value from $6000 \frac Nm$ to $60,000\frac Nm$, so in simulation
 the wall stiffness $k$ is taken as a random number within this range.
 
 \begin{figure}[t]
@@ -425,12 +426,60 @@ A natural frequency of $\omega_n = 0.1 \frac{rad}{sec}$ and a $K_{w_d} = 50$ wer
 	K_{w_p} &= K_{w_i} = \omega_n^2K_{w_d} = 0.5
 \end{align}
 \end{subequations}
+
 \chapter{Results}
+\begin{figure}[ht]
+\centering
+\includegraphics[width=0.6\textwidth]{SimulationImage}
+\caption{MATLAB Simulation of RPR manipulator contacting wall.}
+\label{fig:SimImage}
+\end{figure}
+The simulation was programmed to randomly choose wall stiffnesses within the allowable range (6000$\frac Nm$ to 60,000$\frac Nm$) which was then 
+modulated by additive Gaussian noise in the range of 0 to 1000$\frac Nm$ for every force/torque sensor sample. The manipulator end effector was 
+programmed to approach the wall in an exponential fashion in order to minimize force overshoot when colliding with the wall, and track between 
+two points on the wall (0.2 m to 1 m). The manipulator used a sinusoid to track between the two points \eqref{eq:tracking}. The end effector orientation
+was set to be zero, perpendicular to the wall. These trajectories were differentiated and passed to the kinematics equations, 
+Section~\ref{sec:Kinematics}, producing joint position, velocity, and acceleration commands which were input to the position and force controllers.
+The desired force to be applied to the wall was $F_d = 40 N$.
+\begin{subequations} \label{eq:tracking}
+\begin{align}
+	\delta x &= \frac {F_d}{60,000} = 6.6\times10^{-4}\\
+	dx &= (0.2 + \delta x)(1 - e^{-10t}) + 0.4005\\
+	dy &= 0.4sint + 0.6
+\end{align}
+\end{subequations}
+The simulation was evaluated every 0.01 seconds for 10 seconds using the RK4 method. A representative wall stiffness of $k = 56,769.7894 \frac Nm$
+is used for the results of this section.
+
 \section{Position Error}
+\begin{figure}[h!b]
+\centering
+\includegraphics[width=0.6\textwidth]{JointError}
+\caption{Graph of joint error over 10 seconds.}
+\label{fig:JointError}
+\end{figure}
+The slowest joint (joint 3) reached $0.1^\circ$ joint position error in 0.5 seconds and all of the joints stayed within $\pm 0.2^\circ$ error
+for the length of the simulation.
+
 \section{Force Error}
+\begin{figure}[h!b]
+\centering
+\includegraphics[width=0.6\textwidth]{AppliedForceError}
+\caption{Graph of joint error over 10 seconds.}
+\label{fig:ForceError}
+\end{figure}
+The end effector took 0.1 seconds to apply 36 N of force (90\% of $F_d$) after wall contact. The maximum force applied to the wall was 40.63 N. The force
+error was $\pm 0.5 N$ proceeding the initial overshoot of 0.63 N.
 
 
 \chapter{Conclusion}
-
+Hybrid force control allows robust control over force applications in the presence of uncertain environmental conditions. It was generally tolerant of
+varying environmental stiffnesses and sensor noise.
+While the presented controller applies adequate force under the given specifications, a more in depth analysis of the stability of the 
+force controller and the environment is necessary in order to improve its performance. 
+Alternatively a Gain-Lead-Lag controller may provide increased performance over the PID controller at the expense of a small increase of controller memory.
 
 \end{document}
+
+The gains seemed too low for the force controller.
+The inertia matrix was only positive semi-definite. 

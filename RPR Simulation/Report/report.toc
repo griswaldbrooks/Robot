@@ -9,6 +9,6 @@
 \contentsline {subsection}{\numberline {1.5.1}Impedance Control}{8}
 \contentsline {subsection}{\numberline {1.5.2}Force Feedback Control}{8}
 \contentsline {chapter}{\numberline {2}Results}{10}
-\contentsline {section}{\numberline {2.1}Position Error}{10}
-\contentsline {section}{\numberline {2.2}Force Error}{10}
-\contentsline {chapter}{\numberline {3}Conclusion}{11}
+\contentsline {section}{\numberline {2.1}Position Error}{11}
+\contentsline {section}{\numberline {2.2}Force Error}{12}
+\contentsline {chapter}{\numberline {3}Conclusion}{13}

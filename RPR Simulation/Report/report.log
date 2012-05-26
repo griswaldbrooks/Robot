@@ -1,4 +1,4 @@
-This is XeTeX, Version 3.1415926-2.3-0.9997.5 (MiKTeX 2.9) (preloaded format=xelatex 2012.5.25)  25 MAY 2012 19:23
+This is XeTeX, Version 3.1415926-2.3-0.9997.5 (MiKTeX 2.9) (preloaded format=xelatex 2012.5.25)  25 MAY 2012 21:22
 entering extended mode
 **S:/Robot*Research/Robot/RPR*Simulation/Report/report.tex
 ("S:/Robot Research/Robot/RPR Simulation/Report/report.tex"
@@ -205,19 +205,36 @@ LaTeX Info: Redefining \] on input line 2667.
 \WF@everypar=\toks24
 Package: wrapfig 2003/01/31  v 3.6
 )
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\graphicx.sty"
+Package: graphicx 1999/02/16 v1.0f Enhanced LaTeX Graphics (DPC,SPQR)
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\graphics.sty"
+Package: graphics 2009/02/05 v1.0o Standard LaTeX Graphics (DPC,SPQR)
+
+("C:\Program Files\MiKTeX 2.9\tex\latex\graphics\trig.sty"
+Package: trig 1999/03/16 v1.09 sin cos tan (DPC)
+)
+("C:\Program Files\MiKTeX 2.9\tex\latex\00miktex\graphics.cfg"
+File: graphics.cfg 2007/01/18 v1.5 graphics configuration of teTeX/TeXLive
+)
+Package graphics Info: Driver file: xetex.def on input line 91.
+)
+\Gin@req@height=\dimen137
+\Gin@req@width=\dimen138
+)
 ("S:\Robot Research\Robot\RPR Simulation\Report\report.aux")
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 6.
-LaTeX Font Info:    ... okay on input line 6.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 7.
+LaTeX Font Info:    ... okay on input line 7.
 Requested font "cmr17" at 20.74pt
  -> cmr17
 Requested font "cmr12" at 14.4pt
@@ -281,20 +298,31 @@ Requested font "cmbx12" at 14.4pt
  -> cmbx12
  [3] [4] [5] [6] [7] [8] [9]
 Chapter 2.
+File: SimulationImage.jpg Graphic file (type QTm)
+<use  "SimulationImage.jpg" >
+Overfull \hbox (3.75146pt too wide) in paragraph at lines 437--445
+[]\OT1/cmr/m/n/12 The sim-u-la-tion was pro-grammed to ran-domly choose wall st
+iff-nesses within
+ []
+
 [10
 
 ]
+File: JointError.jpg Graphic file (type QTm)
+ <use  "JointError.jpg" >
+File: AppliedForceError.jpg Graphic file (type QTm)
+ <use  "AppliedForceError.jpg" > [11] [12]
 Chapter 3.
-[11
+[13
 
 ] ("S:\Robot Research\Robot\RPR Simulation\Report\report.aux") ) 
 Here is how much of TeX's memory you used:
- 3114 strings out of 429156
- 38716 string characters out of 3168943
- 120972 words of memory out of 3000000
- 6374 multiletter control sequences out of 15000+200000
+ 3305 strings out of 429156
+ 41053 string characters out of 3168943
+ 124734 words of memory out of 3000000
+ 6546 multiletter control sequences out of 15000+200000
  10539 words of font info for 38 fonts, out of 3000000 for 9000
  786 hyphenation exceptions out of 8191
- 32i,10n,38p,280b,255s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 32i,10n,38p,280b,276s stack positions out of 5000i,500n,10000p,200000b,50000s
 
-Output written on report.pdf (13 pages).
+Output written on report.pdf (15 pages).
