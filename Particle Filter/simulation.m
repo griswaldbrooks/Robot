@@ -14,7 +14,12 @@ robot_diameter = 0.3;
 
 % Robot State
 % pose = [x,y,\theta]'
+% Actual State
 x = [0,0,pi/6]';
+% Estimated State
+xk = x;
+% State Covariance
+Pk = eye(1);
 
 % Control Inputs
 % u = [velocity left, velocity right]
@@ -42,12 +47,30 @@ for t = 0:dt:T
    plot(landmark(1), landmark(2), 'r+');
    
    % Update Control Input
-   u = [1,1]';
+   u = [3,3.5]';
    % Update Pose
-   linear = (u(2) + u(1))/2;
-   omega = (u(2) - u(1))/robot_diameter;
-   h = [linear*dt*cos(x(3)),linear*dt*sin(x(3)),omega*dt]';
-   x = x + h;
+   % Movement noise
+   vl = 0.1*rand(1);
+   vw = 0.2*rand(1);
+   % Motion Model
+   linear = ((u(2) + u(1))/2) + vl;
+   omega = ((u(2) - u(1))/robot_diameter) + vw;
+   dx = [linear*dt*cos(x(3)),linear*dt*sin(x(3)),omega*dt]';
+   %dx = [linear*dt*cos(x(3) + omega*dt),linear*dt*sin(x(3) + omega*dt),omega*dt]';
+   x = x + dx;
+   
+   % Measurement Noise
+   w = 0.01*rand(1);
+   % Measurement Model h(x,m)
+   h = sqrt((x(1) - landmark(1))^2 + (x(2) - landmark(2))^2);
+   z = h + w;
+   
+   % EKF
+   [xk,Pk] = ekf(xk,z,u,dt,landmark,Pk)
+   % Plot Estimated Robot Position
+   plot(xk(1), xk(2), 'go');
+   % Plot Estimated Robot Orientation
+   line([xk(1),fr_sc*cos(xk(3)) + xk(1)],[xk(2),fr_sc*sin(xk(3)) + xk(2)], 'Color', 'g');
    
    pause(dt);
    %input('Pause')
