@@ -2,8 +2,10 @@ function [xkp1,Pkp1] = ekf(xk,zk,uk,dt,landmark,Pk)
 
 % Parameters
 robot_diameter = 0.3; 
-Cv = 0.1*eye(3);
-Cw = 0.1;
+% Process Covariance
+Cv = 0.01*eye(3);
+% Sensor Covariance
+Cw = 0.001*eye(2);
 
 % Control Input
 v = (uk(2) + uk(1))/2;
@@ -20,7 +22,11 @@ F = [   1,  0,  -v*dt*sin(xkp1_p(3));
         0,  0,  1];
 
 % Linearized Sensor Model
-H = [   xkp1_p(1)*(xkp1_p(1) - landmark(1)), xkp1_p(2)*(xkp1_p(2) - landmark(2)), 0];
+% H = [   (xkp1_p(1) - landmark(1))*((xkp1_p(1) - landmark(1))^2 + (xkp1_p(2) - landmark(2))^2),...
+%         (xkp1_p(2) - landmark(2))*((xkp1_p(1) - landmark(1))^2 + (xkp1_p(2) - landmark(2))^2),...
+%          0];
+H = [   (xkp1_p(1) - landmark(1))*(((xkp1_p(1) - landmark(1))^2 + (xkp1_p(2) - landmark(2))^2)^(-1/2)), (xkp1_p(2) - landmark(2))*(((xkp1_p(1) - landmark(1))^2 + (xkp1_p(2) - landmark(2))^2)^(-1/2)),0;
+        ((xkp1_p(1) - landmark(1))^2 + (xkp1_p(2) - landmark(2))^2)^(-1), (-(xkp1_p(1) - landmark(1))^2)*(((xkp1_p(1) - landmark(1))^2 + (xkp1_p(2) - landmark(2))^2)^(-1)),1];
 
 % State Covariance
 Pkp1_p = F*Pk*F' + Cv;
@@ -33,8 +39,10 @@ S = H*Pkp1_p*H' + Cw;
 K = (Pkp1_p*(H'))/S;
 
 % Innovation
-h = sqrt((xkp1_p(1) - landmark(1))^2 + (xkp1_p(2) - landmark(2))^2);
-r = zk - h;
+h1 = sqrt((xkp1_p(1) - landmark(1))^2 + (xkp1_p(2) - landmark(2))^2);
+h2 = xkp1_p(3) - atan((xkp1_p(2) - landmark(2))/( xkp1_p(1) - landmark(1)));
+
+r = zk - [h1,h2]';
 
 % Update State
 xkp1 = xkp1_p + K*r;
