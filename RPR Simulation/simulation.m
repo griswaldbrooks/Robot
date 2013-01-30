@@ -1,4 +1,4 @@
-% Simulation of a PRR manipulator, using a Feedback Linearizing Controller.
+% Simulation of a RPR manipulator, using a Feedback Linearizing Controller.
 % The simulation is calculated using RK4
 
 cla,clc,clear
